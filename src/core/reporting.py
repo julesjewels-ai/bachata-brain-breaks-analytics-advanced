@@ -6,6 +6,25 @@ from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from pydantic import BaseModel, Field, ValidationError, field_validator
+import re
+
+
+class ReportConfig(BaseModel):
+    """Configuration for report generation validation."""
+    filepath: str = Field(..., description="Path to save the Excel report")
+
+    @field_validator('filepath')
+    @classmethod
+    def validate_filepath(cls, v: str) -> str:
+        if not v.endswith('.xlsx'):
+            raise ValueError("File must be an Excel (.xlsx) file")
+        if '..' in v:
+            raise ValueError("Path traversal detected")
+        if not re.match(r'^[\w\-. /]+$', v):
+            raise ValueError("File path contains invalid characters")
+        return v
+
 
 class ExcelReportGenerator:
     """Generates styled Excel reports for analytics data."""
@@ -34,14 +53,24 @@ class ExcelReportGenerator:
             cell.fill = ExcelReportGenerator.HEADER_FILL
         ws.freeze_panes = 'A2'
 
-    def generate_excel(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str):
+    def generate_excel(self,
+                       anomalies: Dict[str, pd.DataFrame],
+                       strategy: str,
+                       filepath: str):
         """Creates an Excel report with anomalies and strategy analysis."""
-        with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+        try:
+            config = ReportConfig(filepath=filepath)
+            safe_path = config.filepath
+        except ValidationError as e:
+            raise ValueError(f"Security validation failed: {e}")
+
+        with pd.ExcelWriter(safe_path, engine='openpyxl') as writer:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
-                    df.to_excel(writer, sheet_name=f"{v_type} Anomalies", index=False)
-                    ws = writer.sheets[f"{v_type} Anomalies"]
+                    sheet_name = f"{v_type} Anomalies"
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._adjust_column_widths(ws)
 
@@ -52,4 +81,5 @@ class ExcelReportGenerator:
             ws_strat = writer.sheets["Strategy"]
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
-            ws_strat['A2'].alignment = ws_strat['A2'].alignment.copy(wrap_text=True)
+            align = ws_strat['A2'].alignment
+            ws_strat['A2'].alignment = align.copy(wrap_text=True)
