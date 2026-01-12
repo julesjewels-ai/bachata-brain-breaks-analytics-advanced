@@ -1,0 +1,55 @@
+"""
+Reporting module for generating Excel reports.
+Handles styling and formatting logic for Excel output.
+"""
+from typing import Dict
+import pandas as pd
+from openpyxl.styles import Font, PatternFill
+from openpyxl.utils import get_column_letter
+
+class ExcelReportGenerator:
+    """Generates styled Excel reports for analytics data."""
+
+    HEADER_FONT = Font(bold=True, color="FFFFFF")
+    HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
+
+    @staticmethod
+    def _adjust_column_widths(ws):
+        """Auto-adjusts column widths based on content length."""
+        for col in ws.columns:
+            max_length = 0
+            col_letter = get_column_letter(col[0].column)
+            for cell in col:
+                # Convert to string safely to check length
+                val = str(cell.value) if cell.value is not None else ""
+                if len(val) > max_length:
+                    max_length = len(val)
+            ws.column_dimensions[col_letter].width = max_length + 2
+
+    @staticmethod
+    def _apply_header_style(ws):
+        """Applies standard header styling and freezes panes."""
+        for cell in ws[1]:
+            cell.font = ExcelReportGenerator.HEADER_FONT
+            cell.fill = ExcelReportGenerator.HEADER_FILL
+        ws.freeze_panes = 'A2'
+
+    def generate_excel(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str):
+        """Creates an Excel report with anomalies and strategy analysis."""
+        with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+            # 1. Anomalies Sheets
+            for v_type, df in anomalies.items():
+                if not df.empty:
+                    df.to_excel(writer, sheet_name=f"{v_type} Anomalies", index=False)
+                    ws = writer.sheets[f"{v_type} Anomalies"]
+                    self._apply_header_style(ws)
+                    self._adjust_column_widths(ws)
+
+            # 2. Strategy Sheet
+            pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
+                writer, sheet_name="Strategy", index=False
+            )
+            ws_strat = writer.sheets["Strategy"]
+            self._apply_header_style(ws_strat)
+            ws_strat.column_dimensions['A'].width = 100
+            ws_strat['A2'].alignment = ws_strat['A2'].alignment.copy(wrap_text=True)

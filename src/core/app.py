@@ -6,6 +6,7 @@ import os
 import random
 from typing import List, Dict, Any
 import pandas as pd
+from src.core.reporting import ExcelReportGenerator
 
 class GeminiThinkingAgent:
     """
@@ -93,4 +94,11 @@ class BachataAnalyticsApp:
         analysis_input = top_5 + bottom_5
         strategy = self.agent.analyze_semantics(analysis_input)
         print(strategy)
+
+        # 4. Generate Excel Report
+        print("\nGenerating Excel Report...")
+        report_gen = ExcelReportGenerator()
+        report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+        print("Report saved to 'bachata_analytics.xlsx'.")
+
         print("\nDashboard update complete.")
