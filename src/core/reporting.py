@@ -36,14 +36,9 @@ class ExcelReportGenerator:
     def _adjust_column_widths(ws):
         """Auto-adjusts column widths based on content length."""
         for col in ws.columns:
-            max_length = 0
-            col_letter = get_column_letter(col[0].column)
-            for cell in col:
-                # Convert to string safely to check length
-                val = str(cell.value) if cell.value is not None else ""
-                if len(val) > max_length:
-                    max_length = len(val)
-            ws.column_dimensions[col_letter].width = max_length + 2
+            # Convert to string safely to check length
+            max_length = max((len(str(cell.value) if cell.value is not None else "") for cell in col), default=0)
+            ws.column_dimensions[get_column_letter(col[0].column)].width = max_length + 2
 
     @staticmethod
     def _apply_header_style(ws):
