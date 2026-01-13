@@ -1,7 +1,6 @@
 """
 Unit tests for core application logic.
 """
-import pytest
 import pandas as pd
 from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent
 

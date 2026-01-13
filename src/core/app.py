@@ -2,7 +2,6 @@
 Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
-import os
 import random
 from typing import List, Dict, Any
 import pandas as pd
@@ -88,8 +87,10 @@ class BachataAnalyticsApp:
         # 3. Gemini Analysis (Top/Bottom 5)
         print("\n--- Gemini 3 Agent Analysis ---")
         sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
-        top_5 = sorted_df.head(5).to_dict('records')
-        bottom_5 = sorted_df.tail(5).to_dict('records')
+        # Type ignored because pandas to_dict('records') returns list[dict[Hashable, Any]]
+        # but we know keys are strings.
+        top_5: List[Dict[str, Any]] = sorted_df.head(5).to_dict('records')  # type: ignore
+        bottom_5: List[Dict[str, Any]] = sorted_df.tail(5).to_dict('records')  # type: ignore
         
         analysis_input = top_5 + bottom_5
         strategy = self.agent.analyze_semantics(analysis_input)

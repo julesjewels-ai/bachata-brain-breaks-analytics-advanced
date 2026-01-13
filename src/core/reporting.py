@@ -48,6 +48,25 @@ class ExcelReportGenerator:
             cell.fill = ExcelReportGenerator.HEADER_FILL
         ws.freeze_panes = 'A2'
 
+    @staticmethod
+    def _apply_number_formats(ws):
+        """Applies number formatting to specific columns."""
+        # Map column headers to their respective formats
+        format_map = {
+            'views': '#,##0',
+            'retention_avg_pct': '0.00"%"'
+        }
+
+        # Find column indices for headers
+        headers = {cell.value: cell.column for cell in ws[1]}
+
+        for header, fmt in format_map.items():
+            if header in headers:
+                col_idx = headers[header]
+                # Apply format to all cells in the column (skipping header)
+                for row in range(2, ws.max_row + 1):
+                    ws.cell(row=row, column=col_idx).number_format = fmt
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -67,6 +86,7 @@ class ExcelReportGenerator:
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
+                    self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
 
             # 2. Strategy Sheet
