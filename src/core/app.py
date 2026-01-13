@@ -6,6 +6,7 @@ import random
 from typing import List, Dict, Any
 import pandas as pd
 from src.core.reporting import ExcelReportGenerator
+from src.core.config import AppConfig
 
 class GeminiThinkingAgent:
     """
@@ -32,6 +33,8 @@ class BachataAnalyticsApp:
     """
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
+        # Securely load configuration
+        self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
 
     def ingest_data(self) -> pd.DataFrame:
@@ -92,7 +95,12 @@ class BachataAnalyticsApp:
         top_5: List[Dict[str, Any]] = sorted_df.head(5).to_dict('records')  # type: ignore
         bottom_5: List[Dict[str, Any]] = sorted_df.tail(5).to_dict('records')  # type: ignore
         
-        analysis_input = top_5 + bottom_5
+        # Convert explicitly to match expected type List[Dict[str, Any]]
+        analysis_input = []
+        for record in top_5 + bottom_5:
+             # Ensure keys are strings (pandas might use other types if columns were different)
+             analysis_input.append({str(k): v for k, v in record.items()})
+
         strategy = self.agent.analyze_semantics(analysis_input)
         print(strategy)
 
