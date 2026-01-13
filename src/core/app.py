@@ -2,7 +2,6 @@
 Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
-import os
 import random
 from typing import List, Dict, Any
 import pandas as pd
@@ -59,16 +58,11 @@ class BachataAnalyticsApp:
         Implements statistical outlier detection for viral anomalies.
         """
         results = {}
-        for v_type in ['Shorts', 'Long']:
-            subset = df[df['type'] == v_type].copy()
-            if subset.empty:
-                continue
-            
+        for v_type, subset in df.groupby('type'):
             # Simple statistical outlier detection using Quantiles (Viral > 90th percentile)
             threshold = subset['views'].quantile(0.90)
-            outliers = subset[subset['views'] > threshold]
-            results[v_type] = outliers
-            
+            results[v_type] = subset[subset['views'] > threshold]
+
         return results
 
     def run(self) -> None:
