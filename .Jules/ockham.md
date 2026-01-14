@@ -1,0 +1,1 @@
+## 2024-05-22 - [Manual Iteration over Groups] **Observation:** The `detect_outliers` method in `src/core/app.py` manually iterates over hardcoded video types ('Shorts', 'Long') to filter dataframes, which is non-idiomatic in Pandas and brittle if new types are added. **Action:** Refactor to use `df.groupby('type')` to handle groups dynamically and idiomatically.

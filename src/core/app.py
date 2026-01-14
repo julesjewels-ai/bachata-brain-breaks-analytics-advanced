@@ -61,16 +61,11 @@ class BachataAnalyticsApp:
         Implements statistical outlier detection for viral anomalies.
         """
         results = {}
-        for v_type in ['Shorts', 'Long']:
-            subset = df[df['type'] == v_type].copy()
-            if subset.empty:
-                continue
-            
+        for v_type, group in df.groupby('type'):
             # Simple statistical outlier detection using Quantiles (Viral > 90th percentile)
-            threshold = subset['views'].quantile(0.90)
-            outliers = subset[subset['views'] > threshold]
-            results[v_type] = outliers
-            
+            threshold = group['views'].quantile(0.90)
+            results[str(v_type)] = group[group['views'] > threshold]
+
         return results
 
     def run(self) -> None:
