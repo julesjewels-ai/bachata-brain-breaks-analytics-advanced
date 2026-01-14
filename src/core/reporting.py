@@ -3,11 +3,14 @@ Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
+import logging
 import pandas as pd
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
+
+logger = logging.getLogger(__name__)
 
 
 class ReportConfig(BaseModel):
@@ -76,6 +79,7 @@ class ExcelReportGenerator:
             config = ReportConfig(filepath=filepath)
             safe_path = config.filepath
         except ValidationError as e:
+            logger.error(f"Validation error for filepath '{filepath}': {e}")
             raise ValueError(f"Security validation failed: {e}")
 
         with pd.ExcelWriter(safe_path, engine='openpyxl') as writer:

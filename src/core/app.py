@@ -3,10 +3,13 @@ Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
+import logging
 from typing import List, Dict, Any
 import pandas as pd
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
+
+logger = logging.getLogger(__name__)
 
 class GeminiThinkingAgent:
     """
@@ -42,7 +45,7 @@ class BachataAnalyticsApp:
         Simulates ingesting channel data (Shorts and Long-form).
         In a real app, this would connect to YouTube Analytics API.
         """
-        print("Ingesting channel data...")
+        logger.info("Ingesting channel data...")
         data = {
             'video_id': [f'vid_{i}' for i in range(1, 21)],
             'title': [
@@ -79,7 +82,7 @@ class BachataAnalyticsApp:
         """
         # 1. Ingest
         df = self.ingest_data()
-        print(f"Data loaded: {len(df)} records.")
+        logger.info(f"Data loaded: {len(df)} records.")
 
         # 2. Outlier Detection
         anomalies = self.detect_outliers(df)
@@ -105,9 +108,9 @@ class BachataAnalyticsApp:
         print(strategy)
 
         # 4. Generate Excel Report
-        print("\nGenerating Excel Report...")
+        logger.info("Generating Excel Report...")
         report_gen = ExcelReportGenerator()
         report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-        print("Report saved to 'bachata_analytics.xlsx'.")
+        logger.info("Report saved to 'bachata_analytics.xlsx'.")
 
-        print("\nDashboard update complete.")
+        logger.info("Dashboard update complete.")

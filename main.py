@@ -4,7 +4,17 @@ Handles command-line arguments and initializes the core application logic.
 """
 import argparse
 import sys
+import logging
 from src.core.app import BachataAnalyticsApp
+
+# Configure logging for the entire application
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+    stream=sys.stdout
+)
+logger = logging.getLogger(__name__)
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -27,12 +37,12 @@ def main() -> None:
         print("Bachata Brain Breaks Analytics v1.0.0")
         sys.exit(0)
 
-    print("Initializing Analytics Dashboard...")
+    logger.info("Initializing Analytics Dashboard...")
     app = BachataAnalyticsApp(dry_run=args.dry_run)
     try:
         app.run()
     except Exception as e:
-        print(f"Critical Error: {e}", file=sys.stderr)
+        logger.critical(f"Critical Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
