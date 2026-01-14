@@ -3,18 +3,48 @@ Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
-from typing import List, Dict, Any
+import logging
+from typing import List, Dict
 import pandas as pd
+from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+class VideoAnalysisInput(BaseModel):
+    """
+    Schema for video data to be analyzed by the agent.
+    Strictly validates input to prevent injection and ensure data integrity.
+    """
+    video_id: str = Field(..., pattern=r"^vid_\d+$")
+    title: str = Field(..., min_length=1, max_length=200)
+    views: int = Field(..., ge=0)
+    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
+    type: str = Field(..., pattern=r"^(Shorts|Long)$")
+
+    @field_validator('title')
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        # Basic sanitization and prompt injection check
+        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
+        for pattern in forbidden_patterns:
+            if pattern in v:
+                raise ValueError(f"Potential prompt injection detected: {pattern}")
+        # Ensure no control characters
+        if not v.isprintable():
+            raise ValueError("Title contains non-printable characters")
+        return v
 
 class GeminiThinkingAgent:
     """
     Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
     """
-    def analyze_semantics(self, videos: List[Dict[str, Any]]) -> str:
+    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
         """
         Analyzes titles and thumbnails (metadata) to find conversion patterns.
+        Now strictly typed for security.
         """
         if not videos:
             return "No data to analyze."
@@ -90,16 +120,23 @@ class BachataAnalyticsApp:
         # 3. Gemini Analysis (Top/Bottom 5)
         print("\n--- Gemini 3 Agent Analysis ---")
         sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
-        # Type ignored because pandas to_dict('records') returns list[dict[Hashable, Any]]
-        # but we know keys are strings.
-        top_5: List[Dict[str, Any]] = sorted_df.head(5).to_dict('records')  # type: ignore
-        bottom_5: List[Dict[str, Any]] = sorted_df.tail(5).to_dict('records')  # type: ignore
         
-        # Convert explicitly to match expected type List[Dict[str, Any]]
+        top_5_records = sorted_df.head(5).to_dict('records')
+        bottom_5_records = sorted_df.tail(5).to_dict('records')
+
+        # Securely validate and convert data
         analysis_input = []
-        for record in top_5 + bottom_5:
-             # Ensure keys are strings (pandas might use other types if columns were different)
-             analysis_input.append({str(k): v for k, v in record.items()})
+        try:
+            for record in top_5_records + bottom_5_records:
+                # Ensure keys are strings
+                clean_record = {str(k): v for k, v in record.items()}
+                validated_item = VideoAnalysisInput(**clean_record)
+                analysis_input.append(validated_item)
+        except ValidationError as e:
+            logger.error(f"Data validation failed for Gemini Analysis: {e}")
+            # Decide whether to abort or skip. Aborting is safer for security.
+            print("Error: Invalid data detected. Aborting analysis for security.")
+            return
 
         strategy = self.agent.analyze_semantics(analysis_input)
         print(strategy)
