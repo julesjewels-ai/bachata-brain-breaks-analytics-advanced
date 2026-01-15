@@ -51,3 +51,30 @@ def test_gemini_agent_output():
     agent = GeminiThinkingAgent()
     output = agent.analyze_semantics([{'title': 'test'}])
     assert "Gemini 3 Thinking Mode" in output
+
+def test_prepare_gemini_input_validation():
+    app = BachataAnalyticsApp()
+    # Invalid data (empty title fails min_length=1)
+    df = pd.DataFrame({
+        'video_id': ['vid_1'],
+        'title': [''],
+        'views': [100],
+        'retention_avg_pct': [50.0],
+        'type': ['Shorts']
+    })
+    # Should return None due to validation error
+    result = app._prepare_gemini_input(df)
+    assert result is None
+
+    # Valid data
+    df_valid = pd.DataFrame({
+        'video_id': ['vid_1'],
+        'title': ['Valid Title'],
+        'views': [100],
+        'retention_avg_pct': [50.0],
+        'type': ['Shorts']
+    })
+    result_valid = app._prepare_gemini_input(df_valid)
+    assert result_valid is not None
+    # 1 record -> top 5 gets 1, bottom 5 gets 1 -> total 2
+    assert len(result_valid) == 2

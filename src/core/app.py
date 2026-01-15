@@ -98,6 +98,31 @@ class BachataAnalyticsApp:
 
         return results
 
+    def _prepare_gemini_input(self, df: pd.DataFrame) -> List[VideoAnalysisInput] | None:
+        """
+        Prepares and validates data for Gemini analysis.
+        Returns None if validation fails.
+        """
+        sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
+        
+        top_5_records = sorted_df.head(5).to_dict('records')
+        bottom_5_records = sorted_df.tail(5).to_dict('records')
+
+        # Securely validate and convert data
+        analysis_input = []
+        try:
+            for record in top_5_records + bottom_5_records:
+                # Ensure keys are strings
+                clean_record = {str(k): v for k, v in record.items()}
+                validated_item = VideoAnalysisInput(**clean_record)
+                analysis_input.append(validated_item)
+            return analysis_input
+        except ValidationError as e:
+            logger.error(f"Data validation failed for Gemini Analysis: {e}")
+            # Decide whether to abort or skip. Aborting is safer for security.
+            print("Error: Invalid data detected. Aborting analysis for security.")
+            return None
+
     def run(self) -> None:
         """
         Executes the analytics pipeline.
@@ -114,23 +139,8 @@ class BachataAnalyticsApp:
 
         # 3. Gemini Analysis (Top/Bottom 5)
         print("\n--- Gemini 3 Agent Analysis ---")
-        sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
-        
-        top_5_records = sorted_df.head(5).to_dict('records')
-        bottom_5_records = sorted_df.tail(5).to_dict('records')
-
-        # Securely validate and convert data
-        analysis_input = []
-        try:
-            for record in top_5_records + bottom_5_records:
-                # Ensure keys are strings
-                clean_record = {str(k): v for k, v in record.items()}
-                validated_item = VideoAnalysisInput(**clean_record)
-                analysis_input.append(validated_item)
-        except ValidationError as e:
-            logger.error(f"Data validation failed for Gemini Analysis: {e}")
-            # Decide whether to abort or skip. Aborting is safer for security.
-            print("Error: Invalid data detected. Aborting analysis for security.")
+        analysis_input = self._prepare_gemini_input(df)
+        if analysis_input is None:
             return
 
         strategy = self.agent.analyze_semantics(analysis_input)
