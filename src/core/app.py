@@ -98,6 +98,24 @@ class BachataAnalyticsApp:
 
         return results
 
+    def _prepare_agent_input(self, df: pd.DataFrame) -> List[VideoAnalysisInput]:
+        """
+        Selects top/bottom performing videos and validates them for the agent.
+        """
+        sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
+
+        top_5 = sorted_df.head(5).to_dict('records')
+        bottom_5 = sorted_df.tail(5).to_dict('records')
+
+        analysis_input = []
+        for record in top_5 + bottom_5:
+            # Ensure keys are strings and validate
+            clean_record = {str(k): v for k, v in record.items()}
+            validated_item = VideoAnalysisInput(**clean_record)
+            analysis_input.append(validated_item)
+
+        return analysis_input
+
     def run(self) -> None:
         """
         Executes the analytics pipeline.
@@ -114,19 +132,9 @@ class BachataAnalyticsApp:
 
         # 3. Gemini Analysis (Top/Bottom 5)
         print("\n--- Gemini 3 Agent Analysis ---")
-        sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
         
-        top_5_records = sorted_df.head(5).to_dict('records')
-        bottom_5_records = sorted_df.tail(5).to_dict('records')
-
-        # Securely validate and convert data
-        analysis_input = []
         try:
-            for record in top_5_records + bottom_5_records:
-                # Ensure keys are strings
-                clean_record = {str(k): v for k, v in record.items()}
-                validated_item = VideoAnalysisInput(**clean_record)
-                analysis_input.append(validated_item)
+            analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
             # Decide whether to abort or skip. Aborting is safer for security.
