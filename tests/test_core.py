@@ -2,7 +2,7 @@
 Unit tests for core application logic.
 """
 import pandas as pd
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent
+from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
 
 def test_agent_initialization():
     app = BachataAnalyticsApp()
@@ -47,7 +47,32 @@ def test_outlier_detection_dynamic_types():
     assert len(anomalies['NewType1']) == 1  # 1000 should be filtered
     assert len(anomalies['NewType2']) == 1
 
+def test_prepare_agent_input():
+    app = BachataAnalyticsApp()
+    df = pd.DataFrame({
+        'video_id': [f'vid_{i}' for i in range(10)],
+        'title': [f'Title {i}' for i in range(10)],
+        'views': [100 * i for i in range(10)],
+        'retention_avg_pct': [10.0 * i for i in range(10)],
+        'type': ['Shorts'] * 10
+    })
+
+    result = app._prepare_agent_input(df)
+    assert len(result) == 10
+    assert isinstance(result[0], VideoAnalysisInput)
+    # sort desc: 90, 80 ... 0
+    # top 5: 90, 80, 70, 60, 50
+    # bottom 5 (tail of desc sorted): 40, 30, 20, 10, 0
+    assert result[0].retention_avg_pct == 90.0
+
 def test_gemini_agent_output():
     agent = GeminiThinkingAgent()
-    output = agent.analyze_semantics([{'title': 'test'}])
+    video = VideoAnalysisInput(
+        video_id="vid_1",
+        title="test",
+        views=100,
+        retention_avg_pct=50.0,
+        type="Shorts"
+    )
+    output = agent.analyze_semantics([video])
     assert "Gemini 3 Thinking Mode" in output
