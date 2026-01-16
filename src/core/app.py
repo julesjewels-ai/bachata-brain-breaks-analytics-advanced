@@ -32,6 +32,12 @@ class VideoAnalysisInput(BaseModel):
         for pattern in forbidden_patterns:
             if pattern in v:
                 raise ValueError(f"Potential prompt injection detected: {pattern}")
+
+        # Prevent Excel Formula Injection (CSV Injection)
+        # Block titles starting with =, +, -, @ to prevent arbitrary code execution in reports
+        if v.startswith(('=', '+', '-', '@')):
+            raise ValueError(f"Potential Excel formula injection detected: starts with '{v[0]}'")
+
         # Ensure no control characters
         if not v.isprintable():
             raise ValueError("Title contains non-printable characters")
