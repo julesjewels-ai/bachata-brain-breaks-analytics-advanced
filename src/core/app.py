@@ -9,6 +9,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
+from src.core.formatting import format_validation_error
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -138,7 +139,8 @@ class BachataAnalyticsApp:
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
             # Decide whether to abort or skip. Aborting is safer for security.
-            print("Error: Invalid data detected. Aborting analysis for security.")
+            print(format_validation_error(e))
+            print("Aborting analysis for security.")
             return
 
         strategy = self.agent.analyze_semantics(analysis_input)
