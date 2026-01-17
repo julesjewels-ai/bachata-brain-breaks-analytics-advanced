@@ -9,7 +9,8 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.core.formatting import format_validation_error
+from src.core.interfaces import IUserInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -62,8 +63,9 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, dry_run: bool = False):
+    def __init__(self, console: IUserInterface, dry_run: bool = False):
         self.dry_run = dry_run
+        self.console = console
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
@@ -73,18 +75,18 @@ class BachataAnalyticsApp:
         Simulates ingesting channel data (Shorts and Long-form).
         In a real app, this would connect to YouTube Analytics API.
         """
-        print("Ingesting channel data...")
-        data = {
-            'video_id': [f'vid_{i}' for i in range(1, 21)],
-            'title': [
-                'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance', 
-                'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-                'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
-            ] * 2,
-            'views': [random.randint(500, 500000) for _ in range(20)],
-            'retention_avg_pct': [random.uniform(20.0, 95.0) for _ in range(20)],
-            'type': ['Long' if i % 3 != 0 else 'Shorts' for i in range(20)]
-        }
+        with self.console.show_spinner("Ingesting channel data...") as _:
+            data = {
+                'video_id': [f'vid_{i}' for i in range(1, 21)],
+                'title': [
+                    'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
+                    'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
+                    'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
+                ] * 2,
+                'views': [random.randint(500, 500000) for _ in range(20)],
+                'retention_avg_pct': [random.uniform(20.0, 95.0) for _ in range(20)],
+                'type': ['Long' if i % 3 != 0 else 'Shorts' for i in range(20)]
+            }
         return pd.DataFrame(data)
 
     def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -121,39 +123,46 @@ class BachataAnalyticsApp:
         """
         Executes the analytics pipeline.
         """
+        self.console.print_welcome()
+
         # 1. Ingest
         df = self.ingest_data()
-        print(f"Data loaded: {len(df)} records.")
+        self.console.print_success(f"Data loaded: {len(df)} records.")
 
         # 2. Outlier Detection
+        self.console.print_step("Detecting Viral Anomalies")
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
-            print(f"\n--- Viral Anomalies ({v_type}) ---")
-            print(format_dataframe_for_display(data[['title', 'views', 'retention_avg_pct']]))
+            self.console.display_dataframe(
+                data[['title', 'views', 'retention_avg_pct']],
+                title=f"Viral Anomalies ({v_type})"
+            )
 
         # 3. Gemini Analysis (Top/Bottom 5)
-        print("\n--- Gemini 3 Agent Analysis ---")
+        self.console.print_step("Running Gemini 3 Agent Analysis")
         
         try:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
-            # Decide whether to abort or skip. Aborting is safer for security.
-            print(format_validation_error(e))
-            print("Aborting analysis for security.")
+            self.console.print_error(format_validation_error(e))
+            self.console.print_error("Aborting analysis for security.")
             return
 
-        strategy = self.agent.analyze_semantics(analysis_input)
-        print(strategy)
+        with self.console.show_spinner("Analyzing semantic patterns...") as _:
+            strategy = self.agent.analyze_semantics(analysis_input)
+
+        self.console.display_agent_thought(strategy)
 
         # 4. Generate Excel Report
-        print("\nGenerating Excel Report...")
+        self.console.print_step("Generating Excel Report")
         try:
-            report_gen = ExcelReportGenerator()
-            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-            print("Report saved to 'bachata_analytics.xlsx'.")
+            with self.console.show_spinner("Saving report...") as _:
+                report_gen = ExcelReportGenerator()
+                report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            self.console.print_success("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
-            print(f"Error generating report: {e}")
+            self.console.print_error(f"Error generating report: {e}")
 
-        print("\nDashboard update complete.")
+        self.console.print_success("Dashboard update complete.")

@@ -1,22 +1,29 @@
 """
 Unit tests for core application logic.
 """
+import pytest
 import pandas as pd
+from unittest.mock import MagicMock
 from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.interfaces import IUserInterface
 
-def test_agent_initialization():
-    app = BachataAnalyticsApp()
+@pytest.fixture
+def mock_console():
+    return MagicMock(spec=IUserInterface)
+
+def test_agent_initialization(mock_console):
+    app = BachataAnalyticsApp(console=mock_console)
     assert isinstance(app.agent, GeminiThinkingAgent)
 
-def test_ingest_data_structure():
-    app = BachataAnalyticsApp()
+def test_ingest_data_structure(mock_console):
+    app = BachataAnalyticsApp(console=mock_console)
     df = app.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
     assert list(df.columns) == expected_cols
 
-def test_outlier_detection():
-    app = BachataAnalyticsApp()
+def test_outlier_detection(mock_console):
+    app = BachataAnalyticsApp(console=mock_console)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3'],
         'title': ['A', 'B', 'Viral'],
@@ -31,9 +38,9 @@ def test_outlier_detection():
     # For this simple test, we ensure it returns a DataFrame.
     assert isinstance(anomalies['Shorts'], pd.DataFrame)
 
-def test_outlier_detection_dynamic_types():
+def test_outlier_detection_dynamic_types(mock_console):
     """Test that outlier detection handles arbitrary types dynamically."""
-    app = BachataAnalyticsApp()
+    app = BachataAnalyticsApp(console=mock_console)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3', '4'],
         'title': ['A', 'B', 'C', 'D'],
@@ -47,8 +54,8 @@ def test_outlier_detection_dynamic_types():
     assert len(anomalies['NewType1']) == 1  # 1000 should be filtered
     assert len(anomalies['NewType2']) == 1
 
-def test_prepare_agent_input():
-    app = BachataAnalyticsApp()
+def test_prepare_agent_input(mock_console):
+    app = BachataAnalyticsApp(console=mock_console)
     df = pd.DataFrame({
         'video_id': [f'vid_{i}' for i in range(10)],
         'title': [f'Title {i}' for i in range(10)],

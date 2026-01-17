@@ -6,3 +6,8 @@ __pycache__/
 .DS_Store
 coverage.xml
 .coverage
+*.xlsx
+.mypy_cache/
+.mypy_cache/
+.mypy_cache/
+.mypy_cache/

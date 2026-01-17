@@ -5,6 +5,7 @@ Handles command-line arguments and initializes the core application logic.
 import argparse
 import sys
 from src.core.app import BachataAnalyticsApp
+from src.interfaces.cli import RichConsole
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -22,17 +23,18 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    console = RichConsole()
 
     if args.version:
-        print("Bachata Brain Breaks Analytics v1.0.0")
+        console.print_welcome()
         sys.exit(0)
 
-    print("Initializing Analytics Dashboard...")
-    app = BachataAnalyticsApp(dry_run=args.dry_run)
+    console.print_info("Initializing Analytics Dashboard...")
+    app = BachataAnalyticsApp(console=console, dry_run=args.dry_run)
     try:
         app.run()
     except Exception as e:
-        print(f"Critical Error: {e}", file=sys.stderr)
+        console.print_error(f"Critical Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
