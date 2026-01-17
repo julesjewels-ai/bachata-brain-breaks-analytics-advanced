@@ -1,6 +1,7 @@
 import pytest
+import pandas as pd
 from pydantic import BaseModel, ValidationError, Field, field_validator
-from src.core.formatting import format_validation_error
+from src.core.formatting import format_validation_error, format_dataframe_for_display
 
 class ValidationTestModel(BaseModel):
     name: str = Field(..., min_length=3)
@@ -35,3 +36,31 @@ def test_format_validation_error_custom():
     # "Value error, " should be stripped
     assert "• name: Name cannot contain 'bad'" in formatted
     assert "Value error," not in formatted
+
+def test_format_dataframe_for_display():
+    """Test dataframe formatting for CLI display."""
+    df = pd.DataFrame({
+        'title': ['Video A', 'Video B'],
+        'views': [1000, 1500000],
+        'retention_avg_pct': [45.678, 99.123],
+        'type': ['Shorts', 'Long']
+    })
+
+    formatted = format_dataframe_for_display(df)
+
+    # Check headers
+    assert "Video Title" in formatted
+    assert "Views" in formatted
+    assert "Retention" in formatted
+
+    # Check values
+    assert "1,000" in formatted
+    assert "1,500,000" in formatted
+    assert "45.7%" in formatted
+    assert "99.1%" in formatted
+
+def test_format_dataframe_empty():
+    """Test behavior with empty dataframe."""
+    df = pd.DataFrame()
+    formatted = format_dataframe_for_display(df)
+    assert formatted == "No data available."

@@ -9,7 +9,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error
+from src.core.formatting import format_validation_error, format_dataframe_for_display
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -129,7 +129,7 @@ class BachataAnalyticsApp:
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
             print(f"\n--- Viral Anomalies ({v_type}) ---")
-            print(data[['title', 'views', 'retention_avg_pct']].to_string(index=False))
+            print(format_dataframe_for_display(data[['title', 'views', 'retention_avg_pct']]))
 
         # 3. Gemini Analysis (Top/Bottom 5)
         print("\n--- Gemini 3 Agent Analysis ---")
@@ -148,8 +148,12 @@ class BachataAnalyticsApp:
 
         # 4. Generate Excel Report
         print("\nGenerating Excel Report...")
-        report_gen = ExcelReportGenerator()
-        report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-        print("Report saved to 'bachata_analytics.xlsx'.")
+        try:
+            report_gen = ExcelReportGenerator()
+            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            print("Report saved to 'bachata_analytics.xlsx'.")
+        except ValueError as e:
+            logger.error(f"Failed to generate report: {e}")
+            print(f"Error generating report: {e}")
 
         print("\nDashboard update complete.")
