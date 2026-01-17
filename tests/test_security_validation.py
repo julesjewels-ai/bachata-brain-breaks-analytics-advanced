@@ -54,6 +54,26 @@ def test_video_analysis_input_prompt_injection():
         VideoAnalysisInput(**data)
     assert "Potential prompt injection detected" in str(exc.value)
 
+def test_video_analysis_input_formula_injection():
+    """Test formula injection detection in title."""
+    malicious_inputs = [
+        "=SUM(A1:A10)",
+        "@SUM(1,1)",
+        "+1+1",
+        "-1+1"
+    ]
+    for bad_title in malicious_inputs:
+        data = {
+            "video_id": "vid_1",
+            "title": bad_title,
+            "views": 100,
+            "retention_avg_pct": 50.5,
+            "type": "Shorts"
+        }
+        with pytest.raises(ValidationError) as exc:
+            VideoAnalysisInput(**data)
+        assert "Formula Injection" in str(exc.value)
+
 def test_video_analysis_input_invalid_type():
     """Test invalid video type."""
     data = {
