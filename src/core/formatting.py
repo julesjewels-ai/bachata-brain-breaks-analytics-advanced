@@ -3,6 +3,7 @@ Formatting utilities for user-facing output.
 Handles string manipulation, error message processing, and display formatting.
 """
 from pydantic import ValidationError
+import pandas as pd
 
 def format_validation_error(e: ValidationError) -> str:
     """
@@ -29,3 +30,37 @@ def format_validation_error(e: ValidationError) -> str:
         messages.append(f"• {field}: {msg}")
 
     return "Validation Error:\n" + "\n".join(messages)
+
+def format_dataframe_for_display(df: pd.DataFrame) -> str:
+    """
+    Formats a DataFrame for CLI display with human-readable numbers.
+
+    Args:
+        df: The pandas DataFrame to format.
+
+    Returns:
+        A formatted string representation of the DataFrame.
+    """
+    if df.empty:
+        return "No data available."
+
+    display_df = df.copy()
+
+    # Format Views (Comma separated)
+    if 'views' in display_df.columns:
+        display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
+
+    # Format Retention (Percentage)
+    if 'retention_avg_pct' in display_df.columns:
+        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+
+    # Rename columns for display
+    display_df = display_df.rename(columns={
+        'title': 'Video Title',
+        'views': 'Views',
+        'retention_avg_pct': 'Retention',
+        'video_id': 'ID',
+        'type': 'Type'
+    })
+
+    return display_df.to_string(index=False)
