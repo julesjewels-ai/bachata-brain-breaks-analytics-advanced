@@ -104,18 +104,9 @@ class BachataAnalyticsApp:
         Selects top/bottom performing videos and validates them for the agent.
         """
         sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
+        records = pd.concat([sorted_df.head(5), sorted_df.tail(5)]).to_dict('records')
 
-        top_5 = sorted_df.head(5).to_dict('records')
-        bottom_5 = sorted_df.tail(5).to_dict('records')
-
-        analysis_input = []
-        for record in top_5 + bottom_5:
-            # Ensure keys are strings and validate
-            clean_record = {str(k): v for k, v in record.items()}
-            validated_item = VideoAnalysisInput(**clean_record)
-            analysis_input.append(validated_item)
-
-        return analysis_input
+        return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
 
     def run(self) -> None:
         """
