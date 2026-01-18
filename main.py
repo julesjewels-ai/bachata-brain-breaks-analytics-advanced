@@ -15,12 +15,6 @@ def main() -> None:
         action="store_true", 
         help="Show application version"
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Run analysis without executing external API calls"
-    )
-
     args = parser.parse_args()
 
     if args.version:
@@ -28,7 +22,7 @@ def main() -> None:
         sys.exit(0)
 
     print("Initializing Analytics Dashboard...")
-    app = BachataAnalyticsApp(dry_run=args.dry_run)
+    app = BachataAnalyticsApp()
     try:
         app.run()
     except Exception as e:
