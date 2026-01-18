@@ -62,8 +62,7 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, dry_run: bool = False):
-        self.dry_run = dry_run
+    def __init__(self):
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
