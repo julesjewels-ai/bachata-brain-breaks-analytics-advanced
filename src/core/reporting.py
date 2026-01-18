@@ -53,8 +53,8 @@ class ExcelReportGenerator:
         """Applies number formatting to specific columns."""
         # Map column headers to their respective formats
         format_map = {
-            'views': '#,##0',
-            'retention_avg_pct': '0.00"%"'
+            'Views': '#,##0',
+            'Retention': '0.00"%"'
         }
 
         # Find column indices for headers
@@ -82,8 +82,17 @@ class ExcelReportGenerator:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
+                    # Rename columns for friendly output
+                    friendly_df = df.rename(columns={
+                        'video_id': 'Video ID',
+                        'title': 'Video Title',
+                        'views': 'Views',
+                        'retention_avg_pct': 'Retention',
+                        'type': 'Type'
+                    })
+
                     sheet_name = f"{v_type} Anomalies"
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    friendly_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
