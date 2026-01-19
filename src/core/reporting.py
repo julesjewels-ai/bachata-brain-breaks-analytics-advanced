@@ -9,6 +9,8 @@ from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
+from src.core.charting import ChartBuilder, ChartDataLocation
+
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
@@ -97,6 +99,35 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+
+                    # Add Chart
+                    headers = {cell.value: cell.column for cell in ws[1]}
+                    if 'views' in headers and 'title' in headers:
+                        view_col = headers['views']
+                        title_col = headers['title']
+                        max_row = ws.max_row
+
+                        if max_row > 1:
+                            # Data includes header for series name
+                            data_loc = ChartDataLocation(
+                                min_col=view_col, min_row=1,
+                                max_col=view_col, max_row=max_row
+                            )
+                            # Categories (Labels)
+                            cats_loc = ChartDataLocation(
+                                min_col=title_col, min_row=2,
+                                max_col=title_col, max_row=max_row
+                            )
+
+                            chart = ChartBuilder.build_bar_chart(
+                                ws=ws,
+                                data_loc=data_loc,
+                                categories_loc=cats_loc,
+                                title=f"{v_type} Performance",
+                                y_axis_title="Views",
+                                x_axis_title="Video"
+                            )
+                            ws.add_chart(chart, "G2")
 
             # 2. Strategy Sheet
             pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
