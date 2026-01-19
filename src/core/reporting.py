@@ -4,7 +4,7 @@ Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
 import pandas as pd
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
@@ -34,18 +34,27 @@ class ExcelReportGenerator:
 
     @staticmethod
     def _adjust_column_widths(ws):
-        """Auto-adjusts column widths based on content length."""
+        """Auto-adjusts column widths based on content length with min/max constraints."""
+        min_width = 10
+        max_width = 50
         for col in ws.columns:
-            # Convert to string safely to check length
-            max_length = max((len(str(cell.value) if cell.value is not None else "") for cell in col), default=0)
-            ws.column_dimensions[get_column_letter(col[0].column)].width = max_length + 2
+            # Calculate max length of data in column
+            max_length = 0
+            for cell in col:
+                val = str(cell.value) if cell.value is not None else ""
+                max_length = max(max_length, len(val))
+
+            # Apply padding and clamp between min and max
+            adjusted_width = max(min_width, min(max_length + 2, max_width))
+            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
 
     @staticmethod
     def _apply_header_style(ws):
-        """Applies standard header styling and freezes panes."""
+        """Applies standard header styling (Bold, Centered, Blue) and freezes panes."""
         for cell in ws[1]:
             cell.font = ExcelReportGenerator.HEADER_FONT
             cell.fill = ExcelReportGenerator.HEADER_FILL
+            cell.alignment = Alignment(horizontal="center", vertical="center")
         ws.freeze_panes = 'A2'
 
     @staticmethod
