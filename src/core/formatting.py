@@ -46,13 +46,14 @@ def format_dataframe_for_display(df: pd.DataFrame) -> str:
 
     display_df = df.copy()
 
-    # Format Views (Comma separated)
-    if 'views' in display_df.columns:
-        display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
+    formatters = {
+        'views': lambda x: f"{x:,.0f}",
+        'retention_avg_pct': lambda x: f"{x:.1f}%"
+    }
 
-    # Format Retention (Percentage)
-    if 'retention_avg_pct' in display_df.columns:
-        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+    for col, fmt_func in formatters.items():
+        if col in display_df.columns:
+            display_df[col] = display_df[col].map(fmt_func)
 
     # Rename columns for display
     display_df = display_df.rename(columns={
