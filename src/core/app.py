@@ -33,6 +33,11 @@ class VideoAnalysisInput(BaseModel):
         for pattern in forbidden_patterns:
             if pattern in v:
                 raise ValueError(f"Potential prompt injection detected: {pattern}")
+
+        # Formula Injection Prevention
+        if v.startswith(('=', '@', '+', '-')):
+            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
+
         # Ensure no control characters
         if not v.isprintable():
             raise ValueError("Title contains non-printable characters")
@@ -73,18 +78,28 @@ class BachataAnalyticsApp:
         In a real app, this would connect to YouTube Analytics API.
         """
         print("Ingesting channel data...")
-        data = {
-            'video_id': [f'vid_{i}' for i in range(1, 21)],
-            'title': [
-                'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance', 
-                'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-                'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
-            ] * 2,
-            'views': [random.randint(500, 500000) for _ in range(20)],
-            'retention_avg_pct': [random.uniform(20.0, 95.0) for _ in range(20)],
-            'type': ['Long' if i % 3 != 0 else 'Shorts' for i in range(20)]
-        }
-        return pd.DataFrame(data)
+
+        # Generate mock data
+        titles = [
+            'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
+            'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
+            'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
+        ] * 2
+
+        raw_data = []
+        for i in range(1, 21):
+            raw_data.append({
+                'video_id': f'vid_{i}',
+                'title': titles[i-1],
+                'views': random.randint(500, 500000),
+                'retention_avg_pct': random.uniform(20.0, 95.0),
+                'type': 'Long' if i % 3 != 0 else 'Shorts'
+            })
+
+        # Validate data using VideoAnalysisInput (Ensures type safety & security)
+        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+
+        return pd.DataFrame(validated_data)
 
     def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         """
