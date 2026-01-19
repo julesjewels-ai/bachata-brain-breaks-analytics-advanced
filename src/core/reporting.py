@@ -2,12 +2,29 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Union
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
+
+
+class ExcelSanitizer:
+    """
+    Sanitizes inputs to prevent CSV/Formula Injection in Excel.
+    Follows Single Responsibility Principle by isolating sanitization logic.
+    """
+
+    @staticmethod
+    def sanitize(value: object) -> Union[str, object]:
+        """
+        Prefixes dangerous characters with a single quote to force them to be treated as text.
+        Dangerous characters: =, @, +, -
+        """
+        if isinstance(value, str) and value.startswith(('=', '@', '+', '-')):
+            return f"'{value}"
+        return value
 
 
 class ReportConfig(BaseModel):
@@ -91,19 +108,32 @@ class ExcelReportGenerator:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
+                    # Security: Sanitize all object columns to prevent Formula Injection
+                    sanitized_df = df.copy()
+                    for col in sanitized_df.select_dtypes(include=['object']).columns:
+                        sanitized_df[col] = sanitized_df[col].map(ExcelSanitizer.sanitize)
+
                     sheet_name = f"{v_type} Anomalies"
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    sanitized_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
 
             # 2. Strategy Sheet
-            pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
+            # Security: Sanitize strategy text
+            sanitized_strategy = ExcelSanitizer.sanitize(strategy)
+            pd.DataFrame({'Gemini Analysis': [sanitized_strategy]}).to_excel(
                 writer, sheet_name="Strategy", index=False
             )
             ws_strat = writer.sheets["Strategy"]
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
-            align = ws_strat['A2'].alignment
-            ws_strat['A2'].alignment = align.copy(wrap_text=True)
+
+            # Use specific properties to avoid deprecation warning and ensure clean code
+            current_align = ws_strat['A2'].alignment
+            ws_strat['A2'].alignment = Alignment(
+                horizontal=current_align.horizontal,
+                vertical=current_align.vertical,
+                wrap_text=True
+            )
