@@ -9,6 +9,8 @@ from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
+from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
@@ -86,6 +88,51 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    def _add_charts(self, ws, df: pd.DataFrame, sheet_title: str):
+        """
+        Generates and inserts charts into the worksheet.
+        """
+        builder = ChartBuilder()
+
+        # Dynamically find columns
+        headers = {cell.value: cell.column for cell in ws[1]}
+        views_col = headers.get('Views')
+        title_col = headers.get('Video Title')
+
+        if not views_col or not title_col:
+            return
+
+        max_row = len(df) + 1
+
+        # Create Chart Config
+        try:
+            config = ChartConfig(
+                title=f"{sheet_title} - Views Analysis",
+                x_axis_title="Video Title",
+                y_axis_title="Views",
+                data_location=ChartDataLocation(
+                    min_col=views_col,
+                    min_row=1, # Include header for series name
+                    max_col=views_col,
+                    max_row=max_row
+                ),
+                categories_location=ChartDataLocation(
+                    min_col=title_col,
+                    min_row=2, # Skip header
+                    max_col=title_col,
+                    max_row=max_row
+                ),
+                width=20.0,
+                height=12.0
+            )
+
+            chart = builder.build_bar_chart(ws, config)
+            # Position the chart at H2 (to the right of the data)
+            ws.add_chart(chart, "H2")
+        except ValidationError as e:
+            # Fallback or log if chart config fails, but don't stop report gen
+            print(f"Warning: Could not generate chart for {sheet_title}: {e}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -109,6 +156,9 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+
+                    # Add Charts
+                    self._add_charts(ws, display_df, sheet_name)
 
             # 2. Strategy Sheet
             pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
