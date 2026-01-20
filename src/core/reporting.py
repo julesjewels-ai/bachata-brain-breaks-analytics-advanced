@@ -32,6 +32,16 @@ class ExcelReportGenerator:
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
 
+    # Mapping from DataFrame columns to Excel headers
+    COLUMN_MAPPING = {
+        'video_id': 'Video ID',
+        'title': 'Video Title',
+        'views': 'Views',
+        'retention_avg_pct': 'Retention (%)',
+        'type': 'Type',
+        'publish_date': 'Publish Date'
+    }
+
     @staticmethod
     def _adjust_column_widths(ws):
         """Auto-adjusts column widths based on content length with min/max constraints."""
@@ -62,8 +72,8 @@ class ExcelReportGenerator:
         """Applies number formatting to specific columns."""
         # Map column headers to their respective formats
         format_map = {
-            'views': '#,##0',
-            'retention_avg_pct': '0.00"%"'
+            'Views': '#,##0',
+            'Retention (%)': '0.00"%"'
         }
 
         # Find column indices for headers
@@ -92,7 +102,9 @@ class ExcelReportGenerator:
             for v_type, df in anomalies.items():
                 if not df.empty:
                     sheet_name = f"{v_type} Anomalies"
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    # Rename columns for better readability
+                    display_df = df.rename(columns=self.COLUMN_MAPPING)
+                    display_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
@@ -105,5 +117,4 @@ class ExcelReportGenerator:
             ws_strat = writer.sheets["Strategy"]
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
-            align = ws_strat['A2'].alignment
-            ws_strat['A2'].alignment = align.copy(wrap_text=True)
+            ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
