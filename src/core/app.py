@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.services.image_service import ThumbnailService, ThumbnailConfig
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -71,6 +72,14 @@ class BachataAnalyticsApp:
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
+
+        # Initialize Services
+        self.thumbnail_service = ThumbnailService(
+            default_config=ThumbnailConfig(
+                bg_color="#34495E",
+                text_color="#ECF0F1"
+            )
+        )
 
     def ingest_data(self) -> pd.DataFrame:
         """
@@ -154,7 +163,8 @@ class BachataAnalyticsApp:
         # 4. Generate Excel Report
         print("\nGenerating Excel Report...")
         try:
-            report_gen = ExcelReportGenerator()
+            # Injecting the ThumbnailService dependency
+            report_gen = ExcelReportGenerator(thumbnail_service=self.thumbnail_service)
             report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
             print("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:

@@ -2,14 +2,16 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as OpenPyXLImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+from src.services.image_service import IThumbnailService, ThumbnailConfig
 
 
 class ReportConfig(BaseModel):
@@ -43,6 +45,13 @@ class ExcelReportGenerator:
         'type': 'Type',
         'publish_date': 'Publish Date'
     }
+
+    def __init__(self, thumbnail_service: Optional[IThumbnailService] = None):
+        """
+        Args:
+            thumbnail_service: Optional service to generate and embed thumbnails.
+        """
+        self.thumbnail_service = thumbnail_service
 
     @staticmethod
     def _adjust_column_widths(ws):
@@ -88,6 +97,62 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    def _embed_thumbnails(self, ws, df: pd.DataFrame):
+        """
+        Embeds thumbnails into the worksheet if a thumbnail service is available.
+        """
+        if not self.thumbnail_service:
+            return
+
+        # Add "Thumbnail" header
+        thumb_col_idx = ws.max_column + 1
+        ws.cell(row=1, column=thumb_col_idx, value="Thumbnail")
+        ws.cell(row=1, column=thumb_col_idx).font = self.HEADER_FONT
+        ws.cell(row=1, column=thumb_col_idx).fill = self.HEADER_FILL
+        ws.cell(row=1, column=thumb_col_idx).alignment = Alignment(horizontal="center", vertical="center")
+
+        # Set column width to accommodate thumbnails (approximate logic)
+        # 160px width is roughly 22 column width units in Excel
+        ws.column_dimensions[get_column_letter(thumb_col_idx)].width = 25
+
+        # Iterate rows and insert images
+        # df index should align with ws rows (starting at row 2)
+        # Note: df is the display_df (renamed columns) so we need to map back or look at title
+
+        # Finding 'Video Title' column index
+        headers = {cell.value: cell.column for cell in ws[1]}
+        title_col_name = self.COLUMN_MAPPING.get('title', 'Video Title')
+
+        if title_col_name not in headers:
+            return
+
+        title_col_idx = headers[title_col_name]
+
+        for i, row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=title_col_idx, max_col=title_col_idx)):
+            title_cell = row[0]
+            title_text = title_cell.value
+
+            if title_text:
+                try:
+                    # Generate thumbnail stream
+                    img_stream = self.thumbnail_service.generate_thumbnail(str(title_text))
+
+                    # Create OpenPyXL Image
+                    img = OpenPyXLImage(img_stream)
+
+                    # Position image
+                    # Anchor is the cell address, e.g., 'F2'
+                    anchor_cell = ws.cell(row=title_cell.row, column=thumb_col_idx)
+                    anchor = anchor_cell.coordinate
+
+                    ws.add_image(img, anchor)
+
+                    # Adjust row height to fit image (90px height is roughly 67.5 points)
+                    ws.row_dimensions[title_cell.row].height = 70
+
+                except Exception as e:
+                    print(f"Failed to generate/embed thumbnail for '{title_text}': {e}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -112,6 +177,9 @@ class ExcelReportGenerator:
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
 
+                    # Embed Thumbnails if service is present
+                    self._embed_thumbnails(ws, display_df)
+
                     # Add Chart
                     # Locate 'Views' column
                     headers = {cell.value: cell.column for cell in ws[1]}
@@ -119,7 +187,7 @@ class ExcelReportGenerator:
                         views_col = headers['Views']
                         title_col = headers['Video Title']
                         max_row = ws.max_row
-                        max_col = ws.max_column
+                        max_col = ws.max_column # Note: max_col might have increased due to thumbnails
 
                         # Only add chart if there is data
                         if max_row > 1:
@@ -138,7 +206,7 @@ class ExcelReportGenerator:
                                 y_axis_title="Views"
                             )
 
-                            # Dynamic anchor: 2 columns to the right of the table
+                            # Dynamic anchor: 2 columns to the right of the table (taking thumbnails into account)
                             anchor_col = get_column_letter(max_col + 2)
 
                             chart_builder.add_bar_chart(
