@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from src.core.app import VideoAnalysisInput, GeminiThinkingAgent
+from src.core.reporting import ReportConfig
 
 def test_video_analysis_input_valid():
     """Test valid input creation."""
@@ -101,3 +102,33 @@ def test_agent_analyze_semantics_typed():
     ]
     result = agent.analyze_semantics(inputs)
     assert "[Gemini 3 Thinking Mode]" in result
+
+def test_report_config_valid_filepath():
+    """Test valid filepath."""
+    config = ReportConfig(filepath="report.xlsx")
+    assert config.filepath == "report.xlsx"
+
+    config = ReportConfig(filepath="my-report_2023.xlsx")
+    assert config.filepath == "my-report_2023.xlsx"
+
+def test_report_config_path_traversal_slash():
+    """Test that paths with slashes (directories) are rejected."""
+    # Current behavior might allow this, we are asserting it should fail after our fix
+    # So this test might fail initially if I run it now.
+    with pytest.raises(ValidationError) as exc:
+        ReportConfig(filepath="dir/report.xlsx")
+    # We expect "invalid characters" or similar
+    assert "File path contains invalid characters" in str(exc.value)
+
+def test_report_config_path_traversal_dotdot():
+    """Test that paths with .. are rejected."""
+    with pytest.raises(ValidationError) as exc:
+        ReportConfig(filepath="../report.xlsx")
+    # This might fail with "Path traversal detected" or "invalid characters" depending on order
+    assert "Path traversal detected" in str(exc.value) or "File path contains invalid characters" in str(exc.value)
+
+def test_report_config_invalid_extension():
+    """Test invalid extension."""
+    with pytest.raises(ValidationError) as exc:
+        ReportConfig(filepath="report.txt")
+    assert "File must be an Excel (.xlsx) file" in str(exc.value)

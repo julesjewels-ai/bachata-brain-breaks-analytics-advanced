@@ -23,8 +23,8 @@ class ReportConfig(BaseModel):
             raise ValueError("File must be an Excel (.xlsx) file")
         if '..' in v:
             raise ValueError("Path traversal detected")
-        if not re.match(r'^[\w\-. /]+$', v):
-            raise ValueError("File path contains invalid characters")
+        if not re.match(r'^[\w\-. ]+$', v):
+            raise ValueError("File path contains invalid characters (no directories allowed)")
         return v
 
 
