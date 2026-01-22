@@ -3,6 +3,7 @@ Tests for configuration management.
 """
 import os
 import pytest
+from pydantic import ValidationError
 from src.core.config import AppConfig
 
 def test_app_config_load():
@@ -21,7 +22,7 @@ def test_app_config_validation_error():
     os.environ['APP_ENV'] = 'invalid_env'
     os.environ['GOOGLE_API_KEY'] = 'test_key'
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         AppConfig.get_config()
 
 def test_missing_api_key_access():

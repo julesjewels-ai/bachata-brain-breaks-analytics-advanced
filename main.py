@@ -4,7 +4,9 @@ Handles command-line arguments and initializes the core application logic.
 """
 import argparse
 import sys
+from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
+from src.core.formatting import format_validation_error
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -22,9 +24,12 @@ def main() -> None:
         sys.exit(0)
 
     print("Initializing Analytics Dashboard...")
-    app = BachataAnalyticsApp()
     try:
+        app = BachataAnalyticsApp()
         app.run()
+    except ValidationError as e:
+        print(format_validation_error(e), file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
         print(f"Critical Error: {e}", file=sys.stderr)
         sys.exit(1)

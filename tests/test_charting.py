@@ -2,7 +2,6 @@
 Tests for the charting module.
 """
 from unittest.mock import MagicMock
-import pytest
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from openpyxl.chart import BarChart
 
