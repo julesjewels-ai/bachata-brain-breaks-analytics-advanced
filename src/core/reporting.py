@@ -2,14 +2,14 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
-from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation, ImageEmbedder, ImageConfig
 
 
 class ReportConfig(BaseModel):
@@ -91,7 +91,8 @@ class ExcelReportGenerator:
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
-                       filepath: str):
+                       filepath: str,
+                       logo_path: Optional[str] = None):
         """Creates an Excel report with anomalies and strategy analysis."""
         try:
             config = ReportConfig(filepath=filepath)
@@ -112,6 +113,27 @@ class ExcelReportGenerator:
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
 
+                    # Determine anchor column (2 columns to the right of the table)
+                    max_col = ws.max_column
+                    anchor_col = get_column_letter(max_col + 2)
+
+                    # Add Logo if provided
+                    chart_row_start = 2
+                    if logo_path:
+                        try:
+                            embedder = ImageEmbedder(ws)
+                            # Add logo at row 1 of anchor column
+                            embedder.add_image(
+                                image_path=logo_path,
+                                anchor=f"{anchor_col}1",
+                                config=ImageConfig(height=60) # Standard logo height
+                            )
+                            # Push chart down to avoid overlap
+                            chart_row_start = 6
+                        except Exception as e:
+                            # Log error but don't fail report generation
+                            print(f"Warning: Failed to embed logo: {e}")
+
                     # Add Chart
                     # Locate 'Views' column
                     headers = {cell.value: cell.column for cell in ws[1]}
@@ -119,7 +141,6 @@ class ExcelReportGenerator:
                         views_col = headers['Views']
                         title_col = headers['Video Title']
                         max_row = ws.max_row
-                        max_col = ws.max_column
 
                         # Only add chart if there is data
                         if max_row > 1:
@@ -138,13 +159,10 @@ class ExcelReportGenerator:
                                 y_axis_title="Views"
                             )
 
-                            # Dynamic anchor: 2 columns to the right of the table
-                            anchor_col = get_column_letter(max_col + 2)
-
                             chart_builder.add_bar_chart(
                                 data_loc=data_loc,
                                 config=chart_config,
-                                anchor=f"{anchor_col}2"
+                                anchor=f"{anchor_col}{chart_row_start}"
                             )
 
             # 2. Strategy Sheet

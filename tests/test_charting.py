@@ -1,9 +1,9 @@
 """
 Tests for the charting module.
 """
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import pytest
-from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation, ImageEmbedder, ImageConfig
 from openpyxl.chart import BarChart
 
 def test_chart_builder_add_bar_chart():
@@ -62,3 +62,26 @@ def test_chart_builder_add_bar_chart():
     # Verify anchor
     anchor_arg = mock_ws.add_chart.call_args[0][1]
     assert anchor_arg == "E2"
+
+@patch("src.core.charting.OpenPyXLImage")
+def test_image_embedder_add_image(mock_image_cls):
+    """Test embedding an image into a worksheet."""
+    mock_ws = MagicMock()
+    embedder = ImageEmbedder(mock_ws)
+
+    mock_img_instance = MagicMock()
+    mock_image_cls.return_value = mock_img_instance
+
+    config = ImageConfig(width=100, height=200)
+
+    embedder.add_image("test.png", "A1", config)
+
+    # Verify Image was instantiated with path
+    mock_image_cls.assert_called_with("test.png")
+
+    # Verify dimensions were set
+    assert mock_img_instance.width == 100
+    assert mock_img_instance.height == 200
+
+    # Verify image was added to worksheet
+    mock_ws.add_image.assert_called_with(mock_img_instance, "A1")

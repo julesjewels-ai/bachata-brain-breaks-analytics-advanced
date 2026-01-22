@@ -6,6 +6,42 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 from openpyxl.chart import BarChart, Reference
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.drawing.image import Image as OpenPyXLImage
+
+class ImageConfig(BaseModel):
+    """Configuration for embedded images."""
+    width: Optional[float] = Field(None, description="Image width in pixels")
+    height: Optional[float] = Field(None, description="Image height in pixels")
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class ImageEmbedder:
+    """Embeds images into OpenPyXL worksheets."""
+
+    def __init__(self, worksheet: Worksheet):
+        self.ws = worksheet
+
+    def add_image(self,
+                  image_path: str,
+                  anchor: str,
+                  config: Optional[ImageConfig] = None) -> None:
+        """
+        Embeds an image from a file path into the worksheet.
+
+        Args:
+            image_path: Path to the image file.
+            anchor: Cell address to place the top-left corner (e.g., 'A1').
+            config: Optional configuration for resizing.
+        """
+        img = OpenPyXLImage(image_path)
+
+        if config:
+            if config.width:
+                img.width = config.width # type: ignore
+            if config.height:
+                img.height = config.height # type: ignore
+
+        self.ws.add_image(img, anchor)
+
 
 class ChartDataLocation(BaseModel):
     """Defines the location of data for the chart."""
