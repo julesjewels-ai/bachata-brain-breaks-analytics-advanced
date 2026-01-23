@@ -6,6 +6,7 @@ from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import DataBarRule, ColorScaleRule
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
@@ -88,6 +89,32 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    @staticmethod
+    def _apply_conditional_formatting(ws):
+        """Applies Data Bars and Color Scales to specific columns."""
+        # Find column indices for headers
+        headers = {cell.value: cell.column for cell in ws[1]}
+        max_row = ws.max_row
+
+        if max_row < 2:
+            return
+
+        # 1. Data Bar for 'Views' (Blue)
+        if 'Views' in headers:
+            col_letter = get_column_letter(headers['Views'])
+            # Create a DataBarRule
+            rule = DataBarRule(start_type='min', end_type='max', color="638EC6")
+            ws.conditional_formatting.add(f"{col_letter}2:{col_letter}{max_row}", rule)
+
+        # 2. Color Scale for 'Retention (%)' (Red-Yellow-Green)
+        if 'Retention (%)' in headers:
+            col_letter = get_column_letter(headers['Retention (%)'])
+            # Create a ColorScaleRule
+            rule = ColorScaleRule(start_type='min', start_color='F8696B',
+                                  mid_type='percentile', mid_value=50, mid_color='FFEB84',
+                                  end_type='max', end_color='63BE7B')
+            ws.conditional_formatting.add(f"{col_letter}2:{col_letter}{max_row}", rule)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -111,6 +138,7 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+                    self._apply_conditional_formatting(ws)
 
                     # Add Chart
                     # Locate 'Views' column
