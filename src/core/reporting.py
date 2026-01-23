@@ -136,7 +136,7 @@ class ExcelReportGenerator:
                                 title=f"Top {v_type} Views",
                                 x_axis_title="Video Title",
                                 y_axis_title="Views"
-                            )
+                            ) # type: ignore
 
                             # Dynamic anchor: 2 columns to the right of the table
                             anchor_col = get_column_letter(max_col + 2)

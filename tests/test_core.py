@@ -2,21 +2,27 @@
 Unit tests for core application logic.
 """
 import pandas as pd
+from unittest.mock import MagicMock
 from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.interfaces import UserInterface
+
+def create_app():
+    mock_ui = MagicMock(spec=UserInterface)
+    return BachataAnalyticsApp(ui=mock_ui)
 
 def test_agent_initialization():
-    app = BachataAnalyticsApp()
+    app = create_app()
     assert isinstance(app.agent, GeminiThinkingAgent)
 
 def test_ingest_data_structure():
-    app = BachataAnalyticsApp()
+    app = create_app()
     df = app.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
     assert list(df.columns) == expected_cols
 
 def test_outlier_detection():
-    app = BachataAnalyticsApp()
+    app = create_app()
     df = pd.DataFrame({
         'video_id': ['1', '2', '3'],
         'title': ['A', 'B', 'Viral'],
@@ -33,7 +39,7 @@ def test_outlier_detection():
 
 def test_outlier_detection_dynamic_types():
     """Test that outlier detection handles arbitrary types dynamically."""
-    app = BachataAnalyticsApp()
+    app = create_app()
     df = pd.DataFrame({
         'video_id': ['1', '2', '3', '4'],
         'title': ['A', 'B', 'C', 'D'],
@@ -48,7 +54,7 @@ def test_outlier_detection_dynamic_types():
     assert len(anomalies['NewType2']) == 1
 
 def test_prepare_agent_input():
-    app = BachataAnalyticsApp()
+    app = create_app()
     df = pd.DataFrame({
         'video_id': [f'vid_{i}' for i in range(10)],
         'title': [f'Title {i}' for i in range(10)],

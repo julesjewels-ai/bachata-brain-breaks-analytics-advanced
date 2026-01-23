@@ -9,7 +9,8 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.core.formatting import format_validation_error
+from src.core.interfaces import UserInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -67,7 +68,8 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self):
+    def __init__(self, ui: UserInterface):
+        self.ui = ui
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
@@ -77,8 +79,6 @@ class BachataAnalyticsApp:
         Simulates ingesting channel data (Shorts and Long-form).
         In a real app, this would connect to YouTube Analytics API.
         """
-        print("Ingesting channel data...")
-
         # Generate mock data
         titles = [
             'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
@@ -97,7 +97,7 @@ class BachataAnalyticsApp:
             })
 
         # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]  # type: ignore
 
         return pd.DataFrame(validated_data)
 
@@ -126,39 +126,45 @@ class BachataAnalyticsApp:
         """
         Executes the analytics pipeline.
         """
+        self.ui.display_header("Bachata Brain Breaks Analytics")
+
         # 1. Ingest
-        df = self.ingest_data()
-        print(f"Data loaded: {len(df)} records.")
+        with self.ui.display_status("Ingesting channel data..."):
+            df = self.ingest_data()
+        self.ui.display_message(f"Data loaded: {len(df)} records.", style="success")
 
         # 2. Outlier Detection
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
-            print(f"\n--- Viral Anomalies ({v_type}) ---")
-            print(format_dataframe_for_display(data[['title', 'views', 'retention_avg_pct']]))
+            self.ui.display_dataframe(data[['title', 'views', 'retention_avg_pct']], title=f"Viral Anomalies ({v_type})")
 
         # 3. Gemini Analysis (Top/Bottom 5)
-        print("\n--- Gemini 3 Agent Analysis ---")
+        self.ui.display_message("Analyzing semantics with Gemini 3...", style="info")
         
         try:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
             # Decide whether to abort or skip. Aborting is safer for security.
-            print(format_validation_error(e))
-            print("Aborting analysis for security.")
+            self.ui.display_error(format_validation_error(e))
+            self.ui.display_error("Aborting analysis for security.")
             return
 
-        strategy = self.agent.analyze_semantics(analysis_input)
-        print(strategy)
+        with self.ui.display_status("Running Gemini 3 Agent Analysis..."):
+            strategy = self.agent.analyze_semantics(analysis_input)
+
+        self.ui.display_message("Gemini 3 Analysis Result:", style="info")
+        self.ui.display_message(strategy)
+        self.ui.display_message("", style="info") # Spacing
 
         # 4. Generate Excel Report
-        print("\nGenerating Excel Report...")
         try:
-            report_gen = ExcelReportGenerator()
-            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-            print("Report saved to 'bachata_analytics.xlsx'.")
+            with self.ui.display_status("Generating Excel Report..."):
+                report_gen = ExcelReportGenerator()
+                report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            self.ui.display_message("Report saved to 'bachata_analytics.xlsx'.", style="success")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
-            print(f"Error generating report: {e}")
+            self.ui.display_error(f"Error generating report: {e}")
 
-        print("\nDashboard update complete.")
+        self.ui.display_message("Dashboard update complete.", style="success")
