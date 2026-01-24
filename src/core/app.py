@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.core.visualization import MatplotlibVisualizer
+from src.core.services import AnalyticsReportService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -72,6 +74,11 @@ class BachataAnalyticsApp:
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
 
+        # Initialize Architecture Components
+        self.report_generator = ExcelReportGenerator()
+        self.visualizer = MatplotlibVisualizer()
+        self.report_service = AnalyticsReportService(self.report_generator, self.visualizer)
+
     def ingest_data(self) -> pd.DataFrame:
         """
         Simulates ingesting channel data (Shorts and Long-form).
@@ -97,7 +104,7 @@ class BachataAnalyticsApp:
             })
 
         # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+        validated_data = [VideoAnalysisInput.model_validate(record).model_dump() for record in raw_data]
 
         return pd.DataFrame(validated_data)
 
@@ -154,8 +161,7 @@ class BachataAnalyticsApp:
         # 4. Generate Excel Report
         print("\nGenerating Excel Report...")
         try:
-            report_gen = ExcelReportGenerator()
-            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            self.report_service.create_comprehensive_report(anomalies, strategy, "bachata_analytics.xlsx")
             print("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
