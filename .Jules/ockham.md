@@ -1,3 +1,5 @@
 ## 2024-05-22 - [Manual Iteration over Groups] **Observation:** The `detect_outliers` method in `src/core/app.py` manually iterates over hardcoded video types ('Shorts', 'Long') to filter dataframes, which is non-idiomatic in Pandas and brittle if new types are added. **Action:** Refactor to use `df.groupby('type')` to handle groups dynamically and idiomatically.
 
 ## 2025-02-14 - [Dead Code (dry_run)] **Observation:** The `dry_run` parameter was passed through `main.py` to `BachataAnalyticsApp` but never used in any logic (ingestion or analysis). **Action:** Removed `dry_run` parameter and argument to reduce confusion and cognitive load.
+
+## 2026-01-24 - [Unnecessary Dictionary Comprehension] **Observation:** The `_prepare_agent_input` method in `src/core/app.py` used a redundant dictionary comprehension to convert keys to strings, despite `pd.to_dict('records')` already providing string keys. **Action:** Refactored to use `VideoAnalysisInput.model_validate(record)` for cleaner, idiomatic Pydantic V2 usage.
