@@ -23,7 +23,7 @@ class ReportConfig(BaseModel):
             raise ValueError("File must be an Excel (.xlsx) file")
         if '..' in v:
             raise ValueError("Path traversal detected")
-        if not re.match(r'^[\w\-. /]+$', v):
+        if not re.match(r'^[\w\-. ]+$', v):
             raise ValueError("File path contains invalid characters")
         return v
 
@@ -136,7 +136,7 @@ class ExcelReportGenerator:
                                 title=f"Top {v_type} Views",
                                 x_axis_title="Video Title",
                                 y_axis_title="Views"
-                            )
+                            ) # type: ignore
 
                             # Dynamic anchor: 2 columns to the right of the table
                             anchor_col = get_column_letter(max_col + 2)
