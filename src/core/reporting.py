@@ -5,6 +5,7 @@ Handles styling and formatting logic for Excel output.
 from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.formatting.rule import DataBarRule, ColorScaleRule
 from openpyxl.utils import get_column_letter
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
@@ -88,6 +89,39 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    @staticmethod
+    def _apply_conditional_formatting(ws):
+        """Applies Data Bars and Color Scales to enhance visualization."""
+        # Find column indices for headers
+        headers = {cell.value: cell.column for cell in ws[1]}
+        column_letter_views = None
+        column_letter_retention = None
+
+        if 'Views' in headers:
+            column_letter_views = get_column_letter(headers['Views'])
+
+        if 'Retention (%)' in headers:
+            column_letter_retention = get_column_letter(headers['Retention (%)'])
+
+        # Apply Data Bar to Views
+        if column_letter_views and ws.max_row > 1:
+            rule = DataBarRule(
+                start_type='min', end_type='max',
+                color="638EC6", showValue=None, minLength=None, maxLength=None
+            )
+            range_string = f"{column_letter_views}2:{column_letter_views}{ws.max_row}"
+            ws.conditional_formatting.add(range_string, rule)
+
+        # Apply Color Scale to Retention
+        if column_letter_retention and ws.max_row > 1:
+            rule = ColorScaleRule(
+                start_type='min', start_color='F8696B',
+                mid_type='percentile', mid_value=50, mid_color='FFEB84',
+                end_type='max', end_color='63BE7B'
+            )
+            range_string = f"{column_letter_retention}2:{column_letter_retention}{ws.max_row}"
+            ws.conditional_formatting.add(range_string, rule)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -111,6 +145,7 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+                    self._apply_conditional_formatting(ws)
 
                     # Add Chart
                     # Locate 'Views' column
@@ -132,7 +167,7 @@ class ExcelReportGenerator:
                                 title_from_data=True,
                                 cats_min_col=title_col
                             )
-                            chart_config = ChartConfig(
+                            chart_config = ChartConfig( # type: ignore
                                 title=f"Top {v_type} Views",
                                 x_axis_title="Video Title",
                                 y_axis_title="Views"
