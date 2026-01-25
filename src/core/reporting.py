@@ -2,14 +2,16 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+from src.core.interfaces import IVisualizer
 
 
 class ReportConfig(BaseModel):
@@ -30,6 +32,9 @@ class ReportConfig(BaseModel):
 
 class ExcelReportGenerator:
     """Generates styled Excel reports for analytics data."""
+
+    def __init__(self, visualizer: Optional[IVisualizer] = None):
+        self.visualizer = visualizer
 
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
@@ -100,7 +105,11 @@ class ExcelReportGenerator:
             raise ValueError(f"Security validation failed: {e}")
 
         with pd.ExcelWriter(safe_path, engine='openpyxl') as writer:
-            # 1. Anomalies Sheets
+            # 1. Visual Insights (if available)
+            if self.visualizer:
+                self._add_visual_insights(writer, anomalies)
+
+            # 2. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
                     sheet_name = f"{v_type} Anomalies"
@@ -147,7 +156,7 @@ class ExcelReportGenerator:
                                 anchor=f"{anchor_col}2"
                             )
 
-            # 2. Strategy Sheet
+            # 3. Strategy Sheet
             pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
                 writer, sheet_name="Strategy", index=False
             )
@@ -155,3 +164,42 @@ class ExcelReportGenerator:
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
             ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+
+    def _add_visual_insights(self, writer: pd.ExcelWriter, anomalies: Dict[str, pd.DataFrame]):
+        """Adds a sheet with visual insights if visualizer is available."""
+        if not self.visualizer:
+            return
+
+        # Combine all data for the scatter plot
+        full_df = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+
+        if full_df.empty or 'views' not in full_df.columns or 'retention_avg_pct' not in full_df.columns:
+            return
+
+        try:
+            # Create Scatter Plot
+            img_stream = self.visualizer.create_scatter_plot(
+                full_df,
+                x_col='views',
+                y_col='retention_avg_pct',
+                title='Views vs Retention Correlation'
+            )
+
+            # Create Sheet
+            sheet_name = "Visual Insights"
+            # Access underlying OpenPyXL workbook
+            writer.book.create_sheet(sheet_name)
+            ws = writer.book[sheet_name]
+
+            # Add Image
+            img = XLImage(img_stream)
+            # Adjust anchor if needed
+            ws.add_image(img, 'B2')
+
+            # Add some text explanation
+            ws['B20'] = "Analysis: Correlation between Views and Retention Rate."
+            ws['B20'].font = Font(italic=True, color="555555")
+
+        except Exception as e:
+            # Fallback or log error, don't break the whole report
+            print(f"Warning: Failed to add visual insights: {e}")
