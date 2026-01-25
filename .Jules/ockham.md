@@ -1,3 +1,5 @@
 ## 2024-05-22 - [Manual Iteration over Groups] **Observation:** The `detect_outliers` method in `src/core/app.py` manually iterates over hardcoded video types ('Shorts', 'Long') to filter dataframes, which is non-idiomatic in Pandas and brittle if new types are added. **Action:** Refactor to use `df.groupby('type')` to handle groups dynamically and idiomatically.
 
 ## 2025-02-14 - [Dead Code (dry_run)] **Observation:** The `dry_run` parameter was passed through `main.py` to `BachataAnalyticsApp` but never used in any logic (ingestion or analysis). **Action:** Removed `dry_run` parameter and argument to reduce confusion and cognitive load.
+
+## 2026-01-25 - [Reporting Structure] **Observation:** The `generate_excel` method in `src/core/reporting.py` was handling sheet creation, styling, and chart logic in a loop, violating SRP and creating deep nesting. **Action:** Extracted `_create_anomaly_sheet` and `_add_chart` methods, and simplified `_adjust_column_widths` with a generator expression.
