@@ -6,6 +6,7 @@ from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import DataBarRule
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
@@ -88,6 +89,34 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    @staticmethod
+    def _apply_conditional_formatting(ws):
+        """Applies Data Bars to 'Views' and 'Retention' columns for better visualization."""
+        headers = {cell.value: cell.column for cell in ws[1]}
+        max_row = ws.max_row
+
+        if max_row < 2:
+            return
+
+        # Helper to get range string (e.g., "C2:C10")
+        def get_range(col_idx):
+            col_letter = get_column_letter(col_idx)
+            return f"{col_letter}2:{col_letter}{max_row}"
+
+        # 1. Views - Blue Data Bar
+        if 'Views' in headers:
+            col_idx = headers['Views']
+            # Blue color: 638EC6 (Excel standard blue)
+            rule = DataBarRule(start_type='min', end_type='max', color="638EC6")
+            ws.conditional_formatting.add(get_range(col_idx), rule)
+
+        # 2. Retention - Green Data Bar
+        if 'Retention (%)' in headers:
+            col_idx = headers['Retention (%)']
+            # Green color: 63C384 (Excel standard green)
+            rule = DataBarRule(start_type='num', start_value=0, end_type='max', color="63C384")
+            ws.conditional_formatting.add(get_range(col_idx), rule)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -111,6 +140,7 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+                    self._apply_conditional_formatting(ws)
 
                     # Add Chart
                     # Locate 'Views' column
