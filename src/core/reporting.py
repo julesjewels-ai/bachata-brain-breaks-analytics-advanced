@@ -6,6 +6,7 @@ from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import DataBarRule
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
@@ -88,6 +89,38 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    @staticmethod
+    def _apply_conditional_formatting(ws):
+        """Applies conditional formatting (Data Bars) to visual columns."""
+        # Find column indices for headers
+        headers = {cell.value: cell.column for cell in ws[1]}
+        max_row = ws.max_row
+
+        if max_row <= 1:
+            return
+
+        # Views (Blue Data Bar)
+        if 'Views' in headers:
+            col_letter = get_column_letter(headers['Views'])
+            rng = f"{col_letter}2:{col_letter}{max_row}"
+            rule = DataBarRule(
+                start_type='min',
+                end_type='max',
+                color='638EC6'
+            )
+            ws.conditional_formatting.add(rng, rule)
+
+        # Retention (%) (Green Data Bar)
+        if 'Retention (%)' in headers:
+            col_letter = get_column_letter(headers['Retention (%)'])
+            rng = f"{col_letter}2:{col_letter}{max_row}"
+            rule = DataBarRule(
+                start_type='min',
+                end_type='max',
+                color='63C384'
+            )
+            ws.conditional_formatting.add(rng, rule)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -111,6 +144,7 @@ class ExcelReportGenerator:
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
+                    self._apply_conditional_formatting(ws)
 
                     # Add Chart
                     # Locate 'Views' column
