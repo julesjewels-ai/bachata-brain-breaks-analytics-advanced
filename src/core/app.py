@@ -97,7 +97,7 @@ class BachataAnalyticsApp:
             })
 
         # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+        validated_data = [VideoAnalysisInput.model_validate(record).model_dump() for record in raw_data]
 
         return pd.DataFrame(validated_data)
 
@@ -120,7 +120,7 @@ class BachataAnalyticsApp:
         sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
         records = pd.concat([sorted_df.head(5), sorted_df.tail(5)]).to_dict('records')
 
-        return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
+        return [VideoAnalysisInput.model_validate(record) for record in records]
 
     def run(self) -> None:
         """

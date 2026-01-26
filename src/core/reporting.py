@@ -45,6 +45,11 @@ class ExcelReportGenerator:
     }
 
     @staticmethod
+    def _get_header_map(ws) -> Dict[str, int]:
+        """Creates a mapping of header names to column indices."""
+        return {cell.value: cell.column for cell in ws[1]}
+
+    @staticmethod
     def _adjust_column_widths(ws):
         """Auto-adjusts column widths based on content length with min/max constraints."""
         min_width = 10
@@ -78,8 +83,7 @@ class ExcelReportGenerator:
             'Retention (%)': '0.00"%"'
         }
 
-        # Find column indices for headers
-        headers = {cell.value: cell.column for cell in ws[1]}
+        headers = ExcelReportGenerator._get_header_map(ws)
 
         for header, fmt in format_map.items():
             if header in headers:
@@ -87,6 +91,46 @@ class ExcelReportGenerator:
                 # Apply format to all cells in the column (skipping header)
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
+
+    @staticmethod
+    def _add_chart(ws, v_type: str) -> None:
+        """Adds a bar chart for views if data exists."""
+        headers = ExcelReportGenerator._get_header_map(ws)
+
+        if 'Views' not in headers or 'Video Title' not in headers:
+            return
+
+        # Only add chart if there is data (more than just header)
+        if ws.max_row <= 1:
+            return
+
+        views_col = headers['Views']
+        title_col = headers['Video Title']
+        max_col = ws.max_column
+
+        data_loc = ChartDataLocation(
+            min_col=views_col,
+            min_row=1,  # Include header for series name
+            max_col=views_col,
+            max_row=ws.max_row,
+            title_from_data=True,
+            cats_min_col=title_col
+        )
+
+        chart_config = ChartConfig(
+            title=f"Top {v_type} Views",
+            x_axis_title="Video Title",
+            y_axis_title="Views"
+        ) # type: ignore
+
+        # Dynamic anchor: 2 columns to the right of the table
+        anchor_col = get_column_letter(max_col + 2)
+
+        ChartBuilder(ws).add_bar_chart(
+            data_loc=data_loc,
+            config=chart_config,
+            anchor=f"{anchor_col}2"
+        )
 
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
@@ -108,44 +152,11 @@ class ExcelReportGenerator:
                     display_df = df.rename(columns=self.COLUMN_MAPPING)
                     display_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
+
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
                     self._adjust_column_widths(ws)
-
-                    # Add Chart
-                    # Locate 'Views' column
-                    headers = {cell.value: cell.column for cell in ws[1]}
-                    if 'Views' in headers and 'Video Title' in headers:
-                        views_col = headers['Views']
-                        title_col = headers['Video Title']
-                        max_row = ws.max_row
-                        max_col = ws.max_column
-
-                        # Only add chart if there is data
-                        if max_row > 1:
-                            chart_builder = ChartBuilder(ws)
-                            data_loc = ChartDataLocation(
-                                min_col=views_col,
-                                min_row=1, # Include header for series name
-                                max_col=views_col,
-                                max_row=max_row,
-                                title_from_data=True,
-                                cats_min_col=title_col
-                            )
-                            chart_config = ChartConfig(
-                                title=f"Top {v_type} Views",
-                                x_axis_title="Video Title",
-                                y_axis_title="Views"
-                            )
-
-                            # Dynamic anchor: 2 columns to the right of the table
-                            anchor_col = get_column_letter(max_col + 2)
-
-                            chart_builder.add_bar_chart(
-                                data_loc=data_loc,
-                                config=chart_config,
-                                anchor=f"{anchor_col}2"
-                            )
+                    self._add_chart(ws, v_type)
 
             # 2. Strategy Sheet
             pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
