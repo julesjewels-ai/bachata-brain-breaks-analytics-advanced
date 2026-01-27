@@ -9,7 +9,8 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.core.formatting import format_validation_error
+from src.core.interfaces import UserInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -67,17 +68,18 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self):
+    def __init__(self, ui: UserInterface):
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.agent = GeminiThinkingAgent()
+        self.ui = ui
 
     def ingest_data(self) -> pd.DataFrame:
         """
         Simulates ingesting channel data (Shorts and Long-form).
         In a real app, this would connect to YouTube Analytics API.
         """
-        print("Ingesting channel data...")
+        self.ui.display_status("Ingesting channel data...")
 
         # Generate mock data
         titles = [
@@ -122,43 +124,71 @@ class BachataAnalyticsApp:
 
         return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
 
+    def _prepare_display_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Formats a DataFrame for display (renaming columns, formatting numbers).
+        """
+        if df.empty:
+            return pd.DataFrame()
+
+        display_df = df.copy()
+
+        # Format Views
+        if 'views' in display_df.columns:
+            display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
+
+        # Format Retention
+        if 'retention_avg_pct' in display_df.columns:
+            display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+
+        # Rename columns
+        return display_df.rename(columns={
+            'title': 'Video Title',
+            'views': 'Views',
+            'retention_avg_pct': 'Retention',
+            'video_id': 'ID',
+            'type': 'Type'
+        })
+
     def run(self) -> None:
         """
         Executes the analytics pipeline.
         """
         # 1. Ingest
+        self.ui.display_header("Bachata Analytics Dashboard")
         df = self.ingest_data()
-        print(f"Data loaded: {len(df)} records.")
+        self.ui.display_success(f"Data loaded: {len(df)} records.")
 
         # 2. Outlier Detection
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
-            print(f"\n--- Viral Anomalies ({v_type}) ---")
-            print(format_dataframe_for_display(data[['title', 'views', 'retention_avg_pct']]))
+            self.ui.display_section(f"Viral Anomalies ({v_type})")
+            display_df = self._prepare_display_df(data[['title', 'views', 'retention_avg_pct']])
+            self.ui.display_table(display_df)
 
         # 3. Gemini Analysis (Top/Bottom 5)
-        print("\n--- Gemini 3 Agent Analysis ---")
+        self.ui.display_section("Gemini 3 Agent Analysis")
         
         try:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
             # Decide whether to abort or skip. Aborting is safer for security.
-            print(format_validation_error(e))
-            print("Aborting analysis for security.")
+            self.ui.display_error(format_validation_error(e))
+            self.ui.display_error("Aborting analysis for security.")
             return
 
         strategy = self.agent.analyze_semantics(analysis_input)
-        print(strategy)
+        self.ui.display_info(strategy)
 
         # 4. Generate Excel Report
-        print("\nGenerating Excel Report...")
+        self.ui.display_status("Generating Excel Report...")
         try:
             report_gen = ExcelReportGenerator()
             report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-            print("Report saved to 'bachata_analytics.xlsx'.")
+            self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
-            print(f"Error generating report: {e}")
+            self.ui.display_error(f"Error generating report: {e}")
 
-        print("\nDashboard update complete.")
+        self.ui.display_success("Dashboard update complete.")
