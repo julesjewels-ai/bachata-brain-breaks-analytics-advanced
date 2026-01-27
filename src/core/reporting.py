@@ -6,6 +6,7 @@ from typing import Dict
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import DataBarRule
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
@@ -88,6 +89,28 @@ class ExcelReportGenerator:
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
+    @staticmethod
+    def _apply_conditional_formatting(ws):
+        """Applies data bars to visualization columns."""
+        # Define rules
+        # Blue for Views, Green for Retention
+        rules = {
+            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
+            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
+        }
+
+        # Find headers
+        headers = {cell.value: cell.column_letter for cell in ws[1]}
+
+        for header, rule in rules.items():
+            if header in headers:
+                col_letter = headers[header]
+                # Apply to the entire column data range (e.g. C2:C100)
+                # Ensure we have data
+                if ws.max_row > 1:
+                    range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
+                    ws.conditional_formatting.add(range_ref, rule)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -110,6 +133,7 @@ class ExcelReportGenerator:
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
+                    self._apply_conditional_formatting(ws)
                     self._adjust_column_widths(ws)
 
                     # Add Chart
