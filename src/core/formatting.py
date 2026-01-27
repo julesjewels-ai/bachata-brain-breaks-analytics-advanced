@@ -31,6 +31,38 @@ def format_validation_error(e: ValidationError) -> str:
 
     return "Validation Error:\n" + "\n".join(messages)
 
+def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepares a DataFrame for CLI display by formatting numbers and renaming columns.
+
+    Args:
+        df: The raw pandas DataFrame.
+
+    Returns:
+        A new DataFrame with human-readable string values and headers.
+    """
+    if df.empty:
+        return pd.DataFrame()
+
+    display_df = df.copy()
+
+    # Format Views (Comma separated)
+    if 'views' in display_df.columns:
+        display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
+
+    # Format Retention (Percentage)
+    if 'retention_avg_pct' in display_df.columns:
+        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+
+    # Rename columns for display
+    return display_df.rename(columns={
+        'title': 'Video Title',
+        'views': 'Views',
+        'retention_avg_pct': 'Retention',
+        'video_id': 'ID',
+        'type': 'Type'
+    })
+
 def format_dataframe_for_display(df: pd.DataFrame) -> str:
     """
     Formats a DataFrame for CLI display with human-readable numbers.
@@ -44,23 +76,5 @@ def format_dataframe_for_display(df: pd.DataFrame) -> str:
     if df.empty:
         return "No data available."
 
-    display_df = df.copy()
-
-    # Format Views (Comma separated)
-    if 'views' in display_df.columns:
-        display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
-
-    # Format Retention (Percentage)
-    if 'retention_avg_pct' in display_df.columns:
-        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
-
-    # Rename columns for display
-    display_df = display_df.rename(columns={
-        'title': 'Video Title',
-        'views': 'Views',
-        'retention_avg_pct': 'Retention',
-        'video_id': 'ID',
-        'type': 'Type'
-    })
-
+    display_df = prepare_display_dataframe(df)
     return display_df.to_string(index=False)

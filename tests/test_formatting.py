@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from pydantic import BaseModel, ValidationError, Field, field_validator
-from src.core.formatting import format_validation_error, format_dataframe_for_display
+from src.core.formatting import format_validation_error, format_dataframe_for_display, prepare_display_dataframe
 
 class ValidationTestModel(BaseModel):
     name: str = Field(..., min_length=3)
@@ -37,6 +37,28 @@ def test_format_validation_error_custom():
     assert "• name: Name cannot contain 'bad'" in formatted
     assert "Value error," not in formatted
 
+def test_prepare_display_dataframe():
+    """Test dataframe preparation for display."""
+    df = pd.DataFrame({
+        'title': ['Video A', 'Video B'],
+        'views': [1000, 1500000],
+        'retention_avg_pct': [45.678, 99.123],
+        'type': ['Shorts', 'Long']
+    })
+
+    display_df = prepare_display_dataframe(df)
+
+    # Check columns are renamed
+    assert "Video Title" in display_df.columns
+    assert "Views" in display_df.columns
+    assert "Retention" in display_df.columns
+
+    # Check values are formatted
+    assert display_df.iloc[0]['Views'] == "1,000"
+    assert display_df.iloc[1]['Views'] == "1,500,000"
+    assert display_df.iloc[0]['Retention'] == "45.7%"
+    assert display_df.iloc[1]['Retention'] == "99.1%"
+
 def test_format_dataframe_for_display():
     """Test dataframe formatting for CLI display."""
     df = pd.DataFrame({
@@ -64,3 +86,6 @@ def test_format_dataframe_empty():
     df = pd.DataFrame()
     formatted = format_dataframe_for_display(df)
     assert formatted == "No data available."
+
+    display_df = prepare_display_dataframe(df)
+    assert display_df.empty
