@@ -41,7 +41,7 @@ class AppConfig(BaseModel):
             )
         except ValidationError as e:
             logger.error(f"Configuration validation failed: {e}")
-            raise ValueError("Invalid configuration") from e
+            raise
 
     def get_api_key(self) -> str:
         """
