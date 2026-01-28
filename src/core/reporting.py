@@ -7,10 +7,13 @@ import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import DataBarRule
+from openpyxl.drawing.image import Image as XLImage
+from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+from src.core.visualization import MatplotlibVisualizer
 
 
 class ReportConfig(BaseModel):
@@ -179,3 +182,34 @@ class ExcelReportGenerator:
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
             ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+
+            # 3. Visual Insights (Embedded Matplotlib)
+            # Combine all anomalies to one DF for visualization
+            all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+            if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
+                visualizer = MatplotlibVisualizer()
+                try:
+                    img_stream = visualizer.generate_chart(
+                        all_anomalies,
+                        title="Views vs Retention Correlation",
+                        x_col="retention_avg_pct",
+                        y_col="views"
+                    )
+
+                    # Create sheet
+                    ws_viz = writer.book.create_sheet("Visual Insights")
+
+                    # Embed Image
+                    # OpenPyXL Image requires a path or PIL Image object
+                    pil_img = PILImage.open(img_stream)
+                    img = XLImage(pil_img)
+                    ws_viz.add_image(img, "A1")
+
+                    # Add description
+                    ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
+                    ws_viz["A25"].font = Font(italic=True, color="555555")
+
+                except Exception as e:
+                    # Log or handle error without crashing report
+                    # In a real app, use logging.error
+                    print(f"Warning: Failed to generate visualization: {e}")

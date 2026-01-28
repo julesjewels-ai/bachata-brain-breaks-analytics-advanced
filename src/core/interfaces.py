@@ -3,6 +3,7 @@ Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import Protocol, Union, Optional
+from io import BytesIO
 import pandas as pd
 
 class UserInterface(Protocol):
@@ -40,4 +41,24 @@ class UserInterface(Protocol):
 
     def display_message(self, text: str) -> None:
         """Displays a standard message."""
+        ...
+
+
+class Visualizer(Protocol):
+    """
+    Protocol for generating static visualizations.
+    """
+    def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
+        """
+        Generates a chart and returns the image as a byte stream.
+
+        Args:
+            df: DataFrame containing the data.
+            title: Title of the chart.
+            x_col: Column name for X-axis.
+            y_col: Column name for Y-axis.
+
+        Returns:
+            BytesIO: Image data stream (e.g., PNG).
+        """
         ...
