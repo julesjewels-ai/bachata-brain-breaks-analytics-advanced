@@ -6,43 +6,15 @@ import random
 import logging
 from typing import List, Dict
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator, ValidationError
-from src.core.reporting import ExcelReportGenerator
+from pydantic import ValidationError
+from src.core.services.excel_report_service import ExcelReportService
+from src.core.domain.models import VideoAnalysisInput
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import UserInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-class VideoAnalysisInput(BaseModel):
-    """
-    Schema for video data to be analyzed by the agent.
-    Strictly validates input to prevent injection and ensure data integrity.
-    """
-    video_id: str = Field(..., pattern=r"^vid_\d+$")
-    title: str = Field(..., min_length=1, max_length=200)
-    views: int = Field(..., ge=0)
-    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
-    type: str = Field(..., pattern=r"^(Shorts|Long)$")
-
-    @field_validator('title')
-    @classmethod
-    def validate_title(cls, v: str) -> str:
-        # Basic sanitization and prompt injection check
-        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
-        for pattern in forbidden_patterns:
-            if pattern in v:
-                raise ValueError(f"Potential prompt injection detected: {pattern}")
-
-        # Formula Injection Prevention
-        if v.startswith(('=', '@', '+', '-')):
-            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
-
-        # Ensure no control characters
-        if not v.isprintable():
-            raise ValueError("Title contains non-printable characters")
-        return v
 
 class GeminiThinkingAgent:
     """
@@ -99,7 +71,7 @@ class BachataAnalyticsApp:
             })
 
         # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+        validated_data = [VideoAnalysisInput.model_validate(record).model_dump() for record in raw_data]
 
         return pd.DataFrame(validated_data)
 
@@ -158,7 +130,7 @@ class BachataAnalyticsApp:
         # 4. Generate Excel Report
         self.ui.display_status("Generating Excel Report...")
         try:
-            report_gen = ExcelReportGenerator()
+            report_gen = ExcelReportService()
             report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
             self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:

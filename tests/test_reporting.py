@@ -2,12 +2,13 @@ import os
 import pandas as pd
 import pytest
 from openpyxl import load_workbook
-from src.core.reporting import ExcelReportGenerator
+from src.core.services.excel_report_service import ExcelReportService
 
-def test_excel_generation_conditional_formatting(tmp_path):
+def test_excel_generation_conditional_formatting(tmp_path, monkeypatch):
     """Test that conditional formatting (DataBars) is applied to specific columns."""
     # Setup
-    generator = ExcelReportGenerator()
+    monkeypatch.chdir(tmp_path)
+    generator = ExcelReportService()
     anomalies = {
         'Shorts': pd.DataFrame({
             'video_id': ['1', '2'],
@@ -19,7 +20,7 @@ def test_excel_generation_conditional_formatting(tmp_path):
         })
     }
     strategy = "Test Strategy"
-    filepath = str(tmp_path / "test_report.xlsx")
+    filepath = "test_report.xlsx"
 
     # Execute
     generator.generate_excel(anomalies, strategy, filepath)

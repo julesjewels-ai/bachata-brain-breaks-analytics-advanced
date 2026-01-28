@@ -1,0 +1,7 @@
+2025-05-20: Refactored Excel Reporting to Clean Architecture.
+- Created `src/core/domain/models.py` for `VideoAnalysisInput` and `ReportConfig`.
+- Created `src/core/services/excel_report_service.py` for `ExcelReportService`.
+- Refactored `src/core/app.py` to use the new service and domain models.
+- Updated `tests/test_core.py` and `tests/test_reporting.py`.
+- Fixed Mypy errors and cleaned up .mypy_cache.
+- Adjusted ReportConfig to allow subdirectories but prevent traversal.

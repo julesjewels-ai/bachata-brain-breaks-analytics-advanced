@@ -1,0 +1,11 @@
+src/core/ui.py:47: error: Argument "justify" to "add_column" of "Table" has incompatible type "str"; expected "Literal['default', 'left', 'center', 'right', 'full']"  [arg-type]
+src/core/visualization.py:44: error: Missing named argument "width" for "VisualizationConfig"  [call-arg]
+src/core/visualization.py:44: error: Missing named argument "height" for "VisualizationConfig"  [call-arg]
+src/core/visualization.py:44: error: Missing named argument "dpi" for "VisualizationConfig"  [call-arg]
+src/core/services/excel_report_service.py:150: error: Missing named argument "width" for "ChartConfig"  [call-arg]
+src/core/services/excel_report_service.py:150: error: Missing named argument "height" for "ChartConfig"  [call-arg]
+src/core/services/excel_report_service.py:150: error: Missing named argument "style" for "ChartConfig"  [call-arg]
+src/core/app.py:74: error: Argument 1 to "VideoAnalysisInput" has incompatible type "**dict[str, object]"; expected "str"  [arg-type]
+src/core/app.py:74: error: Argument 1 to "VideoAnalysisInput" has incompatible type "**dict[str, object]"; expected "int"  [arg-type]
+src/core/app.py:74: error: Argument 1 to "VideoAnalysisInput" has incompatible type "**dict[str, object]"; expected "float"  [arg-type]
+Found 10 errors in 4 files (checked 21 source files)

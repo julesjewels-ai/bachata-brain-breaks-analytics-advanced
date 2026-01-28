@@ -2,7 +2,8 @@
 Unit tests for core application logic.
 """
 import pandas as pd
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent
+from src.core.domain.models import VideoAnalysisInput
 
 class DummyUI:
     def display_header(self, text: str): pass

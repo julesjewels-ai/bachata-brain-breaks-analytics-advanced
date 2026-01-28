@@ -41,7 +41,7 @@ class MatplotlibVisualizer:
         if x_col not in df.columns or y_col not in df.columns:
              raise ValueError(f"Columns '{x_col}' or '{y_col}' not found in DataFrame columns: {df.columns.tolist()}")
 
-        config = VisualizationConfig(title=title, x_col=x_col, y_col=y_col)
+        config = VisualizationConfig(title=title, x_col=x_col, y_col=y_col)  # type: ignore
 
         # Create figure
         fig, ax = plt.subplots(figsize=(config.width, config.height), dpi=config.dpi)
