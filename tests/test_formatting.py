@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from pydantic import BaseModel, ValidationError, Field, field_validator
-from src.core.formatting import format_validation_error, format_dataframe_for_display, prepare_display_dataframe
+from src.core.formatting import format_validation_error, prepare_display_dataframe
 
 class ValidationTestModel(BaseModel):
     name: str = Field(..., min_length=3)
@@ -59,33 +59,7 @@ def test_prepare_display_dataframe():
     assert display_df.iloc[0]['Retention'] == "45.7%"
     assert display_df.iloc[1]['Retention'] == "99.1%"
 
-def test_format_dataframe_for_display():
-    """Test dataframe formatting for CLI display."""
-    df = pd.DataFrame({
-        'title': ['Video A', 'Video B'],
-        'views': [1000, 1500000],
-        'retention_avg_pct': [45.678, 99.123],
-        'type': ['Shorts', 'Long']
-    })
-
-    formatted = format_dataframe_for_display(df)
-
-    # Check headers
-    assert "Video Title" in formatted
-    assert "Views" in formatted
-    assert "Retention" in formatted
-
-    # Check values
-    assert "1,000" in formatted
-    assert "1,500,000" in formatted
-    assert "45.7%" in formatted
-    assert "99.1%" in formatted
-
-def test_format_dataframe_empty():
-    """Test behavior with empty dataframe."""
-    df = pd.DataFrame()
-    formatted = format_dataframe_for_display(df)
-    assert formatted == "No data available."
-
-    display_df = prepare_display_dataframe(df)
-    assert display_df.empty
+    # Test with empty dataframe
+    empty_df = pd.DataFrame()
+    display_empty = prepare_display_dataframe(empty_df)
+    assert display_empty.empty
