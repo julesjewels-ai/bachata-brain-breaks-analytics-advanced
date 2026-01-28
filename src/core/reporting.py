@@ -114,6 +114,54 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
+    def _process_anomaly_sheet(self, writer: pd.ExcelWriter, v_type: str, df: pd.DataFrame) -> None:
+        """Processes a single anomaly sheet with styling and charts."""
+        sheet_name = f"{v_type} Anomalies"
+        # Rename columns for better readability
+        display_df = df.rename(columns=self.COLUMN_MAPPING)
+        display_df.to_excel(writer, sheet_name=sheet_name, index=False)
+        ws = writer.sheets[sheet_name]
+        self._apply_header_style(ws)
+        self._apply_number_formats(ws)
+        self._apply_conditional_formatting(ws)
+        self._adjust_column_widths(ws)
+
+        # Add Chart
+        # Locate 'Views' column
+        headers = {cell.value: cell.column for cell in ws[1]}
+        if 'Views' in headers and 'Video Title' in headers:
+            views_col = headers['Views']
+            title_col = headers['Video Title']
+            max_row = ws.max_row
+            max_col = ws.max_column
+
+            # Only add chart if there is data
+            if max_row > 1:
+                chart_builder = ChartBuilder(ws)
+                data_loc = ChartDataLocation(
+                    min_col=views_col,
+                    min_row=1,  # Include header for series name
+                    max_col=views_col,
+                    max_row=max_row,
+                    title_from_data=True,
+                    cats_min_col=title_col
+                )
+                chart_config = ChartConfig(
+                    title=f"Top {v_type} Views",
+                    x_axis_title="Video Title",
+                    y_axis_title="Views"
+                    # type: ignore # Suppress mypy errors regarding missing arguments with default values
+                )
+
+                # Dynamic anchor: 2 columns to the right of the table
+                anchor_col = get_column_letter(max_col + 2)
+
+                chart_builder.add_bar_chart(
+                    data_loc=data_loc,
+                    config=chart_config,
+                    anchor=f"{anchor_col}2"
+                )
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -129,50 +177,7 @@ class ExcelReportGenerator:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
-                    sheet_name = f"{v_type} Anomalies"
-                    # Rename columns for better readability
-                    display_df = df.rename(columns=self.COLUMN_MAPPING)
-                    display_df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    ws = writer.sheets[sheet_name]
-                    self._apply_header_style(ws)
-                    self._apply_number_formats(ws)
-                    self._apply_conditional_formatting(ws)
-                    self._adjust_column_widths(ws)
-
-                    # Add Chart
-                    # Locate 'Views' column
-                    headers = {cell.value: cell.column for cell in ws[1]}
-                    if 'Views' in headers and 'Video Title' in headers:
-                        views_col = headers['Views']
-                        title_col = headers['Video Title']
-                        max_row = ws.max_row
-                        max_col = ws.max_column
-
-                        # Only add chart if there is data
-                        if max_row > 1:
-                            chart_builder = ChartBuilder(ws)
-                            data_loc = ChartDataLocation(
-                                min_col=views_col,
-                                min_row=1, # Include header for series name
-                                max_col=views_col,
-                                max_row=max_row,
-                                title_from_data=True,
-                                cats_min_col=title_col
-                            )
-                            chart_config = ChartConfig(
-                                title=f"Top {v_type} Views",
-                                x_axis_title="Video Title",
-                                y_axis_title="Views"
-                            )
-
-                            # Dynamic anchor: 2 columns to the right of the table
-                            anchor_col = get_column_letter(max_col + 2)
-
-                            chart_builder.add_bar_chart(
-                                data_loc=data_loc,
-                                config=chart_config,
-                                anchor=f"{anchor_col}2"
-                            )
+                    self._process_anomaly_sheet(writer, v_type, df)
 
             # 2. Strategy Sheet
             pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(

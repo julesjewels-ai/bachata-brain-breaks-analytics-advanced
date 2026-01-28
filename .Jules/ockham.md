@@ -3,3 +3,8 @@
 ## 2025-02-14 - [Dead Code (dry_run)] **Observation:** The `dry_run` parameter was passed through `main.py` to `BachataAnalyticsApp` but never used in any logic (ingestion or analysis). **Action:** Removed `dry_run` parameter and argument to reduce confusion and cognitive load.
 
 ## 2025-02-14 - [Duplicated Logic] **Observation:** Formatting logic for dataframes was duplicated in `src/core/app.py` and `src/core/formatting.py`. **Action:** Extracted `prepare_display_dataframe` to `src/core/formatting.py` and reused it.
+
+## 2025-02-14 - [Complexity Reduction]
+Target: generate_excel in src/core/reporting.py
+Delta: Complexity Score 13 -> 9
+Summary: Extracted anomaly sheet generation logic into _process_anomaly_sheet to simplify the main orchestration method.
