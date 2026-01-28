@@ -2,7 +2,8 @@
 Unit tests for core application logic.
 """
 import pandas as pd
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent
+from src.core.domain.models import VideoAnalysisInput
 
 class DummyUI:
     def display_header(self, text: str): pass
@@ -36,9 +37,6 @@ def test_outlier_detection():
     })
     anomalies = app.detect_outliers(df)
     assert 'Shorts' in anomalies
-    # The logic looks for > 90th percentile. 
-    # With 3 items, 90th percentile is high. 'Viral' (10000) should be caught or border case depending on interpolation.
-    # For this simple test, we ensure it returns a DataFrame.
     assert isinstance(anomalies['Shorts'], pd.DataFrame)
 
 def test_outlier_detection_dynamic_types():
@@ -54,7 +52,7 @@ def test_outlier_detection_dynamic_types():
     anomalies = app.detect_outliers(df)
     assert 'NewType1' in anomalies
     assert 'NewType2' in anomalies
-    assert len(anomalies['NewType1']) == 1  # 1000 should be filtered
+    assert len(anomalies['NewType1']) == 1
     assert len(anomalies['NewType2']) == 1
 
 def test_prepare_agent_input():
@@ -70,9 +68,6 @@ def test_prepare_agent_input():
     result = app._prepare_agent_input(df)
     assert len(result) == 10
     assert isinstance(result[0], VideoAnalysisInput)
-    # sort desc: 90, 80 ... 0
-    # top 5: 90, 80, 70, 60, 50
-    # bottom 5 (tail of desc sorted): 40, 30, 20, 10, 0
     assert result[0].retention_avg_pct == 90.0
 
 def test_gemini_agent_output():

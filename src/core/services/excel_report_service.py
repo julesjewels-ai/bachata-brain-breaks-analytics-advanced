@@ -1,40 +1,26 @@
 """
-Reporting module for generating Excel reports.
-Handles styling and formatting logic for Excel output.
+Service for generating formatted Excel reports.
+Implements secure image handling and structured report generation.
 """
 from typing import Dict
 import pandas as pd
+from io import BytesIO
+from PIL import Image as PILImage
+from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import DataBarRule
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.drawing.image import Image as XLImage
-from PIL import Image as PILImage
-from pydantic import BaseModel, Field, ValidationError, field_validator
-import re
+from pydantic import ValidationError
 
+from src.core.domain.models import ReportConfig
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
 
-
-class ReportConfig(BaseModel):
-    """Configuration for report generation validation."""
-    filepath: str = Field(..., description="Path to save the Excel report")
-
-    @field_validator('filepath')
-    @classmethod
-    def validate_filepath(cls, v: str) -> str:
-        if not v.endswith('.xlsx'):
-            raise ValueError("File must be an Excel (.xlsx) file")
-        if '..' in v:
-            raise ValueError("Path traversal detected")
-        if not re.match(r'^[\w\-. /]+$', v):
-            raise ValueError("File path contains invalid characters")
-        return v
-
-
-class ExcelReportGenerator:
-    """Generates styled Excel reports for analytics data."""
+class ExcelReportService:
+    """
+    Service to generate Excel reports from analytics data.
+    """
 
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
@@ -49,80 +35,93 @@ class ExcelReportGenerator:
         'publish_date': 'Publish Date'
     }
 
-    @staticmethod
-    def _adjust_column_widths(ws):
-        """Auto-adjusts column widths based on content length with min/max constraints."""
+    def _safe_load_image(self, stream: BytesIO) -> PILImage.Image:
+        """
+        Securely loads an image from a stream, protecting against Decompression Bombs.
+        """
+        # Set pixel limit (50MP) to prevent DoS via decompression bombs
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        stream.seek(0)
+        img = PILImage.open(stream)
+
+        # Verify integrity
+        try:
+            img.verify()
+        except Exception as e:
+            raise ValueError(f"Image verification failed: {e}")
+
+        # Re-open after verify as verify() can consume the stream/state
+        stream.seek(0)
+        img = PILImage.open(stream)
+
+        return img
+
+    def _adjust_column_widths(self, ws: Worksheet) -> None:
+        """Auto-adjusts column widths based on content length."""
         min_width = 10
         max_width = 50
         for col in ws.columns:
-            # Calculate max length of data in column
             max_length = 0
             for cell in col:
                 val = str(cell.value) if cell.value is not None else ""
                 max_length = max(max_length, len(val))
 
-            # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
             ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
 
-    @staticmethod
-    def _get_header_map(ws: Worksheet) -> Dict[str, int]:
+    def _get_header_map(self, ws: Worksheet) -> Dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
         return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
 
-    @staticmethod
-    def _apply_header_style(ws):
-        """Applies standard header styling (Bold, Centered, Blue) and freezes panes."""
+    def _apply_styles(self, ws: Worksheet) -> None:
+        """Applies headers, number formats, and conditional formatting."""
+        # 1. Header Style
         for cell in ws[1]:
-            cell.font = ExcelReportGenerator.HEADER_FONT
-            cell.fill = ExcelReportGenerator.HEADER_FILL
+            cell.font = self.HEADER_FONT
+            cell.fill = self.HEADER_FILL
             cell.alignment = Alignment(horizontal="center", vertical="center")
         ws.freeze_panes = 'A2'
 
-    @staticmethod
-    def _apply_number_formats(ws):
-        """Applies number formatting to specific columns."""
-        # Map column headers to their respective formats
+        # 2. Number Formats
         format_map = {
             'Views': '#,##0',
             'Retention (%)': '0.00"%"'
         }
-
-        headers = ExcelReportGenerator._get_header_map(ws)
+        headers = self._get_header_map(ws)
 
         for header, fmt in format_map.items():
             if header in headers:
                 col_idx = headers[header]
-                # Apply format to all cells in the column (skipping header)
                 for row in range(2, ws.max_row + 1):
                     ws.cell(row=row, column=col_idx).number_format = fmt
 
-    @staticmethod
-    def _apply_conditional_formatting(ws):
-        """Applies data bars to visualization columns."""
-        # Define rules
-        # Blue for Views, Green for Retention
+        # 3. Conditional Formatting
         rules = {
             'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
             'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
         }
 
-        headers = ExcelReportGenerator._get_header_map(ws)
-
         for header, rule in rules.items():
             if header in headers:
                 col_letter = get_column_letter(headers[header])
-                # Apply to the entire column data range (e.g. C2:C100)
-                # Ensure we have data
                 if ws.max_row > 1:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
-    def generate_excel(self,
-                       anomalies: Dict[str, pd.DataFrame],
-                       strategy: str,
-                       filepath: str):
-        """Creates an Excel report with anomalies and strategy analysis."""
+    def generate_report(self,
+                        anomalies: Dict[str, pd.DataFrame],
+                        strategy: str,
+                        filepath: str) -> None:
+        """
+        Generates the Excel report.
+
+        Args:
+            anomalies: Dictionary of DataFrames keyed by anomaly type (e.g., 'Shorts').
+            strategy: The strategy text generated by the agent.
+            filepath: The output path for the Excel file.
+        """
+        # Validate Filepath
         try:
             config = ReportConfig(filepath=filepath)
             safe_path = config.filepath
@@ -130,36 +129,32 @@ class ExcelReportGenerator:
             raise ValueError(f"Security validation failed: {e}")
 
         with pd.ExcelWriter(safe_path, engine='openpyxl') as writer:
-            # 1. Anomalies Sheets
+            # 1. Anomaly Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
                     sheet_name = f"{v_type} Anomalies"
-                    # Rename columns for better readability
+
+                    # Rename columns for display
                     display_df = df.rename(columns=self.COLUMN_MAPPING)
                     display_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
                     ws = writer.sheets[sheet_name]
-                    self._apply_header_style(ws)
-                    self._apply_number_formats(ws)
-                    self._apply_conditional_formatting(ws)
+                    self._apply_styles(ws)
                     self._adjust_column_widths(ws)
 
                     # Add Chart
-                    # Locate 'Views' column
-                    headers = ExcelReportGenerator._get_header_map(ws)
+                    headers = self._get_header_map(ws)
                     if 'Views' in headers and 'Video Title' in headers:
                         views_col = headers['Views']
                         title_col = headers['Video Title']
-                        max_row = ws.max_row
-                        max_col = ws.max_column
 
-                        # Only add chart if there is data
-                        if max_row > 1:
+                        if ws.max_row > 1:
                             chart_builder = ChartBuilder(ws)
                             data_loc = ChartDataLocation(
                                 min_col=views_col,
-                                min_row=1, # Include header for series name
+                                min_row=1,
                                 max_col=views_col,
-                                max_row=max_row,
+                                max_row=ws.max_row,
                                 title_from_data=True,
                                 cats_min_col=title_col
                             )
@@ -168,10 +163,8 @@ class ExcelReportGenerator:
                                 x_axis_title="Video Title",
                                 y_axis_title="Views"
                             )
-
-                            # Dynamic anchor: 2 columns to the right of the table
-                            anchor_col = get_column_letter(max_col + 2)
-
+                            # Anchor chart 2 cols to the right
+                            anchor_col = get_column_letter(ws.max_column + 2)
                             chart_builder.add_bar_chart(
                                 data_loc=data_loc,
                                 config=chart_config,
@@ -183,12 +176,11 @@ class ExcelReportGenerator:
                 writer, sheet_name="Strategy", index=False
             )
             ws_strat = writer.sheets["Strategy"]
-            self._apply_header_style(ws_strat)
+            self._apply_styles(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
             ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
 
-            # 3. Visual Insights (Embedded Matplotlib)
-            # Combine all anomalies to one DF for visualization
+            # 3. Visual Insights
             all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
             if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
                 visualizer = MatplotlibVisualizer()
@@ -200,20 +192,15 @@ class ExcelReportGenerator:
                         y_col="views"
                     )
 
-                    # Create sheet
-                    ws_viz = writer.book.create_sheet("Visual Insights")
-
-                    # Embed Image
-                    # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
+                    # Use secure image loader
+                    pil_img = self._safe_load_image(img_stream)
                     img = XLImage(pil_img)
+
+                    ws_viz = writer.book.create_sheet("Visual Insights")
                     ws_viz.add_image(img, "A1")
 
-                    # Add description
                     ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
                     ws_viz["A25"].font = Font(italic=True, color="555555")
 
                 except Exception as e:
-                    # Log or handle error without crashing report
-                    # In a real app, use logging.error
                     print(f"Warning: Failed to generate visualization: {e}")
