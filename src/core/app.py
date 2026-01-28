@@ -9,7 +9,7 @@ import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error
+from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import UserInterface
 
 # Configure logging
@@ -124,32 +124,6 @@ class BachataAnalyticsApp:
 
         return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
 
-    def _prepare_display_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Formats a DataFrame for display (renaming columns, formatting numbers).
-        """
-        if df.empty:
-            return pd.DataFrame()
-
-        display_df = df.copy()
-
-        # Format Views
-        if 'views' in display_df.columns:
-            display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
-
-        # Format Retention
-        if 'retention_avg_pct' in display_df.columns:
-            display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
-
-        # Rename columns
-        return display_df.rename(columns={
-            'title': 'Video Title',
-            'views': 'Views',
-            'retention_avg_pct': 'Retention',
-            'video_id': 'ID',
-            'type': 'Type'
-        })
-
     def run(self) -> None:
         """
         Executes the analytics pipeline.
@@ -163,7 +137,7 @@ class BachataAnalyticsApp:
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
             self.ui.display_section(f"Viral Anomalies ({v_type})")
-            display_df = self._prepare_display_df(data[['title', 'views', 'retention_avg_pct']])
+            display_df = prepare_display_dataframe(data[['title', 'views', 'retention_avg_pct']])
             self.ui.display_table(display_df)
 
         # 3. Gemini Analysis (Top/Bottom 5)
