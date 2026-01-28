@@ -3,6 +3,7 @@ Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
+from io import BytesIO
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -114,6 +115,39 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
+    def _safe_load_image(self, stream: BytesIO) -> PILImage.Image:
+        """
+        Securely loads an image from a stream with size limits to prevent Decompression Bombs.
+
+        Args:
+            stream: The image byte stream.
+
+        Returns:
+            PIL.Image.Image: The loaded image object.
+
+        Raises:
+            ValueError: If the image cannot be verified or processed.
+        """
+        # Set a safe limit (e.g., 50 Million pixels)
+        # Default is usually ~178M, but we enforce this explicitly for security.
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # First pass: verify integrity
+            img = PILImage.open(stream)
+            img.verify()
+
+            # Reset stream for actual loading
+            stream.seek(0)
+            img = PILImage.open(stream)
+            return img
+        except PILImage.DecompressionBombError as e:
+            # Log the security event (mock logging here)
+            # raise a generic error to avoid leaking implementation details
+            raise ValueError("Image processing failed due to size limits.") from e
+        except Exception as e:
+            raise ValueError(f"Invalid image data: {e}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -201,7 +235,7 @@ class ExcelReportGenerator:
 
                     # Embed Image
                     # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
+                    pil_img = self._safe_load_image(img_stream)
                     img = XLImage(pil_img)
                     ws_viz.add_image(img, "A1")
 
