@@ -62,19 +62,3 @@ def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         'video_id': 'ID',
         'type': 'Type'
     })
-
-def format_dataframe_for_display(df: pd.DataFrame) -> str:
-    """
-    Formats a DataFrame for CLI display with human-readable numbers.
-
-    Args:
-        df: The pandas DataFrame to format.
-
-    Returns:
-        A formatted string representation of the DataFrame.
-    """
-    if df.empty:
-        return "No data available."
-
-    display_df = prepare_display_dataframe(df)
-    return display_df.to_string(index=False)

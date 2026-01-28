@@ -7,6 +7,7 @@ import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import DataBarRule
+from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.drawing.image import Image as XLImage
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -65,6 +66,11 @@ class ExcelReportGenerator:
             ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
 
     @staticmethod
+    def _get_header_map(ws: Worksheet) -> Dict[str, int]:
+        """Returns a map of header name to column index (1-based)."""
+        return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
+
+    @staticmethod
     def _apply_header_style(ws):
         """Applies standard header styling (Bold, Centered, Blue) and freezes panes."""
         for cell in ws[1]:
@@ -82,8 +88,7 @@ class ExcelReportGenerator:
             'Retention (%)': '0.00"%"'
         }
 
-        # Find column indices for headers
-        headers = {cell.value: cell.column for cell in ws[1]}
+        headers = ExcelReportGenerator._get_header_map(ws)
 
         for header, fmt in format_map.items():
             if header in headers:
@@ -102,12 +107,11 @@ class ExcelReportGenerator:
             'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
         }
 
-        # Find headers
-        headers = {cell.value: cell.column_letter for cell in ws[1]}
+        headers = ExcelReportGenerator._get_header_map(ws)
 
         for header, rule in rules.items():
             if header in headers:
-                col_letter = headers[header]
+                col_letter = get_column_letter(headers[header])
                 # Apply to the entire column data range (e.g. C2:C100)
                 # Ensure we have data
                 if ws.max_row > 1:
@@ -141,7 +145,7 @@ class ExcelReportGenerator:
 
                     # Add Chart
                     # Locate 'Views' column
-                    headers = {cell.value: cell.column for cell in ws[1]}
+                    headers = ExcelReportGenerator._get_header_map(ws)
                     if 'Views' in headers and 'Video Title' in headers:
                         views_col = headers['Views']
                         title_col = headers['Video Title']

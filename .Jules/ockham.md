@@ -3,3 +3,7 @@
 ## 2025-02-14 - [Dead Code (dry_run)] **Observation:** The `dry_run` parameter was passed through `main.py` to `BachataAnalyticsApp` but never used in any logic (ingestion or analysis). **Action:** Removed `dry_run` parameter and argument to reduce confusion and cognitive load.
 
 ## 2025-02-14 - [Duplicated Logic] **Observation:** Formatting logic for dataframes was duplicated in `src/core/app.py` and `src/core/formatting.py`. **Action:** Extracted `prepare_display_dataframe` to `src/core/formatting.py` and reused it.
+
+## 2025-02-18 - [Duplicated Header Mapping] **Observation:** `src/core/reporting.py` repeated the logic for mapping header names to column indices in 3 different places (`_apply_number_formats`, `_apply_conditional_formatting`, `generate_excel`). **Action:** Extracted `_get_header_map` helper method to consolidate this logic.
+
+## 2025-02-18 - [Dead Code (formatting)] **Observation:** `format_dataframe_for_display` in `src/core/formatting.py` was not used in the application flow (which uses `RichConsoleUI` and `prepare_display_dataframe`). **Action:** Removed the unused function and its tests.
