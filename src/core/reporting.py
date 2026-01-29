@@ -3,6 +3,7 @@ Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
+from numbers import Number
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -50,6 +51,30 @@ class ExcelReportGenerator:
     }
 
     @staticmethod
+    def _estimate_cell_width(cell) -> int:
+        """Estimates the display width of a cell based on value and number format."""
+        if cell.value is None:
+            return 0
+
+        val = cell.value
+        number_format = cell.number_format
+
+        # Handle formatted numbers
+        if isinstance(val, Number) and number_format:
+            # Thousands separator (e.g., #,##0)
+            if '#,##0' in number_format:
+                precision = 2 if '.00' in number_format else 0
+                return len(f"{val:,.{precision}f}")
+
+            # Percentage (e.g., 0.00%)
+            # If value is 95.5, and format is 0.00"%", it displays as 95.50%
+            if '0.00"%"' in number_format or '0.00%' in number_format:
+                return len(f"{val:.2f}%")
+
+        # Default fallback to string length
+        return len(str(val))
+
+    @staticmethod
     def _adjust_column_widths(ws):
         """Auto-adjusts column widths based on content length with min/max constraints."""
         min_width = 10
@@ -58,8 +83,8 @@ class ExcelReportGenerator:
             # Calculate max length of data in column
             max_length = 0
             for cell in col:
-                val = str(cell.value) if cell.value is not None else ""
-                max_length = max(max_length, len(val))
+                cell_width = ExcelReportGenerator._estimate_cell_width(cell)
+                max_length = max(max_length, cell_width)
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
