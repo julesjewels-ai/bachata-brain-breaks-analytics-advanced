@@ -88,7 +88,8 @@ class ExcelReportGenerator:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            ws.column_dimensions[get_column_letter(
+                col[0].column)].width = adjusted_width
 
     @staticmethod
     def _get_header_map(ws: Worksheet) -> Dict[str, int]:
@@ -161,7 +162,8 @@ class ExcelReportGenerator:
                     sheet_name = f"{v_type} Anomalies"
                     # Rename columns for better readability
                     display_df = df.rename(columns=self.COLUMN_MAPPING)
-                    display_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    display_df.to_excel(
+                        writer, sheet_name=sheet_name, index=False)
                     ws = writer.sheets[sheet_name]
                     self._apply_header_style(ws)
                     self._apply_number_formats(ws)
@@ -182,7 +184,7 @@ class ExcelReportGenerator:
                             chart_builder = ChartBuilder(ws)
                             data_loc = ChartDataLocation(
                                 min_col=views_col,
-                                min_row=1, # Include header for series name
+                                min_row=1,  # Include header for series name
                                 max_col=views_col,
                                 max_row=max_row,
                                 title_from_data=True,
@@ -210,11 +212,13 @@ class ExcelReportGenerator:
             ws_strat = writer.sheets["Strategy"]
             self._apply_header_style(ws_strat)
             ws_strat.column_dimensions['A'].width = 100
-            ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+            ws_strat['A2'].alignment = Alignment(
+                wrap_text=True, horizontal='left', vertical='top')
 
             # 3. Visual Insights (Embedded Matplotlib)
             # Combine all anomalies to one DF for visualization
-            all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+            all_anomalies = pd.concat(
+                anomalies.values()) if anomalies else pd.DataFrame()
             if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
                 visualizer = MatplotlibVisualizer()
                 try:

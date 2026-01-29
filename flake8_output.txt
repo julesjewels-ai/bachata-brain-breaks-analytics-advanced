@@ -1,0 +1,139 @@
+src/__init__.py:3:4: W292 no newline at end of file
+src/core/__init__.py:3:4: W292 no newline at end of file
+src/core/app.py:6:1: F401 'typing.List' imported but unused
+src/core/app.py:6:1: F401 'typing.Dict' imported but unused
+src/core/app.py:7:1: F401 'pandas as pd' imported but unused
+src/core/app.py:11:80: E501 line too long (82 > 79 characters)
+src/core/app.py:13:1: F401 'src.core.models.VideoAnalysisInput' imported but unused
+src/core/app.py:19:1: E302 expected 2 blank lines, found 1
+src/core/app.py:30:69: W291 trailing whitespace
+src/core/app.py:48:80: E501 line too long (97 > 79 characters)
+src/core/app.py:53:1: W293 blank line contains whitespace
+src/core/app.py:70:80: E501 line too long (84 > 79 characters)
+src/core/app.py:71:80: E501 line too long (80 > 79 characters)
+src/core/charting.py:10:1: E302 expected 2 blank lines, found 1
+src/core/charting.py:23:1: E302 expected 2 blank lines, found 1
+src/core/charting.py:34:1: E302 expected 2 blank lines, found 1
+src/core/charting.py:50:80: E501 line too long (83 > 79 characters)
+src/core/charting.py:60:35: E261 at least two spaces before inline comment
+src/core/charting.py:61:37: E261 at least two spaces before inline comment
+src/core/charting.py:75:80: E501 line too long (85 > 79 characters)
+src/core/charting.py:76:80: E501 line too long (107 > 79 characters)
+src/core/charting.py:79:80: E501 line too long (96 > 79 characters)
+src/core/charting.py:80:80: E501 line too long (102 > 79 characters)
+src/core/charting.py:82:80: E501 line too long (103 > 79 characters)
+src/core/config.py:17:1: E302 expected 2 blank lines, found 1
+src/core/config.py:51:80: E501 line too long (83 > 79 characters)
+src/core/formatting.py:8:1: E302 expected 2 blank lines, found 1
+src/core/formatting.py:34:1: E302 expected 2 blank lines, found 1
+src/core/formatting.py:36:80: E501 line too long (84 > 79 characters)
+src/core/formatting.py:55:80: E501 line too long (102 > 79 characters)
+src/core/interfaces.py:9:1: E302 expected 2 blank lines, found 1
+src/core/interfaces.py:26:80: E501 line too long (85 > 79 characters)
+src/core/interfaces.py:51:80: E501 line too long (94 > 79 characters)
+src/core/models.py:6:1: E302 expected 2 blank lines, found 1
+src/core/models.py:21:80: E501 line too long (81 > 79 characters)
+src/core/models.py:24:80: E501 line too long (83 > 79 characters)
+src/core/models.py:28:80: E501 line too long (99 > 79 characters)
+src/core/reporting.py:55:80: E501 line too long (85 > 79 characters)
+src/core/reporting.py:79:80: E501 line too long (90 > 79 characters)
+src/core/reporting.py:91:80: E501 line too long (89 > 79 characters)
+src/core/reporting.py:96:80: E501 line too long (89 > 79 characters)
+src/core/reporting.py:100:80: E501 line too long (87 > 79 characters)
+src/core/reporting.py:131:80: E501 line too long (83 > 79 characters)
+src/core/reporting.py:132:80: E501 line too long (90 > 79 characters)
+src/core/reporting.py:164:80: E501 line too long (83 > 79 characters)
+src/core/reporting.py:185:43: E261 at least two spaces before inline comment
+src/core/reporting.py:197:80: E501 line too long (81 > 79 characters)
+src/core/reporting.py:213:80: E501 line too long (99 > 79 characters)
+src/core/reporting.py:217:80: E501 line too long (90 > 79 characters)
+src/core/reporting.py:218:80: E501 line too long (125 > 79 characters)
+src/core/reporting.py:238:80: E501 line too long (114 > 79 characters)
+src/core/services.py:7:1: F401 'typing.Optional' imported but unused
+src/core/services.py:9:1: F401 'pydantic.ValidationError' imported but unused
+src/core/services.py:12:80: E501 line too long (85 > 79 characters)
+src/core/services.py:17:1: E302 expected 2 blank lines, found 1
+src/core/services.py:28:1: W293 blank line contains whitespace
+src/core/services.py:32:80: E501 line too long (108 > 79 characters)
+src/core/services.py:34:80: E501 line too long (88 > 79 characters)
+src/core/services.py:37:1: E302 expected 2 blank lines, found 1
+src/core/services.py:39:80: E501 line too long (81 > 79 characters)
+src/core/services.py:46:80: E501 line too long (83 > 79 characters)
+src/core/services.py:47:1: W293 blank line contains whitespace
+src/core/services.py:51:80: E501 line too long (80 > 79 characters)
+src/core/services.py:65:80: E501 line too long (81 > 79 characters)
+src/core/services.py:66:80: E501 line too long (91 > 79 characters)
+src/core/services.py:80:80: E501 line too long (92 > 79 characters)
+src/core/services.py:86:80: E501 line too long (80 > 79 characters)
+src/core/services.py:91:80: E501 line too long (86 > 79 characters)
+src/core/services.py:93:80: E501 line too long (99 > 79 characters)
+src/core/ui.py:12:1: F401 'src.core.interfaces.UserInterface' imported but unused
+src/core/ui.py:14:1: E302 expected 2 blank lines, found 1
+src/core/ui.py:22:80: E501 line too long (102 > 79 characters)
+src/core/ui.py:30:80: E501 line too long (85 > 79 characters)
+src/core/ui.py:43:80: E501 line too long (116 > 79 characters)
+src/core/ui.py:53:80: E501 line too long (93 > 79 characters)
+src/core/ui.py:54:80: E501 line too long (112 > 79 characters)
+src/core/visualization.py:12:1: E302 expected 2 blank lines, found 1
+src/core/visualization.py:21:1: E302 expected 2 blank lines, found 1
+src/core/visualization.py:24:80: E501 line too long (94 > 79 characters)
+src/core/visualization.py:38:14: E111 indentation is not a multiple of 4
+src/core/visualization.py:38:14: E117 over-indented
+src/core/visualization.py:42:14: E111 indentation is not a multiple of 4
+src/core/visualization.py:42:14: E117 over-indented
+src/core/visualization.py:42:80: E501 line too long (118 > 79 characters)
+src/core/visualization.py:47:80: E501 line too long (85 > 79 characters)
+src/core/visualization.py:51:80: E501 line too long (90 > 79 characters)
+tests/__init__.py:3:4: W292 no newline at end of file
+tests/test_charting.py:5:1: F401 'pytest' imported but unused
+tests/test_charting.py:9:1: E302 expected 2 blank lines, found 1
+tests/test_charting.py:38:80: E501 line too long (82 > 79 characters)
+tests/test_charting.py:39:80: E501 line too long (98 > 79 characters)
+tests/test_charting.py:43:80: E501 line too long (87 > 79 characters)
+tests/test_config.py:9:1: E302 expected 2 blank lines, found 1
+tests/test_config.py:20:1: E302 expected 2 blank lines, found 1
+tests/test_config.py:28:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:9:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:19:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:23:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:31:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:44:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:60:1: E302 expected 2 blank lines, found 1
+tests/test_core.py:75:1: E302 expected 2 blank lines, found 1
+tests/test_formatting.py:4:80: E501 line too long (82 > 79 characters)
+tests/test_formatting.py:6:1: E302 expected 2 blank lines, found 1
+tests/test_formatting.py:17:1: E302 expected 2 blank lines, found 1
+tests/test_formatting.py:29:1: E302 expected 2 blank lines, found 1
+tests/test_formatting.py:40:1: E302 expected 2 blank lines, found 1
+tests/test_reporting.py:3:1: F401 'pytest' imported but unused
+tests/test_reporting.py:7:1: E302 expected 2 blank lines, found 1
+tests/test_reporting.py:8:80: E501 line too long (85 > 79 characters)
+tests/test_reporting.py:33:80: E501 line too long (87 > 79 characters)
+tests/test_reporting.py:34:80: E501 line too long (95 > 79 characters)
+tests/test_reporting.py:38:80: E501 line too long (96 > 79 characters)
+tests/test_reporting.py:56:80: E501 line too long (93 > 79 characters)
+tests/test_security_validation.py:5:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:18:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:31:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:44:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:57:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:77:1: E302 expected 2 blank lines, found 1
+tests/test_security_validation.py:90:1: E302 expected 2 blank lines, found 1
+tests/test_services.py:8:1: E302 expected 2 blank lines, found 1
+tests/test_services.py:15:1: E302 expected 2 blank lines, found 1
+tests/test_services.py:28:1: E302 expected 2 blank lines, found 1
+tests/test_ui_integration.py:1:1: F401 'pytest' imported but unused
+tests/test_ui_integration.py:5:1: F401 'src.core.interfaces.UserInterface' imported but unused
+tests/test_ui_integration.py:7:1: E302 expected 2 blank lines, found 1
+tests/test_ui_integration.py:20:80: E501 line too long (85 > 79 characters)
+tests/test_ui_integration.py:35:1: E302 expected 2 blank lines, found 1
+tests/test_ui_integration.py:39:80: E501 line too long (107 > 79 characters)
+tests/test_ui_integration.py:43:80: E501 line too long (92 > 79 characters)
+tests/test_ui_integration.py:45:80: E501 line too long (81 > 79 characters)
+tests/test_ui_integration.py:47:80: E501 line too long (89 > 79 characters)
+tests/test_ui_integration.py:48:49: E261 at least two spaces before inline comment
+tests/test_ui_integration.py:49:80: E501 line too long (88 > 79 characters)
+tests/test_ui_integration.py:51:80: E501 line too long (91 > 79 characters)
+tests/test_visualization.py:9:1: E302 expected 2 blank lines, found 1
+tests/test_visualization.py:24:1: E302 expected 2 blank lines, found 1
+tests/test_visualization.py:33:1: E302 expected 2 blank lines, found 1

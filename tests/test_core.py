@@ -2,7 +2,10 @@
 Unit tests for core application logic.
 """
 import pandas as pd
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp
+from src.core.services import GeminiThinkingAgent
+from src.core.models import VideoAnalysisInput
+
 
 class DummyUI:
     def display_header(self, text: str): pass
@@ -14,16 +17,20 @@ class DummyUI:
     def display_info(self, text: str): pass
     def display_message(self, text: str): pass
 
+
 def test_agent_initialization():
     app = BachataAnalyticsApp(ui=DummyUI())
     assert isinstance(app.agent, GeminiThinkingAgent)
 
+
 def test_ingest_data_structure():
     app = BachataAnalyticsApp(ui=DummyUI())
-    df = app.ingest_data()
+    # Logic moved to service, testing via app's service attribute
+    df = app.analytics_service.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
     assert list(df.columns) == expected_cols
+
 
 def test_outlier_detection():
     app = BachataAnalyticsApp(ui=DummyUI())
@@ -34,12 +41,10 @@ def test_outlier_detection():
         'retention_avg_pct': [50, 50, 90],
         'type': ['Shorts', 'Shorts', 'Shorts']
     })
-    anomalies = app.detect_outliers(df)
+    anomalies = app.analytics_service.detect_outliers(df)
     assert 'Shorts' in anomalies
-    # The logic looks for > 90th percentile. 
-    # With 3 items, 90th percentile is high. 'Viral' (10000) should be caught or border case depending on interpolation.
-    # For this simple test, we ensure it returns a DataFrame.
     assert isinstance(anomalies['Shorts'], pd.DataFrame)
+
 
 def test_outlier_detection_dynamic_types():
     """Test that outlier detection handles arbitrary types dynamically."""
@@ -51,11 +56,12 @@ def test_outlier_detection_dynamic_types():
         'retention_avg_pct': [50, 90, 50, 90],
         'type': ['NewType1', 'NewType1', 'NewType2', 'NewType2']
     })
-    anomalies = app.detect_outliers(df)
+    anomalies = app.analytics_service.detect_outliers(df)
     assert 'NewType1' in anomalies
     assert 'NewType2' in anomalies
     assert len(anomalies['NewType1']) == 1  # 1000 should be filtered
     assert len(anomalies['NewType2']) == 1
+
 
 def test_prepare_agent_input():
     app = BachataAnalyticsApp(ui=DummyUI())
@@ -67,13 +73,11 @@ def test_prepare_agent_input():
         'type': ['Shorts'] * 10
     })
 
-    result = app._prepare_agent_input(df)
+    result = app.analytics_service.prepare_agent_input(df)
     assert len(result) == 10
     assert isinstance(result[0], VideoAnalysisInput)
-    # sort desc: 90, 80 ... 0
-    # top 5: 90, 80, 70, 60, 50
-    # bottom 5 (tail of desc sorted): 40, 30, 20, 10, 0
     assert result[0].retention_avg_pct == 90.0
+
 
 def test_gemini_agent_output():
     agent = GeminiThinkingAgent()

@@ -2,127 +2,34 @@
 Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
-import random
 import logging
-from typing import List, Dict
-import pandas as pd
-from pydantic import BaseModel, Field, field_validator, ValidationError
+from typing import Optional
+from pydantic import ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import UserInterface
+from src.core.services import AnalyticsService, GeminiThinkingAgent
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-class VideoAnalysisInput(BaseModel):
-    """
-    Schema for video data to be analyzed by the agent.
-    Strictly validates input to prevent injection and ensure data integrity.
-    """
-    video_id: str = Field(..., pattern=r"^vid_\d+$")
-    title: str = Field(..., min_length=1, max_length=200)
-    views: int = Field(..., ge=0)
-    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
-    type: str = Field(..., pattern=r"^(Shorts|Long)$")
-
-    @field_validator('title')
-    @classmethod
-    def validate_title(cls, v: str) -> str:
-        # Basic sanitization and prompt injection check
-        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
-        for pattern in forbidden_patterns:
-            if pattern in v:
-                raise ValueError(f"Potential prompt injection detected: {pattern}")
-
-        # Formula Injection Prevention
-        if v.startswith(('=', '@', '+', '-')):
-            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
-
-        # Ensure no control characters
-        if not v.isprintable():
-            raise ValueError("Title contains non-printable characters")
-        return v
-
-class GeminiThinkingAgent:
-    """
-    Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
-    """
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
-        """
-        Analyzes titles and thumbnails (metadata) to find conversion patterns.
-        Now strictly typed for security.
-        """
-        if not videos:
-            return "No data to analyze."
-            
-        # Simulated 'Thinking Mode' logic
-        return (
-            "[Gemini 3 Thinking Mode] Analysis Complete:\n"
-            "1. Pattern Identification: High-retention videos often use 'sensual' or 'footwork' keywords.\n"
-            "2. Strategy: Use high-contrast thumbnails with dynamic poses.\n"
-            "3. Recommendation: Rename lower performers to include 'Step-by-Step' hook."
-        )
 
 class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, ui: UserInterface):
+
+    def __init__(self, ui: UserInterface, analytics_service: Optional[AnalyticsService] = None, agent: Optional[GeminiThinkingAgent] = None):
         # Securely load configuration
         self.config = AppConfig.get_config()
-        self.agent = GeminiThinkingAgent()
+        self.analytics_service = analytics_service or AnalyticsService()
+        self.agent = agent or GeminiThinkingAgent()
         self.ui = ui
 
-    def ingest_data(self) -> pd.DataFrame:
-        """
-        Simulates ingesting channel data (Shorts and Long-form).
-        In a real app, this would connect to YouTube Analytics API.
-        """
-        self.ui.display_status("Ingesting channel data...")
-
-        # Generate mock data
-        titles = [
-            'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
-            'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-            'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
-        ] * 2
-
-        raw_data = []
-        for i in range(1, 21):
-            raw_data.append({
-                'video_id': f'vid_{i}',
-                'title': titles[i-1],
-                'views': random.randint(500, 500000),
-                'retention_avg_pct': random.uniform(20.0, 95.0),
-                'type': 'Long' if i % 3 != 0 else 'Shorts'
-            })
-
-        # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
-
-        return pd.DataFrame(validated_data)
-
-    def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        """
-        Implements statistical outlier detection for viral anomalies.
-        """
-        results = {}
-        for v_type, group in df.groupby('type'):
-            # Simple statistical outlier detection using Quantiles (Viral > 90th percentile)
-            threshold = group['views'].quantile(0.90)
-            results[str(v_type)] = group[group['views'] > threshold]
-
-        return results
-
-    def _prepare_agent_input(self, df: pd.DataFrame) -> List[VideoAnalysisInput]:
-        """
-        Selects top/bottom performing videos and validates them for the agent.
-        """
-        sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
-        records = pd.concat([sorted_df.head(5), sorted_df.tail(5)]).to_dict('records')
-
-        return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
+    # Delegate methods for backward compatibility/testing if needed,
+    # but ideally we should update tests to not call these directly on the App.
+    # I'll rely on updating tests.
 
     def run(self) -> None:
         """
@@ -130,21 +37,23 @@ class BachataAnalyticsApp:
         """
         # 1. Ingest
         self.ui.display_header("Bachata Analytics Dashboard")
-        df = self.ingest_data()
+        self.ui.display_status("Ingesting channel data...")
+        df = self.analytics_service.ingest_data()
         self.ui.display_success(f"Data loaded: {len(df)} records.")
 
         # 2. Outlier Detection
-        anomalies = self.detect_outliers(df)
+        anomalies = self.analytics_service.detect_outliers(df)
         for v_type, data in anomalies.items():
             self.ui.display_section(f"Viral Anomalies ({v_type})")
-            display_df = prepare_display_dataframe(data[['title', 'views', 'retention_avg_pct']])
+            display_df = prepare_display_dataframe(
+                data[['title', 'views', 'retention_avg_pct']])
             self.ui.display_table(display_df)
 
         # 3. Gemini Analysis (Top/Bottom 5)
         self.ui.display_section("Gemini 3 Agent Analysis")
-        
+
         try:
-            analysis_input = self._prepare_agent_input(df)
+            analysis_input = self.analytics_service.prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
             # Decide whether to abort or skip. Aborting is safer for security.
@@ -159,7 +68,8 @@ class BachataAnalyticsApp:
         self.ui.display_status("Generating Excel Report...")
         try:
             report_gen = ExcelReportGenerator()
-            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            report_gen.generate_excel(
+                anomalies, strategy, "bachata_analytics.xlsx")
             self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")

@@ -1,8 +1,8 @@
 import os
 import pandas as pd
-import pytest
 from openpyxl import load_workbook
 from src.core.reporting import ExcelReportGenerator
+
 
 def test_excel_generation_conditional_formatting(tmp_path):
     """Test that conditional formatting (DataBars) is applied to specific columns."""

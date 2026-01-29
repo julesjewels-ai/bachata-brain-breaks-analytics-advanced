@@ -1,9 +1,38 @@
-venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
 .env
+.venv
+env.bak/
+venv.bak/
+
+# Testing
 .pytest_cache/
-.DS_Store
-coverage.xml
 .coverage
+htmlcov/
+pytest_output*.txt
+
+# Type Checking
+.mypy_cache/
+mypy_output*.txt
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project Specific
 *.xlsx
+.DS_Store
+progress.txt

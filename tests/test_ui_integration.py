@@ -1,8 +1,7 @@
-import pytest
 import pandas as pd
 from typing import Union, Optional
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface
+
 
 class MockUI:
     def __init__(self):
@@ -32,6 +31,7 @@ class MockUI:
     def display_message(self, text: str) -> None:
         self.calls.append(('message', text))
 
+
 def test_app_integration_with_ui():
     ui = MockUI()
     app = BachataAnalyticsApp(ui=ui)
@@ -40,12 +40,17 @@ def test_app_integration_with_ui():
     app.run()
 
     # Verify sequence of calls
-    assert any(c[0] == 'header' and "Bachata Analytics Dashboard" in c[1] for c in ui.calls)
+    assert any(c[0] == 'header' and "Bachata Analytics Dashboard" in c[1]
+               for c in ui.calls)
     assert any(c[0] == 'success' and "Data loaded" in c[1] for c in ui.calls)
-    assert any(c[0] == 'section' and "Viral Anomalies" in c[1] for c in ui.calls)
+    assert any(c[0] == 'section' and "Viral Anomalies" in c[1]
+               for c in ui.calls)
     assert any(c[0] == 'table' for c in ui.calls)
-    assert any(c[0] == 'section' and "Gemini 3 Agent Analysis" in c[1] for c in ui.calls)
-    assert any(c[0] == 'info' for c in ui.calls) # Strategy
-    assert any(c[0] == 'status' and "Generating Excel Report" in c[1] for c in ui.calls)
+    assert any(c[0] == 'section' and "Gemini 3 Agent Analysis" in c[1]
+               for c in ui.calls)
+    assert any(c[0] == 'info' for c in ui.calls)  # Strategy
+    assert any(c[0] == 'status' and "Generating Excel Report" in c[1]
+               for c in ui.calls)
     assert any(c[0] == 'success' and "Report saved" in c[1] for c in ui.calls)
-    assert any(c[0] == 'success' and "Dashboard update complete" in c[1] for c in ui.calls)
+    assert any(c[0] == 'success' and "Dashboard update complete" in c[1]
+               for c in ui.calls)

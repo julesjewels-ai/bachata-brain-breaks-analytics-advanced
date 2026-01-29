@@ -2,9 +2,9 @@
 Tests for the charting module.
 """
 from unittest.mock import MagicMock
-import pytest
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from openpyxl.chart import BarChart
+
 
 def test_chart_builder_add_bar_chart():
     """Test that add_bar_chart configures and adds a chart to the worksheet."""

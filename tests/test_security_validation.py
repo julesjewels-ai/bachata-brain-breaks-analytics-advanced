@@ -1,6 +1,8 @@
 import pytest
 from pydantic import ValidationError
-from src.core.app import VideoAnalysisInput, GeminiThinkingAgent
+from src.core.models import VideoAnalysisInput
+from src.core.services import GeminiThinkingAgent
+
 
 def test_video_analysis_input_valid():
     """Test valid input creation."""
@@ -15,6 +17,7 @@ def test_video_analysis_input_valid():
     assert model.title == "Valid Title"
     assert model.views == 100
 
+
 def test_video_analysis_input_invalid_views():
     """Test invalid views (negative)."""
     data = {
@@ -27,6 +30,7 @@ def test_video_analysis_input_invalid_views():
     with pytest.raises(ValidationError) as exc:
         VideoAnalysisInput(**data)
     assert "Input should be greater than or equal to 0" in str(exc.value)
+
 
 def test_video_analysis_input_invalid_retention():
     """Test invalid retention (> 100)."""
@@ -41,6 +45,7 @@ def test_video_analysis_input_invalid_retention():
         VideoAnalysisInput(**data)
     assert "Input should be less than or equal to 100" in str(exc.value)
 
+
 def test_video_analysis_input_prompt_injection():
     """Test prompt injection detection in title."""
     data = {
@@ -53,6 +58,7 @@ def test_video_analysis_input_prompt_injection():
     with pytest.raises(ValidationError) as exc:
         VideoAnalysisInput(**data)
     assert "Potential prompt injection detected" in str(exc.value)
+
 
 def test_video_analysis_input_formula_injection():
     """Test formula injection detection in title."""
@@ -74,6 +80,7 @@ def test_video_analysis_input_formula_injection():
             VideoAnalysisInput(**data)
         assert "Formula Injection" in str(exc.value)
 
+
 def test_video_analysis_input_invalid_type():
     """Test invalid video type."""
     data = {
@@ -86,6 +93,7 @@ def test_video_analysis_input_invalid_type():
     with pytest.raises(ValidationError) as exc:
         VideoAnalysisInput(**data)
     assert "String should match pattern" in str(exc.value)
+
 
 def test_agent_analyze_semantics_typed():
     """Test that the agent accepts the typed list."""

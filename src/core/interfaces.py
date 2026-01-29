@@ -6,11 +6,13 @@ from typing import Protocol, Union, Optional
 from io import BytesIO
 import pandas as pd
 
+
 class UserInterface(Protocol):
     """
     Protocol for user interaction.
     Allows swapping the console UI for a web UI or mock UI for testing.
     """
+
     def display_header(self, text: str) -> None:
         """Displays a major section header."""
         ...
@@ -48,6 +50,7 @@ class Visualizer(Protocol):
     """
     Protocol for generating static visualizations.
     """
+
     def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
         """
         Generates a chart and returns the image as a byte stream.

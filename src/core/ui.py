@@ -9,17 +9,18 @@ from rich.panel import Panel
 from rich.text import Text
 from rich import box
 
-from src.core.interfaces import UserInterface
 
 class RichConsoleUI:
     """
     Implementation of UserInterface using the Rich library.
     """
+
     def __init__(self) -> None:
         self.console = Console()
 
     def display_header(self, text: str) -> None:
-        self.console.print(Panel(Text(text, justify="center", style="bold white"), style="bold blue"))
+        self.console.print(
+            Panel(Text(text, justify="center", style="bold white"), style="bold blue"))
 
     def display_section(self, text: str) -> None:
         self.console.print(f"\n[bold cyan]--- {text} ---[/bold cyan]")
