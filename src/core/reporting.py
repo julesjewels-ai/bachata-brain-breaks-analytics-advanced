@@ -143,6 +143,95 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
+    def _process_anomaly_sheet(self, writer: pd.ExcelWriter, v_type: str, df: pd.DataFrame):
+        """Processes a single anomaly sheet with styling and charts."""
+        sheet_name = f"{v_type} Anomalies"
+        # Rename columns for better readability
+        display_df = df.rename(columns=self.COLUMN_MAPPING)
+        display_df.to_excel(writer, sheet_name=sheet_name, index=False)
+        ws = writer.sheets[sheet_name]
+        self._apply_header_style(ws)
+        self._apply_number_formats(ws)
+        self._apply_conditional_formatting(ws)
+        self._adjust_column_widths(ws)
+
+        # Add Chart
+        # Locate 'Views' column
+        headers = ExcelReportGenerator._get_header_map(ws)
+        if 'Views' in headers and 'Video Title' in headers:
+            views_col = headers['Views']
+            title_col = headers['Video Title']
+            max_row = ws.max_row
+            max_col = ws.max_column
+
+            # Only add chart if there is data
+            if max_row > 1:
+                chart_builder = ChartBuilder(ws)
+                data_loc = ChartDataLocation(
+                    min_col=views_col,
+                    min_row=1,  # Include header for series name
+                    max_col=views_col,
+                    max_row=max_row,
+                    title_from_data=True,
+                    cats_min_col=title_col
+                )
+                chart_config = ChartConfig(
+                    title=f"Top {v_type} Views",
+                    x_axis_title="Video Title",
+                    y_axis_title="Views"
+                )
+
+                # Dynamic anchor: 2 columns to the right of the table
+                anchor_col = get_column_letter(max_col + 2)
+
+                chart_builder.add_bar_chart(
+                    data_loc=data_loc,
+                    config=chart_config,
+                    anchor=f"{anchor_col}2"
+                )
+
+    def _add_strategy_sheet(self, writer: pd.ExcelWriter, strategy: str):
+        """Adds and styles the strategy analysis sheet."""
+        pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
+            writer, sheet_name="Strategy", index=False
+        )
+        ws_strat = writer.sheets["Strategy"]
+        self._apply_header_style(ws_strat)
+        ws_strat.column_dimensions['A'].width = 100
+        ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+
+    def _add_visual_insights(self, writer: pd.ExcelWriter, anomalies: Dict[str, pd.DataFrame]):
+        """Generates and adds the visual insights sheet."""
+        # Combine all anomalies to one DF for visualization
+        all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+        if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
+            visualizer = MatplotlibVisualizer()
+            try:
+                img_stream = visualizer.generate_chart(
+                    all_anomalies,
+                    title="Views vs Retention Correlation",
+                    x_col="retention_avg_pct",
+                    y_col="views"
+                )
+
+                # Create sheet
+                ws_viz = writer.book.create_sheet("Visual Insights")
+
+                # Embed Image
+                # OpenPyXL Image requires a path or PIL Image object
+                pil_img = PILImage.open(img_stream)
+                img = XLImage(pil_img)
+                ws_viz.add_image(img, "A1")
+
+                # Add description
+                ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
+                ws_viz["A25"].font = Font(italic=True, color="555555")
+
+            except Exception as e:
+                # Log or handle error without crashing report
+                # In a real app, use logging.error
+                print(f"Warning: Failed to generate visualization: {e}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -158,87 +247,10 @@ class ExcelReportGenerator:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
-                    sheet_name = f"{v_type} Anomalies"
-                    # Rename columns for better readability
-                    display_df = df.rename(columns=self.COLUMN_MAPPING)
-                    display_df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    ws = writer.sheets[sheet_name]
-                    self._apply_header_style(ws)
-                    self._apply_number_formats(ws)
-                    self._apply_conditional_formatting(ws)
-                    self._adjust_column_widths(ws)
-
-                    # Add Chart
-                    # Locate 'Views' column
-                    headers = ExcelReportGenerator._get_header_map(ws)
-                    if 'Views' in headers and 'Video Title' in headers:
-                        views_col = headers['Views']
-                        title_col = headers['Video Title']
-                        max_row = ws.max_row
-                        max_col = ws.max_column
-
-                        # Only add chart if there is data
-                        if max_row > 1:
-                            chart_builder = ChartBuilder(ws)
-                            data_loc = ChartDataLocation(
-                                min_col=views_col,
-                                min_row=1, # Include header for series name
-                                max_col=views_col,
-                                max_row=max_row,
-                                title_from_data=True,
-                                cats_min_col=title_col
-                            )
-                            chart_config = ChartConfig(
-                                title=f"Top {v_type} Views",
-                                x_axis_title="Video Title",
-                                y_axis_title="Views"
-                            )
-
-                            # Dynamic anchor: 2 columns to the right of the table
-                            anchor_col = get_column_letter(max_col + 2)
-
-                            chart_builder.add_bar_chart(
-                                data_loc=data_loc,
-                                config=chart_config,
-                                anchor=f"{anchor_col}2"
-                            )
+                    self._process_anomaly_sheet(writer, v_type, df)
 
             # 2. Strategy Sheet
-            pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
-                writer, sheet_name="Strategy", index=False
-            )
-            ws_strat = writer.sheets["Strategy"]
-            self._apply_header_style(ws_strat)
-            ws_strat.column_dimensions['A'].width = 100
-            ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+            self._add_strategy_sheet(writer, strategy)
 
             # 3. Visual Insights (Embedded Matplotlib)
-            # Combine all anomalies to one DF for visualization
-            all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
-            if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
-                visualizer = MatplotlibVisualizer()
-                try:
-                    img_stream = visualizer.generate_chart(
-                        all_anomalies,
-                        title="Views vs Retention Correlation",
-                        x_col="retention_avg_pct",
-                        y_col="views"
-                    )
-
-                    # Create sheet
-                    ws_viz = writer.book.create_sheet("Visual Insights")
-
-                    # Embed Image
-                    # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
-                    img = XLImage(pil_img)
-                    ws_viz.add_image(img, "A1")
-
-                    # Add description
-                    ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
-                    ws_viz["A25"].font = Font(italic=True, color="555555")
-
-                except Exception as e:
-                    # Log or handle error without crashing report
-                    # In a real app, use logging.error
-                    print(f"Warning: Failed to generate visualization: {e}")
+            self._add_visual_insights(writer, anomalies)
