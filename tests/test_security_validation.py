@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from src.core.app import VideoAnalysisInput, GeminiThinkingAgent
+from src.core.models import VideoAnalysisInput
+from src.core.services import GeminiThinkingAgent
 
 def test_video_analysis_input_valid():
     """Test valid input creation."""
