@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from src.core.app import VideoAnalysisInput, GeminiThinkingAgent
+from src.core.domain import VideoAnalysisInput
+from src.core.services.ai import GeminiStreamingService
 
 def test_video_analysis_input_valid():
     """Test valid input creation."""
@@ -89,7 +90,7 @@ def test_video_analysis_input_invalid_type():
 
 def test_agent_analyze_semantics_typed():
     """Test that the agent accepts the typed list."""
-    agent = GeminiThinkingAgent()
+    agent = GeminiStreamingService()
     inputs = [
         VideoAnalysisInput(
             video_id="vid_1",

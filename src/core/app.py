@@ -11,58 +11,11 @@ from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import UserInterface
+from src.core.domain import VideoAnalysisInput
+from src.core.services.ai import GeminiStreamingService
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-class VideoAnalysisInput(BaseModel):
-    """
-    Schema for video data to be analyzed by the agent.
-    Strictly validates input to prevent injection and ensure data integrity.
-    """
-    video_id: str = Field(..., pattern=r"^vid_\d+$")
-    title: str = Field(..., min_length=1, max_length=200)
-    views: int = Field(..., ge=0)
-    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
-    type: str = Field(..., pattern=r"^(Shorts|Long)$")
-
-    @field_validator('title')
-    @classmethod
-    def validate_title(cls, v: str) -> str:
-        # Basic sanitization and prompt injection check
-        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
-        for pattern in forbidden_patterns:
-            if pattern in v:
-                raise ValueError(f"Potential prompt injection detected: {pattern}")
-
-        # Formula Injection Prevention
-        if v.startswith(('=', '@', '+', '-')):
-            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
-
-        # Ensure no control characters
-        if not v.isprintable():
-            raise ValueError("Title contains non-printable characters")
-        return v
-
-class GeminiThinkingAgent:
-    """
-    Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
-    """
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
-        """
-        Analyzes titles and thumbnails (metadata) to find conversion patterns.
-        Now strictly typed for security.
-        """
-        if not videos:
-            return "No data to analyze."
-            
-        # Simulated 'Thinking Mode' logic
-        return (
-            "[Gemini 3 Thinking Mode] Analysis Complete:\n"
-            "1. Pattern Identification: High-retention videos often use 'sensual' or 'footwork' keywords.\n"
-            "2. Strategy: Use high-contrast thumbnails with dynamic poses.\n"
-            "3. Recommendation: Rename lower performers to include 'Step-by-Step' hook."
-        )
 
 class BachataAnalyticsApp:
     """
@@ -71,7 +24,7 @@ class BachataAnalyticsApp:
     def __init__(self, ui: UserInterface):
         # Securely load configuration
         self.config = AppConfig.get_config()
-        self.agent = GeminiThinkingAgent()
+        self.agent = GeminiStreamingService()
         self.ui = ui
 
     def ingest_data(self) -> pd.DataFrame:
