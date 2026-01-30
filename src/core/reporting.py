@@ -11,8 +11,10 @@ from openpyxl.formatting.rule import DataBarRule
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.drawing.image import Image as XLImage
 from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
+from io import BytesIO
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
@@ -143,6 +145,37 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
+    def _safe_load_image(self, img_stream: BytesIO) -> PILImage.Image:
+        """
+        Safely loads an image from a stream with protection against Decompression Bombs.
+
+        Args:
+            img_stream: The image data stream.
+
+        Returns:
+            PIL.Image.Image: The loaded image object.
+
+        Raises:
+            ValueError: If the image is invalid or exceeds pixel limits.
+        """
+        # Set global pixel limit to prevent DoS (approx 50MB uncompressed)
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # Verify file integrity before processing
+            with PILImage.open(img_stream) as img:
+                img.verify()
+
+            # Reset stream for re-opening
+            img_stream.seek(0)
+
+            # Re-open for actual use
+            return PILImage.open(img_stream)
+
+        except (UnidentifiedImageError, IOError, PILImage.DecompressionBombError) as e:
+            # Raise a secure, sanitized error
+            raise ValueError(f"Security event: Invalid image or potential DoS attack. {str(e)}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -230,7 +263,7 @@ class ExcelReportGenerator:
 
                     # Embed Image
                     # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
+                    pil_img = self._safe_load_image(img_stream)
                     img = XLImage(pil_img)
                     ws_viz.add_image(img, "A1")
 
