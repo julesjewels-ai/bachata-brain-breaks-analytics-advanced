@@ -3,6 +3,8 @@ import pandas as pd
 from typing import Union, Optional
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import UserInterface
+from src.core.services.ai import GeminiStreamingService
+from src.core.services.analytics import AnalyticsService
 
 class MockUI:
     def __init__(self):
@@ -34,7 +36,9 @@ class MockUI:
 
 def test_app_integration_with_ui():
     ui = MockUI()
-    app = BachataAnalyticsApp(ui=ui)
+    analytics_service = AnalyticsService()
+    ai_service = GeminiStreamingService()
+    app = BachataAnalyticsApp(ui=ui, analytics_service=analytics_service, ai_service=ai_service)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
     app.run()

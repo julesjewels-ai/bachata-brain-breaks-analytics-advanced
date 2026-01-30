@@ -8,14 +8,17 @@ from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
+from src.core.services.ai import GeminiStreamingService
+from src.core.services.analytics import AnalyticsService
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Bachata Brain Breaks Analytics: Audience & Retention Dashboard"
     )
     parser.add_argument(
-        "--version", 
-        action="store_true", 
+        "--version",
+        action="store_true",
         help="Show application version"
     )
     args = parser.parse_args()
@@ -29,7 +32,16 @@ def main() -> None:
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:
-        app = BachataAnalyticsApp(ui=ui)
+        # Initialize Services
+        analytics_service = AnalyticsService()
+        ai_service = GeminiStreamingService()
+
+        # Inject Dependencies
+        app = BachataAnalyticsApp(
+            ui=ui,
+            analytics_service=analytics_service,
+            ai_service=ai_service
+        )
         app.run()
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
@@ -37,6 +49,7 @@ def main() -> None:
     except Exception as e:
         ui.display_error(f"Critical Error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

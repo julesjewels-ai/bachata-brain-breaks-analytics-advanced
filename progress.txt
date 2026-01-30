@@ -1,0 +1,3 @@
+Current Task: Complete pre commit steps
+Status: In Progress
+Last Action: Updated Entry Point (main.py updated to wire dependencies).
