@@ -1,36 +1,9 @@
-src/core/interfaces.py:6: error: Library stubs not installed for "pandas"  [import-untyped]
-src/core/formatting.py:5: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-src/core/formatting.py:6: error: Library stubs not installed for "pandas"  [import-untyped]
-src/core/charting.py:6: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-src/core/charting.py:7: error: Library stubs not installed for "openpyxl.chart"  [import-untyped]
-src/core/charting.py:8: error: Library stubs not installed for "openpyxl.worksheet.worksheet"  [import-untyped]
-src/core/charting.py:8: note: Hint: "python3 -m pip install types-openpyxl"
-src/core/ui.py:5: error: Library stubs not installed for "pandas"  [import-untyped]
-src/core/ui.py:6: error: Cannot find implementation or library stub for module named "rich.console"  [import-not-found]
-src/core/ui.py:7: error: Cannot find implementation or library stub for module named "rich.table"  [import-not-found]
-src/core/ui.py:8: error: Cannot find implementation or library stub for module named "rich.panel"  [import-not-found]
-src/core/ui.py:9: error: Cannot find implementation or library stub for module named "rich.text"  [import-not-found]
-src/core/ui.py:10: error: Cannot find implementation or library stub for module named "rich"  [import-not-found]
-tests/test_formatting.py:1: error: Cannot find implementation or library stub for module named "pytest"  [import-not-found]
-tests/test_formatting.py:2: error: Library stubs not installed for "pandas"  [import-untyped]
-tests/test_formatting.py:3: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-tests/test_charting.py:5: error: Cannot find implementation or library stub for module named "pytest"  [import-not-found]
-tests/test_charting.py:7: error: Library stubs not installed for "openpyxl.chart"  [import-untyped]
-src/core/reporting.py:6: error: Library stubs not installed for "pandas"  [import-untyped]
-src/core/reporting.py:7: error: Library stubs not installed for "openpyxl.styles"  [import-untyped]
-src/core/reporting.py:8: error: Library stubs not installed for "openpyxl.utils"  [import-untyped]
-src/core/reporting.py:9: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-src/core/config.py:7: error: Cannot find implementation or library stub for module named "dotenv"  [import-not-found]
-src/core/config.py:8: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-tests/test_config.py:5: error: Cannot find implementation or library stub for module named "pytest"  [import-not-found]
-src/core/app.py:8: error: Library stubs not installed for "pandas"  [import-untyped]
-src/core/app.py:8: note: Hint: "python3 -m pip install pandas-stubs"
-src/core/app.py:8: note: (or run "mypy --install-types" to install all missing stub packages)
-src/core/app.py:8: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
-src/core/app.py:9: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-tests/test_ui_integration.py:1: error: Cannot find implementation or library stub for module named "pytest"  [import-not-found]
-tests/test_ui_integration.py:2: error: Library stubs not installed for "pandas"  [import-untyped]
-tests/test_security_validation.py:1: error: Cannot find implementation or library stub for module named "pytest"  [import-not-found]
-tests/test_security_validation.py:2: error: Cannot find implementation or library stub for module named "pydantic"  [import-not-found]
-tests/test_core.py:4: error: Library stubs not installed for "pandas"  [import-untyped]
-Found 31 errors in 13 files (checked 17 source files)
+src/api/routes.py:11: error: Incompatible return value type (got "GeminiStreamingService", expected "AIService")  [return-value]
+src/api/routes.py:11: note: Following member(s) of "GeminiStreamingService" have conflicts:
+src/api/routes.py:11: note:     Expected:
+src/api/routes.py:11: note:         def analyze_stream(self, videos: list[VideoAnalysisInput]) -> Coroutine[Any, Any, AsyncGenerator[str, None]]
+src/api/routes.py:11: note:     Got:
+src/api/routes.py:11: note:         def analyze_stream(self, videos: list[VideoAnalysisInput]) -> AsyncGenerator[str, None]
+src/api/routes.py:47: error: "Coroutine[Any, Any, AsyncGenerator[str, None]]" has no attribute "__aiter__" (not async iterable)  [attr-defined]
+src/api/routes.py:47: note: Maybe you forgot to use "await"?
+Found 2 errors in 1 file (checked 28 source files)

@@ -2,7 +2,9 @@
 Unit tests for core application logic.
 """
 import pandas as pd
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp
+from src.core.domain import VideoAnalysisInput
+from src.core.services.ai import GeminiStreamingService
 
 class DummyUI:
     def display_header(self, text: str): pass
@@ -16,7 +18,7 @@ class DummyUI:
 
 def test_agent_initialization():
     app = BachataAnalyticsApp(ui=DummyUI())
-    assert isinstance(app.agent, GeminiThinkingAgent)
+    assert isinstance(app.ai_service, GeminiStreamingService)
 
 def test_ingest_data_structure():
     app = BachataAnalyticsApp(ui=DummyUI())
@@ -76,7 +78,7 @@ def test_prepare_agent_input():
     assert result[0].retention_avg_pct == 90.0
 
 def test_gemini_agent_output():
-    agent = GeminiThinkingAgent()
+    service = GeminiStreamingService()
     video = VideoAnalysisInput(
         video_id="vid_1",
         title="test",
@@ -84,5 +86,5 @@ def test_gemini_agent_output():
         retention_avg_pct=50.0,
         type="Shorts"
     )
-    output = agent.analyze_semantics([video])
+    output = service.analyze_semantics([video])
     assert "Gemini 3 Thinking Mode" in output
