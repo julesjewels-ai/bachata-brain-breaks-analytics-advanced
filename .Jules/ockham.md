@@ -7,3 +7,5 @@
 ## 2025-02-18 - [Duplicated Header Mapping] **Observation:** `src/core/reporting.py` repeated the logic for mapping header names to column indices in 3 different places (`_apply_number_formats`, `_apply_conditional_formatting`, `generate_excel`). **Action:** Extracted `_get_header_map` helper method to consolidate this logic.
 
 ## 2025-02-18 - [Dead Code (formatting)] **Observation:** `format_dataframe_for_display` in `src/core/formatting.py` was not used in the application flow (which uses `RichConsoleUI` and `prepare_display_dataframe`). **Action:** Removed the unused function and its tests.
+
+## 2025-02-19 - [Complex Method Extraction] **Observation:** `ExcelReportGenerator.generate_excel` had a cyclomatic complexity of 12, handling orchestration, styling, charting, and image embedding. **Action:** Extracted logic into `_add_anomaly_chart`, `_add_strategy_sheet`, and `_add_visual_insights`, reducing complexity to 4.
