@@ -7,3 +7,5 @@
 ## 2025-02-18 - [Duplicated Header Mapping] **Observation:** `src/core/reporting.py` repeated the logic for mapping header names to column indices in 3 different places (`_apply_number_formats`, `_apply_conditional_formatting`, `generate_excel`). **Action:** Extracted `_get_header_map` helper method to consolidate this logic.
 
 ## 2025-02-18 - [Dead Code (formatting)] **Observation:** `format_dataframe_for_display` in `src/core/formatting.py` was not used in the application flow (which uses `RichConsoleUI` and `prepare_display_dataframe`). **Action:** Removed the unused function and its tests.
+
+## 2025-02-19 - [Long Method (generate_excel)] **Observation:** `generate_excel` in `src/core/reporting.py` was a ~70 line method handling sheet creation, styling, charting, and visualization, violating Single Responsibility. **Action:** Refactored by extracting `_create_anomaly_sheet`, `_add_anomaly_chart`, `_add_strategy_sheet`, and `_add_visual_insights` methods.
