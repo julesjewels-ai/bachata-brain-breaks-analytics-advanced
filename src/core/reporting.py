@@ -4,6 +4,7 @@ Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
 from numbers import Number
+from io import BytesIO
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -143,6 +144,28 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
+    @staticmethod
+    def _safe_load_image(image_stream: BytesIO) -> PILImage.Image:
+        """
+        Securely loads an image with checks for decompression bombs.
+        Enforces pixel limits and verifies integrity.
+        """
+        # Prevent Decompression Bomb DoS
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # Verify integrity
+            image_stream.seek(0)
+            with PILImage.open(image_stream) as img:
+                img.verify()
+
+            # Reset stream and load for use
+            image_stream.seek(0)
+            img = PILImage.open(image_stream)
+            return img
+        except (IOError, SyntaxError) as e:
+            raise ValueError(f"Security Check Failed: Invalid or malicious image file. {e}")
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,
@@ -230,7 +253,7 @@ class ExcelReportGenerator:
 
                     # Embed Image
                     # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
+                    pil_img = self._safe_load_image(img_stream)
                     img = XLImage(pil_img)
                     ws_viz.add_image(img, "A1")
 
