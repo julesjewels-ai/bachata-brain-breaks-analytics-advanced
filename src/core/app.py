@@ -79,29 +79,28 @@ class BachataAnalyticsApp:
         Simulates ingesting channel data (Shorts and Long-form).
         In a real app, this would connect to YouTube Analytics API.
         """
-        self.ui.display_status("Ingesting channel data...")
+        with self.ui.loading("Ingesting channel data..."):
+            # Generate mock data
+            titles = [
+                'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
+                'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
+                'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
+            ] * 2
 
-        # Generate mock data
-        titles = [
-            'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
-            'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-            'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
-        ] * 2
+            raw_data = []
+            for i in range(1, 21):
+                raw_data.append({
+                    'video_id': f'vid_{i}',
+                    'title': titles[i-1],
+                    'views': random.randint(500, 500000),
+                    'retention_avg_pct': random.uniform(20.0, 95.0),
+                    'type': 'Long' if i % 3 != 0 else 'Shorts'
+                })
 
-        raw_data = []
-        for i in range(1, 21):
-            raw_data.append({
-                'video_id': f'vid_{i}',
-                'title': titles[i-1],
-                'views': random.randint(500, 500000),
-                'retention_avg_pct': random.uniform(20.0, 95.0),
-                'type': 'Long' if i % 3 != 0 else 'Shorts'
-            })
+            # Validate data using VideoAnalysisInput (Ensures type safety & security)
+            validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
 
-        # Validate data using VideoAnalysisInput (Ensures type safety & security)
-        validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
-
-        return pd.DataFrame(validated_data)
+            return pd.DataFrame(validated_data)
 
     def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         """
@@ -152,14 +151,15 @@ class BachataAnalyticsApp:
             self.ui.display_error("Aborting analysis for security.")
             return
 
-        strategy = self.agent.analyze_semantics(analysis_input)
+        with self.ui.loading("Analyzing semantics with Gemini 3..."):
+            strategy = self.agent.analyze_semantics(analysis_input)
         self.ui.display_info(strategy)
 
         # 4. Generate Excel Report
-        self.ui.display_status("Generating Excel Report...")
         try:
-            report_gen = ExcelReportGenerator()
-            report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
+            with self.ui.loading("Generating Excel Report..."):
+                report_gen = ExcelReportGenerator()
+                report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
             self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")

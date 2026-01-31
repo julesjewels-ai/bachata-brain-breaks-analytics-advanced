@@ -1,7 +1,7 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional
+from typing import Union, Optional, ContextManager, Any
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
@@ -26,6 +26,9 @@ class RichConsoleUI:
 
     def display_status(self, text: str) -> None:
         self.console.print(f"[yellow]{text}[/yellow]")
+
+    def loading(self, text: str) -> ContextManager[Any]:
+        return self.console.status(text, spinner="dots")
 
     def display_table(self, data: pd.DataFrame, title: Optional[str] = None) -> None:
         if data.empty:
