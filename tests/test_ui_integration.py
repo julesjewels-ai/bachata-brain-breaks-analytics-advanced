@@ -51,6 +51,6 @@ def test_app_integration_with_ui():
     assert any(c[0] == 'table' for c in ui.calls)
     assert any(c[0] == 'section' and "Gemini 3 Agent Analysis" in c[1] for c in ui.calls)
     assert any(c[0] == 'info' for c in ui.calls) # Strategy
-    assert any(c[0] == 'status' and "Generating Excel Report" in c[1] for c in ui.calls)
+    assert any(c[0] == 'loading' and "Generating Excel Report" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Report saved" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Dashboard update complete" in c[1] for c in ui.calls)

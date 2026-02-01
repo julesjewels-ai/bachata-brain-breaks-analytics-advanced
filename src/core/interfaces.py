@@ -2,9 +2,26 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any
+from typing import Protocol, Union, Optional, ContextManager, Any, AsyncGenerator
 from io import BytesIO
 import pandas as pd
+
+class AIService(Protocol):
+    """
+    Protocol for AI Service interactions.
+    """
+    def analyze_semantics(self, videos: Any) -> str:
+        """
+        Synchronous analysis of semantic patterns.
+        """
+        ...
+
+    def analyze_stream(self, videos: Any) -> AsyncGenerator[str, None]:
+        """
+        Asynchronous streaming analysis of semantic patterns.
+        """
+        ...
+
 
 class UserInterface(Protocol):
     """
