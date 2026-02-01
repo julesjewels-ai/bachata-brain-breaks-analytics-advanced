@@ -2,7 +2,7 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional
+from typing import Protocol, Union, Optional, ContextManager, Any
 from io import BytesIO
 import pandas as pd
 
@@ -41,6 +41,10 @@ class UserInterface(Protocol):
 
     def display_message(self, text: str) -> None:
         """Displays a standard message."""
+        ...
+
+    def loading(self, text: str) -> ContextManager[Any]:
+        """Returns a context manager for a loading state."""
         ...
 
 
