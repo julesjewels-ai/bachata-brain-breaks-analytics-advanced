@@ -2,6 +2,7 @@
 Unit tests for core application logic.
 """
 import pandas as pd
+from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
 
 class DummyUI:
@@ -13,6 +14,7 @@ class DummyUI:
     def display_success(self, text: str): pass
     def display_info(self, text: str): pass
     def display_message(self, text: str): pass
+    def loading(self, text: str): return nullcontext()
 
 def test_agent_initialization():
     app = BachataAnalyticsApp(ui=DummyUI())

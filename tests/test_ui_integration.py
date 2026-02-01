@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
-from typing import Union, Optional
+from typing import Union, Optional, ContextManager, Any
+from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import UserInterface
 
@@ -31,6 +32,10 @@ class MockUI:
 
     def display_message(self, text: str) -> None:
         self.calls.append(('message', text))
+
+    def loading(self, text: str) -> ContextManager[Any]:
+        self.calls.append(('loading', text))
+        return nullcontext()
 
 def test_app_integration_with_ui():
     ui = MockUI()

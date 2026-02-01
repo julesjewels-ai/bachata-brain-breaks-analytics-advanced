@@ -4,6 +4,7 @@ Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
 from numbers import Number
+import logging
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -17,6 +18,7 @@ import re
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
 
+logger = logging.getLogger(__name__)
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
@@ -240,5 +242,4 @@ class ExcelReportGenerator:
 
                 except Exception as e:
                     # Log or handle error without crashing report
-                    # In a real app, use logging.error
-                    print(f"Warning: Failed to generate visualization: {e}")
+                    logger.warning(f"Failed to generate visualization: {e}")
