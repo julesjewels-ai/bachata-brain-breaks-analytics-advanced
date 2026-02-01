@@ -14,6 +14,7 @@ from openpyxl.drawing.image import Image as XLImage
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
+from io import BytesIO
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
@@ -41,6 +42,34 @@ class ExcelReportGenerator:
 
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
+
+    @staticmethod
+    def _safe_load_image(stream: BytesIO) -> PILImage.Image:
+        """
+        Securely loads an image from a stream with size limits and verification.
+        Prevents Decompression Bomb (DoS) attacks.
+        """
+        # Set pixel limit (50MP)
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # Open the image
+            img = PILImage.open(stream)
+
+            # Verify integrity (this reads the file/stream entirely)
+            img.verify()
+
+            # Verify closes the file/stream, so we must reset stream and reopen
+            if hasattr(stream, 'seek'):
+                stream.seek(0)
+
+            # Re-open for actual use
+            img = PILImage.open(stream)
+            return img
+
+        except (IOError, ValidationError, Exception) as e:
+            logger.error(f"Security event: Image verification failed: {e}")
+            raise RuntimeError("Invalid image file processing attempt.")
 
     # Mapping from DataFrame columns to Excel headers
     COLUMN_MAPPING = {
@@ -232,7 +261,7 @@ class ExcelReportGenerator:
 
                     # Embed Image
                     # OpenPyXL Image requires a path or PIL Image object
-                    pil_img = PILImage.open(img_stream)
+                    pil_img = ExcelReportGenerator._safe_load_image(img_stream)
                     img = XLImage(pil_img)
                     ws_viz.add_image(img, "A1")
 
