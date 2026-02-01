@@ -4,13 +4,13 @@ Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator, ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
-from src.core.interfaces import UserInterface
+from src.core.interfaces import UserInterface, AIService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -44,34 +44,14 @@ class VideoAnalysisInput(BaseModel):
             raise ValueError("Title contains non-printable characters")
         return v
 
-class GeminiThinkingAgent:
-    """
-    Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
-    """
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
-        """
-        Analyzes titles and thumbnails (metadata) to find conversion patterns.
-        Now strictly typed for security.
-        """
-        if not videos:
-            return "No data to analyze."
-            
-        # Simulated 'Thinking Mode' logic
-        return (
-            "[Gemini 3 Thinking Mode] Analysis Complete:\n"
-            "1. Pattern Identification: High-retention videos often use 'sensual' or 'footwork' keywords.\n"
-            "2. Strategy: Use high-contrast thumbnails with dynamic poses.\n"
-            "3. Recommendation: Rename lower performers to include 'Step-by-Step' hook."
-        )
-
 class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, ui: UserInterface):
+    def __init__(self, ui: UserInterface, ai_service: Optional[AIService] = None):
         # Securely load configuration
         self.config = AppConfig.get_config()
-        self.agent = GeminiThinkingAgent()
+        self.ai_service = ai_service
         self.ui = ui
 
     def ingest_data(self) -> pd.DataFrame:
@@ -152,7 +132,10 @@ class BachataAnalyticsApp:
             return
 
         with self.ui.loading("Analyzing semantics with Gemini 3..."):
-            strategy = self.agent.analyze_semantics(analysis_input)
+            if self.ai_service:
+                strategy = self.ai_service.analyze_semantics(analysis_input)
+            else:
+                strategy = "AI Service not configured. Skipping semantic analysis."
 
         self.ui.display_info(strategy)
 

@@ -2,7 +2,7 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any
+from typing import Protocol, Union, Optional, ContextManager, Any, List
 from io import BytesIO
 import pandas as pd
 
@@ -64,5 +64,21 @@ class Visualizer(Protocol):
 
         Returns:
             BytesIO: Image data stream (e.g., PNG).
+        """
+        ...
+
+class AIService(Protocol):
+    """
+    Protocol for AI Service interactions.
+    """
+    def analyze_semantics(self, videos: List[Any]) -> str:
+        """
+        Analyzes semantic patterns in video data.
+
+        Args:
+            videos: List of VideoAnalysisInput objects or dicts.
+
+        Returns:
+            Analysis string.
         """
         ...

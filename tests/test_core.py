@@ -2,8 +2,9 @@
 Unit tests for core application logic.
 """
 import pandas as pd
+from typing import List, Any
 from contextlib import nullcontext
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp, VideoAnalysisInput
 
 class DummyUI:
     def display_header(self, text: str): pass
@@ -16,9 +17,14 @@ class DummyUI:
     def display_message(self, text: str): pass
     def loading(self, text: str): return nullcontext()
 
+class MockAIService:
+    def analyze_semantics(self, videos: List[Any]) -> str:
+        return "Mock Analysis Result"
+
 def test_agent_initialization():
-    app = BachataAnalyticsApp(ui=DummyUI())
-    assert isinstance(app.agent, GeminiThinkingAgent)
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    assert app.ai_service is ai_service
 
 def test_ingest_data_structure():
     app = BachataAnalyticsApp(ui=DummyUI())
@@ -77,8 +83,9 @@ def test_prepare_agent_input():
     # bottom 5 (tail of desc sorted): 40, 30, 20, 10, 0
     assert result[0].retention_avg_pct == 90.0
 
-def test_gemini_agent_output():
-    agent = GeminiThinkingAgent()
+def test_ai_service_output():
+    """Test the AI Service interaction."""
+    service = MockAIService()
     video = VideoAnalysisInput(
         video_id="vid_1",
         title="test",
@@ -86,5 +93,5 @@ def test_gemini_agent_output():
         retention_avg_pct=50.0,
         type="Shorts"
     )
-    output = agent.analyze_semantics([video])
-    assert "Gemini 3 Thinking Mode" in output
+    output = service.analyze_semantics([video])
+    assert "Mock Analysis Result" in output
