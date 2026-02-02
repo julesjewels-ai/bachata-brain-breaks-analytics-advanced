@@ -2,7 +2,7 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any
+from typing import Protocol, Union, Optional, ContextManager, Any, List, Dict, AsyncGenerator
 from io import BytesIO
 import pandas as pd
 
@@ -64,5 +64,24 @@ class Visualizer(Protocol):
 
         Returns:
             BytesIO: Image data stream (e.g., PNG).
+        """
+        ...
+
+
+class AIService(Protocol):
+    """
+    Protocol for AI operations.
+    Supports both synchronous and streaming analysis.
+    """
+    def analyze_semantics(self, videos: List[Dict[str, Any]]) -> str:
+        """
+        Analyzes video data semantics and returns a complete strategy string.
+        """
+        ...
+
+    def analyze_stream(self, videos: List[Dict[str, Any]]) -> AsyncGenerator[str, None]:
+        """
+        Analyzes video data and yields tokens as they are generated.
+        Note: Implemented as an async generator.
         """
         ...
