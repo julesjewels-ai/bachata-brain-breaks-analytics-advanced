@@ -3,6 +3,7 @@ Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
 from typing import Dict
+from io import BytesIO
 from numbers import Number
 import logging
 import pandas as pd
@@ -202,6 +203,32 @@ class ExcelReportGenerator:
         ws_strat.column_dimensions['A'].width = 100
         ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
 
+    @staticmethod
+    def _safe_load_image(stream: BytesIO) -> PILImage.Image:
+        """
+        Securely loads an image from a stream with size limits and verification.
+        Prevents Decompression Bomb DoS and processes only valid images.
+        """
+        # Enforce pixel limit for Decompression Bomb protection
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # Open the image (lazy operation)
+            with PILImage.open(stream) as img:
+                # Verify file integrity (checks headers/structure, not pixel data)
+                img.verify()
+
+            # Reset stream pointer after verify() (which may consume the stream)
+            stream.seek(0)
+
+            # Re-open for actual use (since verify() may close the file or invalidate the object)
+            img = PILImage.open(stream)
+            return img
+
+        except (PILImage.DecompressionBombError, Exception) as e:
+            logger.error(f"Image security check failed: {e}")
+            raise RuntimeError("Image file processing attempt failed: Invalid or malicious file detected.") from e
+
     def _add_visual_insights(self, writer, anomalies: Dict[str, pd.DataFrame]) -> None:
         """Generates and embeds visual insights chart."""
         # Combine all anomalies to one DF for visualization
@@ -219,9 +246,9 @@ class ExcelReportGenerator:
                 # Create sheet
                 ws_viz = writer.book.create_sheet("Visual Insights")
 
-                # Embed Image
+                # Embed Image securely
                 # OpenPyXL Image requires a path or PIL Image object
-                pil_img = PILImage.open(img_stream)
+                pil_img = self._safe_load_image(img_stream)
                 img = XLImage(pil_img)
                 ws_viz.add_image(img, "A1")
 
