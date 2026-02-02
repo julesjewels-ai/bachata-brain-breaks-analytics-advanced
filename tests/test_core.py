@@ -3,7 +3,9 @@ Unit tests for core application logic.
 """
 import pandas as pd
 from contextlib import nullcontext
-from src.core.app import BachataAnalyticsApp, GeminiThinkingAgent, VideoAnalysisInput
+from src.core.app import BachataAnalyticsApp
+from src.core.ai import GeminiThinkingAgent
+from src.core.models import VideoAnalysisInput
 
 class DummyUI:
     def display_header(self, text: str): pass
@@ -16,19 +18,28 @@ class DummyUI:
     def display_message(self, text: str): pass
     def loading(self, text: str): return nullcontext()
 
+class MockAIService:
+    def analyze_semantics(self, videos):
+        return "Mock Analysis"
+    async def analyze_stream(self, videos):
+        yield "Mock Analysis"
+
 def test_agent_initialization():
-    app = BachataAnalyticsApp(ui=DummyUI())
-    assert isinstance(app.agent, GeminiThinkingAgent)
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    assert app.ai_service == ai_service
 
 def test_ingest_data_structure():
-    app = BachataAnalyticsApp(ui=DummyUI())
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
     df = app.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
     assert list(df.columns) == expected_cols
 
 def test_outlier_detection():
-    app = BachataAnalyticsApp(ui=DummyUI())
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3'],
         'title': ['A', 'B', 'Viral'],
@@ -45,7 +56,8 @@ def test_outlier_detection():
 
 def test_outlier_detection_dynamic_types():
     """Test that outlier detection handles arbitrary types dynamically."""
-    app = BachataAnalyticsApp(ui=DummyUI())
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3', '4'],
         'title': ['A', 'B', 'C', 'D'],
@@ -60,7 +72,8 @@ def test_outlier_detection_dynamic_types():
     assert len(anomalies['NewType2']) == 1
 
 def test_prepare_agent_input():
-    app = BachataAnalyticsApp(ui=DummyUI())
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
     df = pd.DataFrame({
         'video_id': [f'vid_{i}' for i in range(10)],
         'title': [f'Title {i}' for i in range(10)],

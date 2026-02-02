@@ -1,0 +1,5 @@
+# Progress Log
+
+## 2025-05-XX
+- Initialized project tracking files.
+- Planned refactoring of `BachataAnalyticsApp` to use Dependency Injection for `AIService`.
