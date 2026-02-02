@@ -54,3 +54,41 @@ def test_excel_generation_conditional_formatting(tmp_path):
 
     # This assertion should fail before implementation
     assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
+
+
+class MockCell:
+    def __init__(self, value, number_format=None):
+        self.value = value
+        self.number_format = number_format
+
+def test_estimate_cell_width():
+    """Test the _estimate_cell_width helper method."""
+    # Test None
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(None)) == 0
+
+    # Test String
+    assert ExcelReportGenerator._estimate_cell_width(MockCell("Hello")) == 5
+
+    # Test Integer
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(12345)) == 5
+
+    # Test Float (default)
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(12.34)) == 5
+
+    # Test Formatted Number (#,##0)
+    # 1234 -> 1,234 (length 5)
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234, '#,##0')) == 5
+
+    # Test Formatted Number with decimals (#,##0.00)
+    # 1234.56 -> 1,234.56 (length 8)
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8
+
+    # Test Percentage (0.00%)
+    # 95.5 -> 95.50% (length 6)
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(95.5, '0.00%')) == 6
+
+    # Test Percentage with quotes (0.00"%")
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6
+
+    # Test Unknown Format
+    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234, 'General')) == 4

@@ -59,21 +59,21 @@ class ExcelReportGenerator:
             return 0
 
         val = cell.value
-        number_format = cell.number_format
+        fmt = cell.number_format
 
-        # Handle formatted numbers
-        if isinstance(val, Number) and number_format:
-            # Thousands separator (e.g., #,##0)
-            if '#,##0' in number_format:
-                precision = 2 if '.00' in number_format else 0
-                return len(f"{val:,.{precision}f}")
+        # Return early if not a number with a format
+        if not (isinstance(val, Number) and fmt):
+            return len(str(val))
 
-            # Percentage (e.g., 0.00%)
-            # If value is 95.5, and format is 0.00"%", it displays as 95.50%
-            if '0.00"%"' in number_format or '0.00%' in number_format:
-                return len(f"{val:.2f}%")
+        # Thousands separator (e.g., #,##0)
+        if '#,##0' in fmt:
+            precision = 2 if '.00' in fmt else 0
+            return len(f"{val:,.{precision}f}")
 
-        # Default fallback to string length
+        # Percentage (e.g., 0.00%)
+        if '0.00%' in fmt or '0.00"%"' in fmt:
+            return len(f"{val:.2f}%")
+
         return len(str(val))
 
     @staticmethod
