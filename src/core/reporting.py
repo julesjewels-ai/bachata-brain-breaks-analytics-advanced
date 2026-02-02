@@ -2,7 +2,7 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 from numbers import Number
 import logging
 import pandas as pd
@@ -61,10 +61,16 @@ class ExcelReportGenerator:
         val = cell.value
         fmt = cell.number_format
 
-        # Return early if not a number with a format
-        if not (isinstance(val, Number) and fmt):
-            return len(str(val))
+        if isinstance(val, Number) and fmt:
+            width = ExcelReportGenerator._get_formatted_width(val, fmt)
+            if width:
+                return width
 
+        return len(str(val))
+
+    @staticmethod
+    def _get_formatted_width(val: Number, fmt: str) -> Optional[int]:
+        """Helper to calculate width for specific Excel number formats."""
         # Thousands separator (e.g., #,##0)
         if '#,##0' in fmt:
             precision = 2 if '.00' in fmt else 0
@@ -74,7 +80,7 @@ class ExcelReportGenerator:
         if '0.00%' in fmt or '0.00"%"' in fmt:
             return len(f"{val:.2f}%")
 
-        return len(str(val))
+        return None
 
     @staticmethod
     def _adjust_column_widths(ws):
