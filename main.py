@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
+from src.core.ai import GeminiThinkingAgent
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -27,9 +28,12 @@ def main() -> None:
     # Initialize UI
     ui = RichConsoleUI()
 
+    # Initialize AI Service
+    ai_service = GeminiThinkingAgent()
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
-        app = BachataAnalyticsApp(ui=ui)
+        app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
         app.run()
     except ValidationError as e:
         ui.display_error(format_validation_error(e))

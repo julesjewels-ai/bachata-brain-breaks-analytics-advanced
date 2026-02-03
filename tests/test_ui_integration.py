@@ -37,9 +37,16 @@ class MockUI:
         self.calls.append(('loading', text))
         return nullcontext()
 
+class MockAIService:
+    def analyze_semantics(self, videos):
+        return "Mock Analysis Strategy"
+    async def analyze_stream(self, videos):
+        yield "Mock Analysis Strategy"
+
 def test_app_integration_with_ui():
     ui = MockUI()
-    app = BachataAnalyticsApp(ui=ui)
+    ai_service = MockAIService()
+    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
     app.run()
