@@ -10,13 +10,15 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Bachata Brain Breaks Analytics: Audience & Retention Dashboard"
+        description="Bachata Brain Breaks Analytics: "
+                    "Audience & Retention Dashboard"
     )
     parser.add_argument(
-        "--version", 
-        action="store_true", 
+        "--version",
+        action="store_true",
         help="Show application version"
     )
     args = parser.parse_args()
@@ -41,6 +43,7 @@ def main() -> None:
     except Exception as e:
         ui.display_error(f"Critical Error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -20,6 +20,7 @@ from src.core.visualization import MatplotlibVisualizer
 
 logger = logging.getLogger(__name__)
 
+
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
     filepath: str = Field(..., description="Path to save the Excel report")
@@ -54,7 +55,9 @@ class ExcelReportGenerator:
 
     @staticmethod
     def _estimate_cell_width(cell) -> int:
-        """Estimates the display width of a cell based on value and number format."""
+        """
+        Estimates display width of a cell based on value and number format.
+        """
         if cell.value is None:
             return 0
 
@@ -78,7 +81,7 @@ class ExcelReportGenerator:
 
     @staticmethod
     def _adjust_column_widths(ws):
-        """Auto-adjusts column widths based on content length with min/max constraints."""
+        """Auto-adjusts column widths based on content length."""
         min_width = 10
         max_width = 50
         for col in ws.columns:
@@ -90,16 +93,21 @@ class ExcelReportGenerator:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            ws.column_dimensions[
+                get_column_letter(col[0].column)
+            ].width = adjusted_width
 
     @staticmethod
     def _get_header_map(ws: Worksheet) -> Dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
-        return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
+        return {
+            str(cell.value): cell.column
+            for cell in ws[1] if cell.value is not None
+        }
 
     @staticmethod
     def _apply_header_style(ws):
-        """Applies standard header styling (Bold, Centered, Blue) and freezes panes."""
+        """Applies standard header styling."""
         for cell in ws[1]:
             cell.font = ExcelReportGenerator.HEADER_FONT
             cell.fill = ExcelReportGenerator.HEADER_FILL
@@ -130,8 +138,12 @@ class ExcelReportGenerator:
         # Define rules
         # Blue for Views, Green for Retention
         rules = {
-            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
-            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
+            'Views': DataBarRule(
+                start_type='min', end_type='max', color="638EC6"
+            ),
+            'Retention (%)': DataBarRule(
+                start_type='min', end_type='max', color="63C384"
+            )
         }
 
         headers = ExcelReportGenerator._get_header_map(ws)
@@ -145,7 +157,9 @@ class ExcelReportGenerator:
                     range_ref = f"{col_letter}2:{col_letter}{ws.max_row}"
                     ws.conditional_formatting.add(range_ref, rule)
 
-    def _create_anomaly_sheet(self, writer, v_type: str, df: pd.DataFrame) -> Worksheet:
+    def _create_anomaly_sheet(
+        self, writer, v_type: str, df: pd.DataFrame
+    ) -> Worksheet:
         """Creates and styles a sheet for anomalies."""
         sheet_name = f"{v_type} Anomalies"
         display_df = df.rename(columns=self.COLUMN_MAPPING)
@@ -171,7 +185,7 @@ class ExcelReportGenerator:
                 chart_builder = ChartBuilder(ws)
                 data_loc = ChartDataLocation(
                     min_col=views_col,
-                    min_row=1, # Include header for series name
+                    min_row=1,  # Include header for series name
                     max_col=views_col,
                     max_row=max_row,
                     title_from_data=True,
@@ -200,13 +214,23 @@ class ExcelReportGenerator:
         ws_strat = writer.sheets["Strategy"]
         self._apply_header_style(ws_strat)
         ws_strat.column_dimensions['A'].width = 100
-        ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+        ws_strat['A2'].alignment = Alignment(
+            wrap_text=True, horizontal='left', vertical='top'
+        )
 
-    def _add_visual_insights(self, writer, anomalies: Dict[str, pd.DataFrame]) -> None:
+    def _add_visual_insights(
+        self, writer, anomalies: Dict[str, pd.DataFrame]
+    ) -> None:
         """Generates and embeds visual insights chart."""
         # Combine all anomalies to one DF for visualization
-        all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
-        if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
+        all_anomalies = (
+            pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+        )
+        if (
+            not all_anomalies.empty
+            and 'views' in all_anomalies.columns
+            and 'retention_avg_pct' in all_anomalies.columns
+        ):
             visualizer = MatplotlibVisualizer()
             try:
                 img_stream = visualizer.generate_chart(
@@ -226,7 +250,10 @@ class ExcelReportGenerator:
                 ws_viz.add_image(img, "A1")
 
                 # Add description
-                ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
+                ws_viz["A25"] = (
+                    "Scatter plot showing relationship between Audience "
+                    "Retention and View Count."
+                )
                 ws_viz["A25"].font = Font(italic=True, color="555555")
 
             except Exception as e:

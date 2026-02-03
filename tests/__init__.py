@@ -1,3 +1,3 @@
 """
-Test package marker.
+Tests for the Bachata Analytics application.
 """

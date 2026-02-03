@@ -1,3 +1,3 @@
 """
-Source root package.
+Source code for Bachata Brain Breaks Analytics.
 """

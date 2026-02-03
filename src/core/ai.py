@@ -2,8 +2,8 @@
 AI Services for Bachata Brain Breaks Analytics.
 """
 from typing import List, AsyncGenerator
-from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
+
 
 class GeminiThinkingAgent:
     """
@@ -20,12 +20,16 @@ class GeminiThinkingAgent:
         # Simulated 'Thinking Mode' logic
         return (
             "[Gemini 3 Thinking Mode] Analysis Complete:\n"
-            "1. Pattern Identification: High-retention videos often use 'sensual' or 'footwork' keywords.\n"
+            "1. Pattern Identification: High-retention videos often use "
+            "'sensual' or 'footwork' keywords.\n"
             "2. Strategy: Use high-contrast thumbnails with dynamic poses.\n"
-            "3. Recommendation: Rename lower performers to include 'Step-by-Step' hook."
+            "3. Recommendation: Rename lower performers to include "
+            "'Step-by-Step' hook."
         )
 
-    async def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
+    async def analyze_stream(
+        self, videos: List[VideoAnalysisInput]
+    ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata.
         """

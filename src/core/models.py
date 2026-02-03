@@ -3,6 +3,7 @@ Domain models for Bachata Brain Breaks Analytics.
 """
 from pydantic import BaseModel, Field, field_validator
 
+
 class VideoAnalysisInput(BaseModel):
     """
     Schema for video data to be analyzed by the agent.
@@ -18,14 +19,21 @@ class VideoAnalysisInput(BaseModel):
     @classmethod
     def validate_title(cls, v: str) -> str:
         # Basic sanitization and prompt injection check
-        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
+        forbidden_patterns = [
+            "Ignore previous instructions", "System:", "User:"
+        ]
         for pattern in forbidden_patterns:
             if pattern in v:
-                raise ValueError(f"Potential prompt injection detected: {pattern}")
+                raise ValueError(
+                    f"Potential prompt injection detected: {pattern}"
+                )
 
         # Formula Injection Prevention
         if v.startswith(('=', '@', '+', '-')):
-            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
+            raise ValueError(
+                "Title contains potential Formula Injection "
+                "(starts with =, @, +, -)"
+            )
 
         # Ensure no control characters
         if not v.isprintable():

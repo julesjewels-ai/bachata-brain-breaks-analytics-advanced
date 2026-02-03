@@ -4,17 +4,20 @@ Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict
 import pandas as pd
 from pydantic import ValidationError
 from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
-from src.core.formatting import format_validation_error, prepare_display_dataframe
+from src.core.formatting import (
+    format_validation_error, prepare_display_dataframe
+)
 from src.core.interfaces import UserInterface, AIService
 from src.core.models import VideoAnalysisInput
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 class BachataAnalyticsApp:
     """
@@ -34,9 +37,11 @@ class BachataAnalyticsApp:
         with self.ui.loading("Ingesting channel data..."):
             # Generate mock data
             titles = [
-                'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
-                'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-                'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
+                'Basic Step Tutorial', 'Sensual Bachata Demo',
+                'Viral Short Dance', 'Advanced Footwork',
+                'Partner Connection Secrets', 'Musicality 101',
+                'Funny Bloopers', 'Festival Vlog', 'Dip Technique',
+                'Spin Drill'
             ] * 2
 
             raw_data = []
@@ -49,8 +54,12 @@ class BachataAnalyticsApp:
                     'type': 'Long' if i % 3 != 0 else 'Shorts'
                 })
 
-            # Validate data using VideoAnalysisInput (Ensures type safety & security)
-            validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+            # Validate data using VideoAnalysisInput (Ensures type safety
+            # & security)
+            validated_data = [
+                VideoAnalysisInput(**record).model_dump()
+                for record in raw_data
+            ]
 
             return pd.DataFrame(validated_data)
 
@@ -60,20 +69,28 @@ class BachataAnalyticsApp:
         """
         results = {}
         for v_type, group in df.groupby('type'):
-            # Simple statistical outlier detection using Quantiles (Viral > 90th percentile)
+            # Simple statistical outlier detection using Quantiles
+            # (Viral > 90th percentile)
             threshold = group['views'].quantile(0.90)
             results[str(v_type)] = group[group['views'] > threshold]
 
         return results
 
-    def _prepare_agent_input(self, df: pd.DataFrame) -> List[VideoAnalysisInput]:
+    def _prepare_agent_input(
+        self, df: pd.DataFrame
+    ) -> List[VideoAnalysisInput]:
         """
         Selects top/bottom performing videos and validates them for the agent.
         """
         sorted_df = df.sort_values(by='retention_avg_pct', ascending=False)
-        records = pd.concat([sorted_df.head(5), sorted_df.tail(5)]).to_dict('records')
+        records = pd.concat(
+            [sorted_df.head(5), sorted_df.tail(5)]
+        ).to_dict('records')
 
-        return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
+        return [
+            VideoAnalysisInput(**{str(k): v for k, v in record.items()})
+            for record in records
+        ]
 
     def run(self) -> None:
         """
@@ -88,12 +105,14 @@ class BachataAnalyticsApp:
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
             self.ui.display_section(f"Viral Anomalies ({v_type})")
-            display_df = prepare_display_dataframe(data[['title', 'views', 'retention_avg_pct']])
+            display_df = prepare_display_dataframe(
+                data[['title', 'views', 'retention_avg_pct']]
+            )
             self.ui.display_table(display_df)
 
         # 3. Gemini Analysis (Top/Bottom 5)
         self.ui.display_section("Gemini 3 Agent Analysis")
-        
+
         try:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
@@ -112,8 +131,12 @@ class BachataAnalyticsApp:
         try:
             with self.ui.loading("Generating Excel Report..."):
                 report_gen = ExcelReportGenerator()
-                report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-            self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
+                report_gen.generate_excel(
+                    anomalies, strategy, "bachata_analytics.xlsx"
+                )
+            self.ui.display_success(
+                "Report saved to 'bachata_analytics.xlsx'."
+            )
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
             self.ui.display_error(f"Error generating report: {e}")
