@@ -56,10 +56,15 @@ def test_excel_generation_conditional_formatting(tmp_path):
     assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
 
 
+class MockFont:
+    def __init__(self, bold=False):
+        self.bold = bold
+
 class MockCell:
-    def __init__(self, value, number_format=None):
+    def __init__(self, value, number_format=None, font=None):
         self.value = value
         self.number_format = number_format
+        self.font = font or MockFont()
 
 def test_estimate_cell_width():
     """Test the _estimate_cell_width helper method."""
@@ -68,6 +73,10 @@ def test_estimate_cell_width():
 
     # Test String
     assert ExcelReportGenerator._estimate_cell_width(MockCell("Hello")) == 5
+
+    # Test Bold String (Header)
+    # Length 6 * 1.2 = 7.2 -> 7
+    assert ExcelReportGenerator._estimate_cell_width(MockCell("Header", font=MockFont(bold=True))) == 7
 
     # Test Integer
     assert ExcelReportGenerator._estimate_cell_width(MockCell(12345)) == 5

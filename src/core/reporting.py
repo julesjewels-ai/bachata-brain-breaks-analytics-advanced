@@ -53,18 +53,8 @@ class ExcelReportGenerator:
     }
 
     @staticmethod
-    def _estimate_cell_width(cell) -> int:
-        """Estimates the display width of a cell based on value and number format."""
-        if cell.value is None:
-            return 0
-
-        val = cell.value
-        fmt = cell.number_format
-
-        # Return early if not a number with a format
-        if not (isinstance(val, Number) and fmt):
-            return len(str(val))
-
+    def _get_formatted_width(val, fmt) -> int:
+        """Helper to get length of a formatted number string."""
         # Thousands separator (e.g., #,##0)
         if '#,##0' in fmt:
             precision = 2 if '.00' in fmt else 0
@@ -75,6 +65,28 @@ class ExcelReportGenerator:
             return len(f"{val:.2f}%")
 
         return len(str(val))
+
+    @staticmethod
+    def _estimate_cell_width(cell) -> int:
+        """Estimates the display width of a cell based on value, number format, and font weight."""
+        if cell.value is None:
+            return 0
+
+        val = cell.value
+        fmt = cell.number_format
+        width = 0
+
+        # Calculate base width from value
+        if isinstance(val, Number) and fmt:
+            width = ExcelReportGenerator._get_formatted_width(val, fmt)
+        else:
+            width = len(str(val))
+
+        # Account for Bold text (headers) which takes ~20% more space
+        if cell.font and cell.font.bold:
+            width = int(width * 1.2)
+
+        return width
 
     @staticmethod
     def _adjust_column_widths(ws):
