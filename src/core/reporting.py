@@ -202,6 +202,33 @@ class ExcelReportGenerator:
         ws_strat.column_dimensions['A'].width = 100
         ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
 
+    def _safe_load_image(self, stream) -> PILImage.Image:
+        """
+        Safely loads an image from a stream with DoS protection (Decompression Bomb).
+        """
+        # Set pixel limit (50MP) - Global setting but necessary for security
+        PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
+        try:
+            # Open the image
+            img = PILImage.open(stream)
+
+            # Verify integrity (this reads the file)
+            img.verify()
+
+            # Reset stream position after verify consumed it
+            stream.seek(0)
+
+            # Re-open for actual use
+            img = PILImage.open(stream)
+            return img
+
+        except (PILImage.DecompressionBombError, IOError, Exception) as e:
+            # Catching general Exception to be safe against PIL specific errors not imported
+            # But verifying strictly against known threats
+            logger.error(f"Security event: Image validation failed: {e}")
+            raise ValueError(f"Security validation failed: Invalid or dangerous image file.")
+
     def _add_visual_insights(self, writer, anomalies: Dict[str, pd.DataFrame]) -> None:
         """Generates and embeds visual insights chart."""
         # Combine all anomalies to one DF for visualization
@@ -221,7 +248,7 @@ class ExcelReportGenerator:
 
                 # Embed Image
                 # OpenPyXL Image requires a path or PIL Image object
-                pil_img = PILImage.open(img_stream)
+                pil_img = self._safe_load_image(img_stream)
                 img = XLImage(pil_img)
                 ws_viz.add_image(img, "A1")
 
