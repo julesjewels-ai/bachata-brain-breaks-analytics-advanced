@@ -42,14 +42,25 @@ class ExcelReportGenerator:
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
 
+    # Constants
+    HEAD_VIDEO_ID = 'Video ID'
+    HEAD_TITLE = 'Video Title'
+    HEAD_VIEWS = 'Views'
+    HEAD_RETENTION = 'Retention (%)'
+    HEAD_TYPE = 'Type'
+    HEAD_PUBLISH_DATE = 'Publish Date'
+
+    COLOR_BLUE = "638EC6"
+    COLOR_GREEN = "63C384"
+
     # Mapping from DataFrame columns to Excel headers
     COLUMN_MAPPING = {
-        'video_id': 'Video ID',
-        'title': 'Video Title',
-        'views': 'Views',
-        'retention_avg_pct': 'Retention (%)',
-        'type': 'Type',
-        'publish_date': 'Publish Date'
+        'video_id': HEAD_VIDEO_ID,
+        'title': HEAD_TITLE,
+        'views': HEAD_VIEWS,
+        'retention_avg_pct': HEAD_RETENTION,
+        'type': HEAD_TYPE,
+        'publish_date': HEAD_PUBLISH_DATE
     }
 
     @staticmethod
@@ -111,8 +122,8 @@ class ExcelReportGenerator:
         """Applies number formatting to specific columns."""
         # Map column headers to their respective formats
         format_map = {
-            'Views': '#,##0',
-            'Retention (%)': '0.00"%"'
+            ExcelReportGenerator.HEAD_VIEWS: '#,##0',
+            ExcelReportGenerator.HEAD_RETENTION: '0.00"%"'
         }
 
         headers = ExcelReportGenerator._get_header_map(ws)
@@ -130,8 +141,8 @@ class ExcelReportGenerator:
         # Define rules
         # Blue for Views, Green for Retention
         rules = {
-            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
-            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
+            ExcelReportGenerator.HEAD_VIEWS: DataBarRule(start_type='min', end_type='max', color=ExcelReportGenerator.COLOR_BLUE),
+            ExcelReportGenerator.HEAD_RETENTION: DataBarRule(start_type='min', end_type='max', color=ExcelReportGenerator.COLOR_GREEN)
         }
 
         headers = ExcelReportGenerator._get_header_map(ws)
@@ -160,9 +171,9 @@ class ExcelReportGenerator:
     def _add_anomaly_chart(self, ws: Worksheet, v_type: str) -> None:
         """Adds a bar chart to the anomaly sheet."""
         headers = ExcelReportGenerator._get_header_map(ws)
-        if 'Views' in headers and 'Video Title' in headers:
-            views_col = headers['Views']
-            title_col = headers['Video Title']
+        if ExcelReportGenerator.HEAD_VIEWS in headers and ExcelReportGenerator.HEAD_TITLE in headers:
+            views_col = headers[ExcelReportGenerator.HEAD_VIEWS]
+            title_col = headers[ExcelReportGenerator.HEAD_TITLE]
             max_row = ws.max_row
             max_col = ws.max_column
 
@@ -178,9 +189,9 @@ class ExcelReportGenerator:
                     cats_min_col=title_col
                 )
                 chart_config = ChartConfig(
-                    title=f"Top {v_type} Views",
-                    x_axis_title="Video Title",
-                    y_axis_title="Views"
+                    title=f"Top {v_type} {ExcelReportGenerator.HEAD_VIEWS}",
+                    x_axis_title=ExcelReportGenerator.HEAD_TITLE,
+                    y_axis_title=ExcelReportGenerator.HEAD_VIEWS
                 )
 
                 # Dynamic anchor: 2 columns to the right of the table
