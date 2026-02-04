@@ -11,3 +11,5 @@
 ## 2025-02-18 - [Long Function (generate_excel)] **Observation:** `generate_excel` in `src/core/reporting.py` was 60+ lines long and mixed sheet creation, styling, and charting logic. **Action:** Extracted `_create_anomaly_sheet`, `_add_anomaly_chart`, `_add_strategy_sheet`, and `_add_visual_insights` helper methods to reduce complexity.
 
 ## 2026-02-02 - [Flattened Arrow Code] **Observation:** `_estimate_cell_width` in `src/core/reporting.py` had nested `if` statements increasing cognitive load. **Action:** Refactored to use guard clauses and early returns for flatter logic.
+
+## 2026-02-03 - [Extracted Helper] **Target:** `ExcelReportGenerator._estimate_cell_width` in `src/core/reporting.py` **Delta:** Complexity Score 8 -> 4 **Summary:** Extracted number formatting logic into `_get_formatted_width` helper to reduce cyclomatic complexity.

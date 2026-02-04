@@ -1,0 +1,1 @@
+src/core/reporting.py:ExcelReportGenerator._estimate_cell_width
