@@ -53,6 +53,20 @@ class ExcelReportGenerator:
     }
 
     @staticmethod
+    def _get_formatted_width(val: Number, fmt: str) -> int:
+        """Calculates width of a number formatted according to Excel format string."""
+        # Thousands separator (e.g., #,##0)
+        if '#,##0' in fmt:
+            precision = 2 if '.00' in fmt else 0
+            return len(f"{val:,.{precision}f}")
+
+        # Percentage (e.g., 0.00%)
+        if '0.00%' in fmt or '0.00"%"' in fmt:
+            return len(f"{val:.2f}%")
+
+        return len(str(val))
+
+    @staticmethod
     def _estimate_cell_width(cell) -> int:
         """Estimates the display width of a cell based on value and number format."""
         if cell.value is None:
@@ -65,16 +79,7 @@ class ExcelReportGenerator:
         if not (isinstance(val, Number) and fmt):
             return len(str(val))
 
-        # Thousands separator (e.g., #,##0)
-        if '#,##0' in fmt:
-            precision = 2 if '.00' in fmt else 0
-            return len(f"{val:,.{precision}f}")
-
-        # Percentage (e.g., 0.00%)
-        if '0.00%' in fmt or '0.00"%"' in fmt:
-            return len(f"{val:.2f}%")
-
-        return len(str(val))
+        return ExcelReportGenerator._get_formatted_width(val, fmt)
 
     @staticmethod
     def _adjust_column_widths(ws):
