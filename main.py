@@ -3,6 +3,7 @@ Entry point for the Bachata Brain Breaks Analytics Advanced application.
 Handles command-line arguments and initializes the core application logic.
 """
 import argparse
+import asyncio
 import sys
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
@@ -34,7 +35,7 @@ def main() -> None:
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
-        app.run()
+        asyncio.run(app.run())
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
         sys.exit(1)

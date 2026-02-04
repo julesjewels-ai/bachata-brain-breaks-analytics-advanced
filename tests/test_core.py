@@ -16,6 +16,9 @@ class DummyUI:
     def display_success(self, text: str): pass
     def display_info(self, text: str): pass
     def display_message(self, text: str): pass
+    async def display_stream(self, generator):
+        async for _ in generator: pass
+        return "Mock Stream Result"
     def loading(self, text: str): return nullcontext()
 
 class MockAIService:

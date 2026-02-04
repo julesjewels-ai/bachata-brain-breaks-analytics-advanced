@@ -60,6 +60,10 @@ class UserInterface(Protocol):
         """Displays a standard message."""
         ...
 
+    async def display_stream(self, generator: AsyncGenerator[str, None]) -> str:
+        """Displays a streaming text response."""
+        ...
+
     def loading(self, text: str) -> ContextManager[Any]:
         """Returns a context manager for a loading state."""
         ...

@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 import pandas as pd
 from typing import Union, Optional, ContextManager, Any
 from contextlib import nullcontext
@@ -33,6 +34,14 @@ class MockUI:
     def display_message(self, text: str) -> None:
         self.calls.append(('message', text))
 
+    async def display_stream(self, generator):
+        self.calls.append(('stream_start',))
+        text = ""
+        async for chunk in generator:
+            text += chunk
+        self.calls.append(('stream_end', text))
+        return text
+
     def loading(self, text: str) -> ContextManager[Any]:
         self.calls.append(('loading', text))
         return nullcontext()
@@ -49,7 +58,7 @@ def test_app_integration_with_ui():
     app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
-    app.run()
+    asyncio.run(app.run())
 
     # Verify sequence of calls
     assert any(c[0] == 'header' and "Bachata Analytics Dashboard" in c[1] for c in ui.calls)
@@ -57,7 +66,8 @@ def test_app_integration_with_ui():
     assert any(c[0] == 'section' and "Viral Anomalies" in c[1] for c in ui.calls)
     assert any(c[0] == 'table' for c in ui.calls)
     assert any(c[0] == 'section' and "Gemini 3 Agent Analysis" in c[1] for c in ui.calls)
-    assert any(c[0] == 'info' for c in ui.calls) # Strategy
+    # assert any(c[0] == 'info' for c in ui.calls) # Strategy replaced by stream
+    assert any(c[0] == 'stream_end' and "Mock Analysis" in c[1] for c in ui.calls)
     assert any(c[0] == 'loading' and "Generating Excel Report" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Report saved" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Dashboard update complete" in c[1] for c in ui.calls)
