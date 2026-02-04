@@ -13,6 +13,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.drawing.image import Image as XLImage
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
+from io import BytesIO
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
@@ -39,6 +40,7 @@ class ReportConfig(BaseModel):
 class ExcelReportGenerator:
     """Generates styled Excel reports for analytics data."""
 
+    MAX_IMAGE_PIXELS = 50_000_000  # Limit to 50MP to prevent decompression bombs
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
 
@@ -51,6 +53,35 @@ class ExcelReportGenerator:
         'type': 'Type',
         'publish_date': 'Publish Date'
     }
+
+    @staticmethod
+    def _safe_load_image(img_stream: BytesIO) -> PILImage.Image:
+        """
+        Safely loads an image from a stream with decompression bomb protection.
+
+        Args:
+            img_stream: BytesIO stream containing the image.
+
+        Returns:
+            PILImage.Image: Verified image object.
+
+        Raises:
+            ValueError: If the image is invalid or exceeds pixel limits.
+        """
+        PILImage.MAX_IMAGE_PIXELS = ExcelReportGenerator.MAX_IMAGE_PIXELS
+        try:
+            img = PILImage.open(img_stream)
+            img.verify()  # Verify file integrity and basic properties
+
+            # Reset stream since verify() reads the file
+            img_stream.seek(0)
+
+            # Reopen the image for actual use
+            img = PILImage.open(img_stream)
+            return img
+        except (PILImage.DecompressionBombError, IOError, SyntaxError) as e:
+            logger.error(f"Security event: Failed to load image - {str(e)}")
+            raise ValueError("Invalid or unsafe image file provided.")
 
     @staticmethod
     def _estimate_cell_width(cell) -> int:
@@ -221,7 +252,7 @@ class ExcelReportGenerator:
 
                 # Embed Image
                 # OpenPyXL Image requires a path or PIL Image object
-                pil_img = PILImage.open(img_stream)
+                pil_img = ExcelReportGenerator._safe_load_image(img_stream)
                 img = XLImage(pil_img)
                 ws_viz.add_image(img, "A1")
 
