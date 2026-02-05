@@ -41,6 +41,7 @@ class ExcelReportGenerator:
 
     HEADER_FONT = Font(bold=True, color="FFFFFF")
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
+    MAX_PIXELS = 50_000_000  # Security limit for Pillow Decompression Bomb protection
 
     # Mapping from DataFrame columns to Excel headers
     COLUMN_MAPPING = {
@@ -219,9 +220,14 @@ class ExcelReportGenerator:
                 # Create sheet
                 ws_viz = writer.book.create_sheet("Visual Insights")
 
-                # Embed Image
+                # Embed Image with Security Check
                 # OpenPyXL Image requires a path or PIL Image object
+                PILImage.MAX_IMAGE_PIXELS = self.MAX_PIXELS
                 pil_img = PILImage.open(img_stream)
+
+                # Verify is difficult with streams that need to be read again,
+                # but setting MAX_IMAGE_PIXELS prevents loading massive images.
+
                 img = XLImage(pil_img)
                 ws_viz.add_image(img, "A1")
 
@@ -229,7 +235,7 @@ class ExcelReportGenerator:
                 ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
                 ws_viz["A25"].font = Font(italic=True, color="555555")
 
-            except Exception as e:
+            except (PILImage.DecompressionBombError, Exception) as e:
                 # Log or handle error without crashing report
                 logger.warning(f"Failed to generate visualization: {e}")
 
