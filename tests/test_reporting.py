@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 from openpyxl import load_workbook
 from src.core.reporting import ExcelReportGenerator
+from src.core.excel_styling import ExcelStyler
 
 def test_excel_generation_conditional_formatting(tmp_path):
     """Test that conditional formatting (DataBars) is applied to specific columns."""
@@ -43,8 +44,6 @@ def test_excel_generation_conditional_formatting(tmp_path):
     # 'retention_avg_pct': 'Retention (%)' (D)
 
     # We expect 2 rules if implemented
-    # Currently we expect 0 or failure to find specific rules
-
     data_bar_rules = 0
     for cf in rules:
         # Each cf object has a list of rules (cf.rules)
@@ -52,43 +51,51 @@ def test_excel_generation_conditional_formatting(tmp_path):
             if rule.type == 'dataBar':
                 data_bar_rules += 1
 
-    # This assertion should fail before implementation
     assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
 
 
+class MockFont:
+    def __init__(self, bold=False):
+        self.b = bold
+
 class MockCell:
-    def __init__(self, value, number_format=None):
+    def __init__(self, value, number_format=None, bold=False):
         self.value = value
         self.number_format = number_format
+        self.font = MockFont(bold)
 
 def test_estimate_cell_width():
-    """Test the _estimate_cell_width helper method."""
+    """Test the estimate_cell_width helper method."""
     # Test None
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(None)) == 0
+    assert ExcelStyler.estimate_cell_width(MockCell(None)) == 0
 
     # Test String
-    assert ExcelReportGenerator._estimate_cell_width(MockCell("Hello")) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell("Hello")) == 5
 
     # Test Integer
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(12345)) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(12345)) == 5
 
     # Test Float (default)
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(12.34)) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(12.34)) == 5
 
     # Test Formatted Number (#,##0)
     # 1234 -> 1,234 (length 5)
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234, '#,##0')) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, '#,##0')) == 5
 
     # Test Formatted Number with decimals (#,##0.00)
     # 1234.56 -> 1,234.56 (length 8)
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8
+    assert ExcelStyler.estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8
 
     # Test Percentage (0.00%)
     # 95.5 -> 95.50% (length 6)
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(95.5, '0.00%')) == 6
+    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00%')) == 6
 
     # Test Percentage with quotes (0.00"%")
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6
+    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6
 
     # Test Unknown Format
-    assert ExcelReportGenerator._estimate_cell_width(MockCell(1234, 'General')) == 4
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, 'General')) == 4
+
+    # Test Bold Font (1.2x multiplier)
+    # "Hello" is 5 chars. 5 * 1.2 = 6.0 -> 6
+    assert ExcelStyler.estimate_cell_width(MockCell("Hello", bold=True)) == 6
