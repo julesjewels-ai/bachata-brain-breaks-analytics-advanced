@@ -5,6 +5,7 @@ Handles string manipulation, error message processing, and display formatting.
 from pydantic import ValidationError
 import pandas as pd
 
+
 def format_validation_error(e: ValidationError) -> str:
     """
     Formats Pydantic ValidationErrors into a user-friendly bulleted list.
@@ -31,9 +32,11 @@ def format_validation_error(e: ValidationError) -> str:
 
     return "Validation Error:\n" + "\n".join(messages)
 
+
 def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Prepares a DataFrame for CLI display by formatting numbers and renaming columns.
+    Prepares a DataFrame for CLI display by formatting numbers and renaming
+    columns.
 
     Args:
         df: The raw pandas DataFrame.
@@ -52,7 +55,9 @@ def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     # Format Retention (Percentage)
     if 'retention_avg_pct' in display_df.columns:
-        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+        display_df['retention_avg_pct'] = (
+            display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+        )
 
     # Rename columns for display
     return display_df.rename(columns={

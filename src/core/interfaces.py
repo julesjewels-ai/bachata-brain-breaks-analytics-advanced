@@ -2,32 +2,40 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator
+from typing import (
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator
+)
 from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
+
 
 class AIService(Protocol):
     """
     Protocol for AI operations.
     """
+
     def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
         """
         Analyzes video metadata to identify semantic patterns.
         """
         ...
 
-    def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
+    def analyze_stream(
+            self,
+            videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata.
         """
         ...
+
 
 class UserInterface(Protocol):
     """
     Protocol for user interaction.
     Allows swapping the console UI for a web UI or mock UI for testing.
     """
+
     def display_header(self, text: str) -> None:
         """Displays a major section header."""
         ...
@@ -40,7 +48,8 @@ class UserInterface(Protocol):
         """Displays a status update or progress message."""
         ...
 
-    def display_table(self, data: pd.DataFrame, title: Optional[str] = None) -> None:
+    def display_table(self, data: pd.DataFrame,
+                      title: Optional[str] = None) -> None:
         """Displays structured data as a table."""
         ...
 
@@ -64,7 +73,8 @@ class UserInterface(Protocol):
         """Returns a context manager for a loading state."""
         ...
 
-    async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+    async def display_stream(
+            self, generator: AsyncGenerator[str, None]) -> None:
         """Displays a streaming response from an async generator."""
         ...
 
@@ -73,7 +83,9 @@ class Visualizer(Protocol):
     """
     Protocol for generating static visualizations.
     """
-    def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
+
+    def generate_chart(self, df: pd.DataFrame, title: str,
+                       x_col: str, y_col: str) -> BytesIO:
         """
         Generates a chart and returns the image as a byte stream.
 

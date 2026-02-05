@@ -1,7 +1,11 @@
 import pytest
 import pandas as pd
 from pydantic import BaseModel, ValidationError, Field, field_validator
-from src.core.formatting import format_validation_error, prepare_display_dataframe
+from src.core.formatting import (
+    format_validation_error,
+    prepare_display_dataframe
+)
+
 
 class ValidationTestModel(BaseModel):
     name: str = Field(..., min_length=3)
@@ -13,6 +17,7 @@ class ValidationTestModel(BaseModel):
         if "bad" in v:
             raise ValueError("Name cannot contain 'bad'")
         return v
+
 
 def test_format_validation_error_basic():
     """Test formatting of standard Pydantic errors."""
@@ -26,6 +31,7 @@ def test_format_validation_error_basic():
     assert "• name: String should have at least 3 characters" in formatted
     assert "• age: Input should be greater than 0" in formatted
 
+
 def test_format_validation_error_custom():
     """Test formatting of custom ValueError messages."""
     with pytest.raises(ValidationError) as exc:
@@ -36,6 +42,7 @@ def test_format_validation_error_custom():
     # "Value error, " should be stripped
     assert "• name: Name cannot contain 'bad'" in formatted
     assert "Value error," not in formatted
+
 
 def test_prepare_display_dataframe():
     """Test dataframe preparation for display."""
