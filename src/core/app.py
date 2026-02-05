@@ -75,7 +75,7 @@ class BachataAnalyticsApp:
 
         return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """
         Executes the analytics pipeline.
         """
@@ -103,10 +103,18 @@ class BachataAnalyticsApp:
             self.ui.display_error("Aborting analysis for security.")
             return
 
-        with self.ui.loading("Analyzing semantics with Gemini 3..."):
-            strategy = self.ai_service.analyze_semantics(analysis_input)
+        # Stream Strategy
+        strategy_chunks: List[str] = []
+        with self.ui.loading("Initializing Gemini 3 Stream..."):
+            stream = self.ai_service.analyze_stream(analysis_input)
 
-        self.ui.display_info(strategy)
+        async def _capture_wrapper(gen):
+            async for chunk in gen:
+                strategy_chunks.append(chunk)
+                yield chunk
+
+        await self.ui.display_stream(_capture_wrapper(stream))
+        strategy = "".join(strategy_chunks)
 
         # 4. Generate Excel Report
         try:

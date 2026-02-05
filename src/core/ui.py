@@ -1,12 +1,13 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional, ContextManager, Any
+from typing import Union, Optional, ContextManager, Any, AsyncGenerator
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
+from rich.live import Live
 from rich import box
 
 from src.core.interfaces import UserInterface
@@ -73,3 +74,12 @@ class RichConsoleUI:
 
     def loading(self, text: str) -> ContextManager[Any]:
         return self.console.status(text, spinner="dots")
+
+    async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+        text_buffer = Text()
+        # Use Live to update the text in place as chunks arrive
+        with Live(text_buffer, console=self.console, refresh_per_second=10) as live:
+            async for chunk in generator:
+                text_buffer.append(chunk)
+                live.update(text_buffer)
+        self.console.print()  # Ensure final newline
