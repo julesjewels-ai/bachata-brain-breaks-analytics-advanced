@@ -1,6 +1,8 @@
 """
 AI Services for Bachata Brain Breaks Analytics.
 """
+import asyncio
+import random
 from typing import List, AsyncGenerator
 from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
@@ -29,4 +31,14 @@ class GeminiThinkingAgent:
         """
         Stream analysis of video metadata.
         """
-        yield self.analyze_semantics(videos)
+        full_response = self.analyze_semantics(videos)
+
+        # Simulate thinking delay
+        await asyncio.sleep(1.0)
+
+        # Stream tokens
+        tokens = full_response.split(' ')
+        for i, token in enumerate(tokens):
+            yield token + " "
+            # Simulate variable network/generation latency
+            await asyncio.sleep(random.uniform(0.01, 0.05))

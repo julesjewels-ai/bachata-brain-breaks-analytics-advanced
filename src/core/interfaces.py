@@ -64,6 +64,10 @@ class UserInterface(Protocol):
         """Returns a context manager for a loading state."""
         ...
 
+    async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+        """Displays a streaming response from an async generator."""
+        ...
+
 
 class Visualizer(Protocol):
     """
