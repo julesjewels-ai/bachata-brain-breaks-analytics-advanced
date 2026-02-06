@@ -1,1 +1,2 @@
 src/core/reporting.py:ExcelReportGenerator
+src/core/reporting.py:ExcelReportGenerator._add_anomaly_chart

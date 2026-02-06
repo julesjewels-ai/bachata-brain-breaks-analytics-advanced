@@ -63,37 +63,42 @@ class ExcelReportGenerator:
     def _add_anomaly_chart(self, ws: Worksheet, v_type: str) -> None:
         """Adds a bar chart to the anomaly sheet."""
         headers = ExcelStyler.get_header_map(ws)
-        if 'Views' in headers and 'Video Title' in headers:
-            views_col = headers['Views']
-            title_col = headers['Video Title']
-            max_row = ws.max_row
-            max_col = ws.max_column
 
-            # Only add chart if there is data
-            if max_row > 1:
-                chart_builder = ChartBuilder(ws)
-                data_loc = ChartDataLocation(
-                    min_col=views_col,
-                    min_row=1, # Include header for series name
-                    max_col=views_col,
-                    max_row=max_row,
-                    title_from_data=True,
-                    cats_min_col=title_col
-                )
-                chart_config = ChartConfig(
-                    title=f"Top {v_type} Views",
-                    x_axis_title="Video Title",
-                    y_axis_title="Views"
-                )
+        if 'Views' not in headers or 'Video Title' not in headers:
+            return
 
-                # Dynamic anchor: 2 columns to the right of the table
-                anchor_col = get_column_letter(max_col + 2)
+        # Only add chart if there is data
+        if ws.max_row <= 1:
+            return
 
-                chart_builder.add_bar_chart(
-                    data_loc=data_loc,
-                    config=chart_config,
-                    anchor=f"{anchor_col}2"
-                )
+        views_col = headers['Views']
+        title_col = headers['Video Title']
+        max_row = ws.max_row
+        max_col = ws.max_column
+
+        chart_builder = ChartBuilder(ws)
+        data_loc = ChartDataLocation(
+            min_col=views_col,
+            min_row=1,  # Include header for series name
+            max_col=views_col,
+            max_row=max_row,
+            title_from_data=True,
+            cats_min_col=title_col
+        )
+        chart_config = ChartConfig(
+            title=f"Top {v_type} Views",
+            x_axis_title="Video Title",
+            y_axis_title="Views"
+        )
+
+        # Dynamic anchor: 2 columns to the right of the table
+        anchor_col = get_column_letter(max_col + 2)
+
+        chart_builder.add_bar_chart(
+            data_loc=data_loc,
+            config=chart_config,
+            anchor=f"{anchor_col}2"
+        )
 
     def _add_strategy_sheet(self, writer, strategy: str) -> None:
         """Creates the strategy analysis sheet."""
