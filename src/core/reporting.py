@@ -17,6 +17,9 @@ from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
 from src.core.excel_styling import ExcelStyler
 
+# Security: Prevent Decompression Bomb DoS attacks
+PILImage.MAX_IMAGE_PIXELS = 50_000_000
+
 logger = logging.getLogger(__name__)
 
 class ReportConfig(BaseModel):
@@ -132,6 +135,8 @@ class ExcelReportGenerator:
                 ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
                 ws_viz["A25"].font = Font(italic=True, color="555555")
 
+            except PILImage.DecompressionBombError as e:
+                logger.error(f"Security event: Decompression bomb detected: {e}")
             except Exception as e:
                 # Log or handle error without crashing report
                 logger.warning(f"Failed to generate visualization: {e}")
