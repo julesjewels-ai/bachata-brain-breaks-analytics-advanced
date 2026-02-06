@@ -9,6 +9,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import DataBarRule
 from openpyxl.worksheet.worksheet import Worksheet
 
+
 class ExcelStyler:
     """Helper class for applying standardized styles to Excel worksheets."""
 
@@ -17,7 +18,9 @@ class ExcelStyler:
 
     @staticmethod
     def estimate_cell_width(cell) -> int:
-        """Estimates the display width of a cell based on value and number format."""
+        """
+        Estimates the display width of a cell based on value and number format.
+        """
         if cell.value is None:
             return 0
 
@@ -41,7 +44,10 @@ class ExcelStyler:
 
     @staticmethod
     def adjust_column_widths(ws: Worksheet):
-        """Auto-adjusts column widths based on content length with min/max constraints."""
+        """
+        Auto-adjusts column widths based on content length with
+        min/max constraints.
+        """
         min_width = 10
         max_width = 50
         for col in ws.columns:
@@ -53,16 +59,23 @@ class ExcelStyler:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            col_letter = get_column_letter(col[0].column)
+            ws.column_dimensions[col_letter].width = adjusted_width
 
     @staticmethod
     def get_header_map(ws: Worksheet) -> Dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
-        return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
+        return {
+            str(cell.value): cell.column
+            for cell in ws[1] if cell.value is not None
+        }
 
     @staticmethod
     def apply_header_style(ws: Worksheet):
-        """Applies standard header styling (Bold, Centered, Blue) and freezes panes."""
+        """
+        Applies standard header styling (Bold, Centered, Blue) and
+        freezes panes.
+        """
         for cell in ws[1]:
             cell.font = ExcelStyler.HEADER_FONT
             cell.fill = ExcelStyler.HEADER_FILL
@@ -93,8 +106,12 @@ class ExcelStyler:
         # Define rules
         # Blue for Views, Green for Retention
         rules = {
-            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
-            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
+            'Views': DataBarRule(
+                start_type='min', end_type='max', color="638EC6"
+            ),
+            'Retention (%)': DataBarRule(
+                start_type='min', end_type='max', color="63C384"
+            )
         }
 
         headers = ExcelStyler.get_header_map(ws)

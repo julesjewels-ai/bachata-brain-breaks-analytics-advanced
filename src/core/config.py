@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+
 class AppConfig(BaseModel):
     """
     Application configuration with strict validation.
@@ -48,5 +49,7 @@ class AppConfig(BaseModel):
         Retrieves API key with safety check.
         """
         if not self.google_api_key:
-            raise ValueError("GOOGLE_API_KEY is missing in environment variables.")
+            raise ValueError(
+                "GOOGLE_API_KEY is missing in environment variables."
+            )
         return self.google_api_key

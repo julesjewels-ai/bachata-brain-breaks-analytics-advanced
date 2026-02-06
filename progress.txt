@@ -3,3 +3,13 @@
 ## 2025-05-XX
 - Initialized project tracking files.
 - Planned refactoring of `BachataAnalyticsApp` to use Dependency Injection for `AIService`.
+
+## 2025-05-XX (Current)
+- Completed refactoring of `BachataAnalyticsApp` to use Dependency Injection.
+- Defined `AIService` and `UserInterface` protocols in `src/core/interfaces.py`.
+- Refactored `GeminiThinkingAgent` in `src/core/ai.py` to match `AIService`.
+- Updated `BachataAnalyticsApp` in `src/core/app.py` to accept `AIService` and `UserInterface` in `__init__`.
+- Updated `main.py` to inject dependencies.
+- Updated `tests/test_core.py` and other tests to match new architecture.
+- Fixed all flake8 linting errors and mypy type errors.
+- Verified functionality with pytest.

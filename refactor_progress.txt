@@ -1,1 +1,2 @@
 src/core/reporting.py:ExcelReportGenerator
+src/core/app.py:BachataAnalyticsApp

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 # Ensure headless backend for server/CLI environments
 plt.switch_backend('Agg')
 
+
 class VisualizationConfig(BaseModel):
     """Configuration for visualization generation."""
     title: str
@@ -18,10 +19,13 @@ class VisualizationConfig(BaseModel):
     height: int = Field(6, description="Height in inches")
     dpi: int = Field(100, description="DPI of the image")
 
+
 class MatplotlibVisualizer:
     """Implementation of Visualizer using Matplotlib."""
 
-    def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
+    def generate_chart(
+        self, df: pd.DataFrame, title: str, x_col: str, y_col: str
+    ) -> BytesIO:
         """
         Generates a scatter plot of x_col vs y_col.
 
@@ -35,20 +39,28 @@ class MatplotlibVisualizer:
             BytesIO: PNG image stream.
         """
         if df.empty:
-             raise ValueError("DataFrame is empty, cannot generate chart.")
+            raise ValueError("DataFrame is empty, cannot generate chart.")
 
         # Validate columns exist
         if x_col not in df.columns or y_col not in df.columns:
-             raise ValueError(f"Columns '{x_col}' or '{y_col}' not found in DataFrame columns: {df.columns.tolist()}")
+            raise ValueError(
+                f"Columns '{x_col}' or '{y_col}' not found in DataFrame "
+                f"columns: {df.columns.tolist()}"
+            )
 
         config = VisualizationConfig(title=title, x_col=x_col, y_col=y_col)
 
         # Create figure
-        fig, ax = plt.subplots(figsize=(config.width, config.height), dpi=config.dpi)
+        fig, ax = plt.subplots(
+            figsize=(config.width, config.height), dpi=config.dpi
+        )
 
         # Plot data
         # Use a semantic color scheme if possible, otherwise default blue
-        ax.scatter(df[x_col], df[y_col], alpha=0.7, c='#4F81BD', edgecolors='white', s=80)
+        ax.scatter(
+            df[x_col], df[y_col],
+            alpha=0.7, c='#4F81BD', edgecolors='white', s=80
+        )
 
         ax.set_title(config.title, fontsize=14, fontweight='bold')
         ax.set_xlabel(config.x_col, fontsize=12)
