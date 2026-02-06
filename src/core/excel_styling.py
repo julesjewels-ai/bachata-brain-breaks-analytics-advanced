@@ -9,6 +9,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import DataBarRule
 from openpyxl.worksheet.worksheet import Worksheet
 
+
 class ExcelStyler:
     """Helper class for applying standardized styles to Excel worksheets."""
 
@@ -17,7 +18,7 @@ class ExcelStyler:
 
     @staticmethod
     def estimate_cell_width(cell) -> int:
-        """Estimates the display width of a cell based on value and number format."""
+        """Estimates display width of a cell based on value and format."""
         if cell.value is None:
             return 0
 
@@ -28,6 +29,11 @@ class ExcelStyler:
         if not (isinstance(val, Number) and fmt):
             return len(str(val))
 
+        return ExcelStyler._get_formatted_number_length(val, fmt)
+
+    @staticmethod
+    def _get_formatted_number_length(val: Number, fmt: str) -> int:
+        """Helper to calculate length of a formatted number."""
         # Thousands separator (e.g., #,##0)
         if '#,##0' in fmt:
             precision = 2 if '.00' in fmt else 0

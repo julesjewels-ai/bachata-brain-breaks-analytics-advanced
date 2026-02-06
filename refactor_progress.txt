@@ -1,1 +1,2 @@
 src/core/reporting.py:ExcelReportGenerator
+src/core/excel_styling.py:ExcelStyler.estimate_cell_width

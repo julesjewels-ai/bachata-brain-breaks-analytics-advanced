@@ -13,3 +13,5 @@
 ## 2026-02-02 - [Flattened Arrow Code] **Observation:** `_estimate_cell_width` in `src/core/reporting.py` had nested `if` statements increasing cognitive load. **Action:** Refactored to use guard clauses and early returns for flatter logic.
 
 ## 2026-02-02 - [God Class (Reporting)] **Observation:** `ExcelReportGenerator` in `src/core/reporting.py` mixed high-level report orchestration with low-level Excel styling details. **Action:** Extracted `ExcelStyler` to `src/core/excel_styling.py` to separate concerns and reduce class size.
+
+## 2026-02-06 - [Extracted Number Formatting] **Observation:** `estimate_cell_width` in `src/core/excel_styling.py` had complexity 8 due to mixed format parsing logic. **Action:** Extracted `_get_formatted_number_length` helper method to isolate number formatting and reduce main method complexity to 4.
