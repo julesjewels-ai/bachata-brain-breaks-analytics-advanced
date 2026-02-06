@@ -16,28 +16,31 @@ class ExcelStyler:
     HEADER_FILL = PatternFill(start_color="4F81BD", fill_type="solid")
 
     @staticmethod
-    def estimate_cell_width(cell) -> int:
+    def estimate_cell_width(cell) -> float:
         """Estimates the display width of a cell based on value and number format."""
         if cell.value is None:
-            return 0
+            return 0.0
 
         val = cell.value
         fmt = cell.number_format
+        width = 0.0
 
-        # Return early if not a number with a format
+        # Calculate base width
         if not (isinstance(val, Number) and fmt):
-            return len(str(val))
-
-        # Thousands separator (e.g., #,##0)
-        if '#,##0' in fmt:
+            width = len(str(val))
+        elif '#,##0' in fmt:
             precision = 2 if '.00' in fmt else 0
-            return len(f"{val:,.{precision}f}")
+            width = len(f"{val:,.{precision}f}")
+        elif '0.00%' in fmt or '0.00"%"' in fmt:
+            width = len(f"{val:.2f}%")
+        else:
+            width = len(str(val))
 
-        # Percentage (e.g., 0.00%)
-        if '0.00%' in fmt or '0.00"%"' in fmt:
-            return len(f"{val:.2f}%")
+        # Apply multiplier for bold text
+        if hasattr(cell, 'font') and cell.font and cell.font.bold:
+            width *= 1.2
 
-        return len(str(val))
+        return float(width)
 
     @staticmethod
     def adjust_column_widths(ws: Worksheet):
@@ -46,7 +49,7 @@ class ExcelStyler:
         max_width = 50
         for col in ws.columns:
             # Calculate max length of data in column
-            max_length = 0
+            max_length = 0.0
             for cell in col:
                 cell_width = ExcelStyler.estimate_cell_width(cell)
                 max_length = max(max_length, cell_width)

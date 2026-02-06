@@ -57,39 +57,52 @@ def test_excel_generation_conditional_formatting(tmp_path):
     assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
 
 
+class MockFont:
+    def __init__(self, bold=False):
+        self.bold = bold
+
 class MockCell:
-    def __init__(self, value, number_format=None):
+    def __init__(self, value, number_format=None, font=None):
         self.value = value
         self.number_format = number_format
+        self.font = font or MockFont()
 
 def test_estimate_cell_width():
     """Test the ExcelStyler.estimate_cell_width helper method."""
     # Test None
-    assert ExcelStyler.estimate_cell_width(MockCell(None)) == 0
+    assert ExcelStyler.estimate_cell_width(MockCell(None)) == 0.0
 
     # Test String
-    assert ExcelStyler.estimate_cell_width(MockCell("Hello")) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell("Hello")) == 5.0
 
     # Test Integer
-    assert ExcelStyler.estimate_cell_width(MockCell(12345)) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(12345)) == 5.0
 
     # Test Float (default)
-    assert ExcelStyler.estimate_cell_width(MockCell(12.34)) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(12.34)) == 5.0
 
     # Test Formatted Number (#,##0)
     # 1234 -> 1,234 (length 5)
-    assert ExcelStyler.estimate_cell_width(MockCell(1234, '#,##0')) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, '#,##0')) == 5.0
 
     # Test Formatted Number with decimals (#,##0.00)
     # 1234.56 -> 1,234.56 (length 8)
-    assert ExcelStyler.estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8
+    assert ExcelStyler.estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8.0
 
     # Test Percentage (0.00%)
     # 95.5 -> 95.50% (length 6)
-    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00%')) == 6
+    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00%')) == 6.0
 
     # Test Percentage with quotes (0.00"%")
-    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6
+    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6.0
 
     # Test Unknown Format
-    assert ExcelStyler.estimate_cell_width(MockCell(1234, 'General')) == 4
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, 'General')) == 4.0
+
+    # Test Bold Font (Multiplier 1.2)
+    # "Hello" (5) * 1.2 = 6.0
+    assert ExcelStyler.estimate_cell_width(MockCell("Hello", font=MockFont(bold=True))) == 6.0
+
+    # Test Bold with Formatting
+    # 1234 -> 1,234 (5) * 1.2 = 6.0
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, '#,##0', font=MockFont(bold=True))) == 6.0
