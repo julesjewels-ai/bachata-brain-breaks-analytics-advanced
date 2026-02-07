@@ -1,2 +1,3 @@
 src/core/reporting.py:ExcelReportGenerator
 src/core/reporting.py:ExcelReportGenerator._add_anomaly_chart
+src/core/excel_styling.py:ExcelStyler.estimate_cell_width

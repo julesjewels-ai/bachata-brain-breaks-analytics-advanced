@@ -15,3 +15,5 @@
 ## 2026-02-02 - [God Class (Reporting)] **Observation:** `ExcelReportGenerator` in `src/core/reporting.py` mixed high-level report orchestration with low-level Excel styling details. **Action:** Extracted `ExcelStyler` to `src/core/excel_styling.py` to separate concerns and reduce class size.
 
 ## 2026-02-02 - [Deep Nesting] **Observation:** `_add_anomaly_chart` in `src/core/reporting.py` contained 4 levels of indentation due to nested conditional checks for headers and data existence. **Action:** Refactored to use guard clauses, flattening the logic and reducing cognitive load.
+
+## 2026-02-03 - [Complex Conditional Logic] **Observation:** `estimate_cell_width` in `src/core/excel_styling.py` had multiple conditional checks for number formatting mixed with null checks. **Action:** Extracted number formatting logic into a private helper method `_get_formatted_number_length` to reduce cyclomatic complexity (8 -> 4).
