@@ -7,7 +7,7 @@ from typing import List, AsyncGenerator
 from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
 
-class GeminiThinkingAgent:
+class GeminiThinkingAgent(AIService):
     """
     Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
     """

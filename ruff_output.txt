@@ -1,0 +1,83 @@
+F401 [*] `src.core.interfaces.AIService` imported but unused
+ --> src/core/ai.py:7:33
+  |
+5 | import random
+6 | from typing import List, AsyncGenerator
+7 | from src.core.interfaces import AIService
+  |                                 ^^^^^^^^^
+8 | from src.core.models import VideoAnalysisInput
+  |
+help: Remove unused import: `src.core.interfaces.AIService`
+
+F401 [*] `typing.Optional` imported but unused
+ --> src/core/app.py:7:32
+  |
+5 | import random
+6 | import logging
+7 | from typing import List, Dict, Optional
+  |                                ^^^^^^^^
+8 | import pandas as pd
+9 | from pydantic import ValidationError
+  |
+help: Remove unused import: `typing.Optional`
+
+F401 [*] `src.core.interfaces.UserInterface` imported but unused
+  --> src/core/ui.py:13:33
+   |
+11 | from rich import box
+12 |
+13 | from src.core.interfaces import UserInterface
+   |                                 ^^^^^^^^^^^^^
+14 |
+15 | class RichConsoleUI:
+   |
+help: Remove unused import: `src.core.interfaces.UserInterface`
+
+F401 [*] `pytest` imported but unused
+ --> tests/test_charting.py:5:8
+  |
+3 | """
+4 | from unittest.mock import MagicMock
+5 | import pytest
+  |        ^^^^^^
+6 | from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
+7 | from openpyxl.chart import BarChart
+  |
+help: Remove unused import: `pytest`
+
+F401 [*] `pytest` imported but unused
+ --> tests/test_reporting.py:3:8
+  |
+1 | import os
+2 | import pandas as pd
+3 | import pytest
+  |        ^^^^^^
+4 | from openpyxl import load_workbook
+5 | from src.core.reporting import ExcelReportGenerator
+  |
+help: Remove unused import: `pytest`
+
+F401 [*] `pytest` imported but unused
+ --> tests/test_ui_integration.py:1:8
+  |
+1 | import pytest
+  |        ^^^^^^
+2 | import asyncio
+3 | import pandas as pd
+  |
+help: Remove unused import: `pytest`
+
+F401 [*] `src.core.interfaces.UserInterface` imported but unused
+ --> tests/test_ui_integration.py:7:33
+  |
+5 | from contextlib import nullcontext
+6 | from src.core.app import BachataAnalyticsApp
+7 | from src.core.interfaces import UserInterface
+  |                                 ^^^^^^^^^^^^^
+8 |
+9 | class MockUI:
+  |
+help: Remove unused import: `src.core.interfaces.UserInterface`
+
+Found 7 errors.
+[*] 7 fixable with the `--fix` option.

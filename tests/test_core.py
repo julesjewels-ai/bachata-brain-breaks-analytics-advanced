@@ -3,22 +3,27 @@ Unit tests for core application logic.
 """
 import pandas as pd
 from contextlib import nullcontext
+from typing import AsyncGenerator
 from src.core.app import BachataAnalyticsApp
 from src.core.ai import GeminiThinkingAgent
 from src.core.models import VideoAnalysisInput
+from src.core.interfaces import UserInterface, AIService
 
-class DummyUI:
-    def display_header(self, text: str): pass
-    def display_section(self, text: str): pass
-    def display_status(self, text: str): pass
-    def display_table(self, data, title=None): pass
-    def display_error(self, error): pass
-    def display_success(self, text: str): pass
-    def display_info(self, text: str): pass
-    def display_message(self, text: str): pass
+class DummyUI(UserInterface):
+    def display_header(self, text: str) -> None: pass
+    def display_section(self, text: str) -> None: pass
+    def display_status(self, text: str) -> None: pass
+    def display_table(self, data, title=None) -> None: pass
+    def display_error(self, error) -> None: pass
+    def display_success(self, text: str) -> None: pass
+    def display_info(self, text: str) -> None: pass
+    def display_message(self, text: str) -> None: pass
     def loading(self, text: str): return nullcontext()
+    async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+        async for _ in generator:
+            pass
 
-class MockAIService:
+class MockAIService(AIService):
     def analyze_semantics(self, videos):
         return "Mock Analysis"
     async def analyze_stream(self, videos):

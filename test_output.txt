@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /app
+collected 26 items
+
+tests/test_charting.py .                                                 [  3%]
+tests/test_config.py ...                                                 [ 15%]
+tests/test_core.py ......                                                [ 38%]
+tests/test_formatting.py ...                                             [ 50%]
+tests/test_reporting.py ..                                               [ 57%]
+tests/test_security_validation.py .......                                [ 84%]
+tests/test_ui_integration.py .                                           [ 88%]
+tests/test_visualization.py ...                                          [100%]
+
+============================== 26 passed in 2.98s ==============================

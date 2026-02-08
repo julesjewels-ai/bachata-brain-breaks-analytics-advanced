@@ -1,0 +1,12 @@
+E701 Multiple statements on one line (colon)
+  --> tests/test_core.py:23:33
+   |
+21 |     def loading(self, text: str): return nullcontext()
+22 |     async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+23 |         async for _ in generator: pass
+   |                                 ^
+24 |
+25 | class MockAIService(AIService):
+   |
+
+Found 1 error.

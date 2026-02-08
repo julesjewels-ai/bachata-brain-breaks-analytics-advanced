@@ -4,7 +4,7 @@ Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict
 import pandas as pd
 from pydantic import ValidationError
 from src.core.reporting import ExcelReportGenerator

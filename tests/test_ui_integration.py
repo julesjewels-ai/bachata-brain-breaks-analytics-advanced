@@ -1,12 +1,11 @@
-import pytest
 import asyncio
 import pandas as pd
 from typing import Union, Optional, ContextManager, Any, AsyncGenerator
 from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface
+from src.core.interfaces import UserInterface, AIService
 
-class MockUI:
+class MockUI(UserInterface):
     def __init__(self):
         self.calls = []
 
@@ -43,7 +42,7 @@ class MockUI:
         async for chunk in generator:
              self.calls.append(('stream_chunk', chunk))
 
-class MockAIService:
+class MockAIService(AIService):
     def analyze_semantics(self, videos):
         return "Mock Analysis Strategy"
     async def analyze_stream(self, videos):

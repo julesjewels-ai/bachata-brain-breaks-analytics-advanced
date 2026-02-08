@@ -12,7 +12,7 @@ from rich import box
 
 from src.core.interfaces import UserInterface
 
-class RichConsoleUI:
+class RichConsoleUI(UserInterface):
     """
     Implementation of UserInterface using the Rich library.
     """
