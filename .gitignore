@@ -7,3 +7,10 @@ __pycache__/
 coverage.xml
 .coverage
 *.xlsx
+
+# Mypy
+.mypy_cache/
+mypy_install.log
+mypy_output*.txt
+.dmypy.json
+dmypy.json
