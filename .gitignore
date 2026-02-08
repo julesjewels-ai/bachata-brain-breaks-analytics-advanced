@@ -14,3 +14,8 @@ mypy_install.log
 mypy_output*.txt
 .dmypy.json
 dmypy.json
+
+# Entropy
+coverage.json
+entropy_report.md
+entropy_*.txt
