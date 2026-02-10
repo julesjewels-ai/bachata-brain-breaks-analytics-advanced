@@ -1,7 +1,17 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
+from datetime import datetime
+from typing import Any, Optional
 from pydantic import BaseModel, Field, field_validator
+
+class CacheEntry(BaseModel):
+    """
+    Schema for a cached item.
+    """
+    key: str
+    value: Any
+    expires_at: Optional[datetime] = None
 
 class VideoAnalysisInput(BaseModel):
     """
