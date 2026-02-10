@@ -6,8 +6,9 @@ from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
 from src.core.ai import GeminiThinkingAgent
 from src.core.models import VideoAnalysisInput
+from src.core.interfaces import UserInterface, AIService
 
-class DummyUI:
+class DummyUI(UserInterface):
     def display_header(self, text: str): pass
     def display_section(self, text: str): pass
     def display_status(self, text: str): pass
@@ -17,8 +18,11 @@ class DummyUI:
     def display_info(self, text: str): pass
     def display_message(self, text: str): pass
     def loading(self, text: str): return nullcontext()
+    async def display_stream(self, generator):
+        async for _ in generator:
+            pass
 
-class MockAIService:
+class MockAIService(AIService):
     def analyze_semantics(self, videos):
         return "Mock Analysis"
     async def analyze_stream(self, videos):

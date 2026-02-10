@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import pytest
 from openpyxl import load_workbook
 from src.core.reporting import ExcelReportGenerator
 from src.core.excel_styling import ExcelStyler
