@@ -4,7 +4,7 @@ Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import random
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any, cast
 import pandas as pd
 from pydantic import ValidationError
 from src.core.reporting import ExcelReportGenerator
@@ -50,7 +50,7 @@ class BachataAnalyticsApp:
                 })
 
             # Validate data using VideoAnalysisInput (Ensures type safety & security)
-            validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
+            validated_data = [VideoAnalysisInput(**cast(Any, record)).model_dump() for record in raw_data]
 
             return pd.DataFrame(validated_data)
 
