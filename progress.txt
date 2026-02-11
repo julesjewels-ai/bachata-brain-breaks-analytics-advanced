@@ -3,3 +3,7 @@
 ## 2025-05-XX
 - Initialized project tracking files.
 - Planned refactoring of `BachataAnalyticsApp` to use Dependency Injection for `AIService`.
+- Refactored `BachataAnalyticsApp` to use Dependency Injection for `ReportGenerator`.
+- Defined `ReportGenerator` protocol in `src/core/interfaces.py`.
+- Renamed `ExcelReportGenerator.generate_excel` to `generate_report`.
+- Updated `main.py` and tests to support DI.

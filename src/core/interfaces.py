@@ -2,7 +2,7 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator
+from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
 from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
@@ -66,6 +66,22 @@ class UserInterface(Protocol):
 
     async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
         """Displays a streaming response from an async generator."""
+        ...
+
+
+class ReportGenerator(Protocol):
+    """
+    Protocol for generating reports.
+    """
+    def generate_report(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str) -> None:
+        """
+        Generates a report based on the provided anomalies and strategy.
+
+        Args:
+            anomalies: Dictionary of anomaly DataFrames by type.
+            strategy: Generated strategy string.
+            filepath: Path to save the report.
+        """
         ...
 
 
