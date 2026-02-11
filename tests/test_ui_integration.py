@@ -1,9 +1,9 @@
 import asyncio
 import pandas as pd
-from typing import Union, Optional, ContextManager, Any, AsyncGenerator
+from typing import Union, Optional, ContextManager, Any, AsyncGenerator, Dict
 from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface, AIService
+from src.core.interfaces import UserInterface, AIService, ReportGenerator
 
 class MockUI(UserInterface):
     def __init__(self):
@@ -48,10 +48,15 @@ class MockAIService(AIService):
     async def analyze_stream(self, videos):
         yield "Mock Analysis Strategy"
 
+class MockReportGenerator(ReportGenerator):
+    def generate(self, anomalies: Dict[str, pd.DataFrame], strategy: str, base_filename: str) -> None:
+        pass
+
 def test_app_integration_with_ui():
     ui = MockUI()
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
     asyncio.run(app.run())
@@ -70,6 +75,7 @@ def test_app_integration_with_ui():
     # We NO LONGER expect 'info' with strategy because we stream it
     # assert any(c[0] == 'info' for c in ui.calls)
 
-    assert any(c[0] == 'loading' and "Generating Excel Report" in c[1] for c in ui.calls)
-    assert any(c[0] == 'success' and "Report saved" in c[1] for c in ui.calls)
+    # Updated assertions for new reporting logic
+    assert any(c[0] == 'loading' and "Generating Reports" in c[1] for c in ui.calls)
+    assert any(c[0] == 'success' and "Reports generated successfully" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Dashboard update complete" in c[1] for c in ui.calls)

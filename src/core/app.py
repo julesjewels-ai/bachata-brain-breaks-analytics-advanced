@@ -7,10 +7,9 @@ import logging
 from typing import List, Dict
 import pandas as pd
 from pydantic import ValidationError
-from src.core.reporting import ExcelReportGenerator
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
-from src.core.interfaces import UserInterface, AIService
+from src.core.interfaces import UserInterface, AIService, ReportGenerator
 from src.core.models import VideoAnalysisInput
 
 # Configure logging
@@ -20,11 +19,12 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, ui: UserInterface, ai_service: AIService):
+    def __init__(self, ui: UserInterface, ai_service: AIService, report_generator: ReportGenerator):
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.ai_service = ai_service
         self.ui = ui
+        self.report_generator = report_generator
 
     def ingest_data(self) -> pd.DataFrame:
         """
@@ -116,14 +116,13 @@ class BachataAnalyticsApp:
         await self.ui.display_stream(_capture_wrapper(stream))
         strategy = "".join(strategy_chunks)
 
-        # 4. Generate Excel Report
+        # 4. Generate Reports
         try:
-            with self.ui.loading("Generating Excel Report..."):
-                report_gen = ExcelReportGenerator()
-                report_gen.generate_excel(anomalies, strategy, "bachata_analytics.xlsx")
-            self.ui.display_success("Report saved to 'bachata_analytics.xlsx'.")
-        except ValueError as e:
-            logger.error(f"Failed to generate report: {e}")
-            self.ui.display_error(f"Error generating report: {e}")
+            with self.ui.loading("Generating Reports..."):
+                self.report_generator.generate(anomalies, strategy, "bachata_analytics")
+            self.ui.display_success("Reports generated successfully.")
+        except Exception as e:
+            logger.error(f"Failed to generate reports: {e}")
+            self.ui.display_error(f"Error generating reports: {e}")
 
         self.ui.display_success("Dashboard update complete.")

@@ -1,9 +1,10 @@
 """
-Reporting module for generating Excel reports.
-Handles styling and formatting logic for Excel output.
+Reporting module for generating reports.
+Handles styling and formatting logic for Excel and other outputs.
 """
-from typing import Dict
+from typing import Dict, List
 import logging
+import json
 import pandas as pd
 from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
@@ -13,6 +14,7 @@ from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
+from src.core.interfaces import ReportGenerator
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from src.core.visualization import MatplotlibVisualizer
 from src.core.excel_styling import ExcelStyler
@@ -21,21 +23,28 @@ logger = logging.getLogger(__name__)
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
-    filepath: str = Field(..., description="Path to save the Excel report")
+    filepath: str = Field(..., description="Path to save the report")
 
     @field_validator('filepath')
     @classmethod
     def validate_filepath(cls, v: str) -> str:
-        if not v.endswith('.xlsx'):
-            raise ValueError("File must be an Excel (.xlsx) file")
+        # Basic path traversal and character validation
         if '..' in v:
             raise ValueError("Path traversal detected")
         if not re.match(r'^[\w\-. /]+$', v):
             raise ValueError("File path contains invalid characters")
         return v
 
+class ExcelReportConfig(ReportConfig):
+    """Configuration specific to Excel reports."""
+    @field_validator('filepath')
+    @classmethod
+    def validate_extension(cls, v: str) -> str:
+        if not v.endswith('.xlsx'):
+            raise ValueError("File must be an Excel (.xlsx) file")
+        return super().validate_filepath(v)
 
-class ExcelReportGenerator:
+class ExcelReportStrategy(ReportGenerator):
     """Generates styled Excel reports for analytics data."""
 
     # Mapping from DataFrame columns to Excel headers
@@ -141,13 +150,14 @@ class ExcelReportGenerator:
                 # Log or handle error without crashing report
                 logger.warning(f"Failed to generate visualization: {e}")
 
-    def generate_excel(self,
-                       anomalies: Dict[str, pd.DataFrame],
-                       strategy: str,
-                       filepath: str):
+    def generate(self,
+                 anomalies: Dict[str, pd.DataFrame],
+                 strategy: str,
+                 base_filename: str) -> None:
         """Creates an Excel report with anomalies and strategy analysis."""
+        filepath = f"{base_filename}.xlsx"
         try:
-            config = ReportConfig(filepath=filepath)
+            config = ExcelReportConfig(filepath=filepath)
             safe_path = config.filepath
         except ValidationError as e:
             raise ValueError(f"Security validation failed: {e}")
@@ -164,3 +174,60 @@ class ExcelReportGenerator:
 
             # 3. Visual Insights (Embedded Matplotlib)
             self._add_visual_insights(writer, anomalies)
+
+class JSONReportStrategy(ReportGenerator):
+    """Generates JSON reports for analytics data."""
+
+    def generate(self,
+                 anomalies: Dict[str, pd.DataFrame],
+                 strategy: str,
+                 base_filename: str) -> None:
+        """Creates a JSON report."""
+        filepath = f"{base_filename}.json"
+
+        # Validation
+        try:
+            config = ReportConfig(filepath=filepath)
+            safe_path = config.filepath
+        except ValidationError as e:
+            raise ValueError(f"Security validation failed: {e}")
+
+        # Convert data
+        output_data = {
+            "strategy": strategy,
+            "anomalies": {
+                k: v.to_dict(orient="records") for k, v in anomalies.items()
+            }
+        }
+
+        try:
+            with open(safe_path, 'w', encoding='utf-8') as f:
+                json.dump(output_data, f, indent=4, default=str)
+        except Exception as e:
+            logger.error(f"Failed to write JSON report: {e}")
+            raise
+
+class CompositeReportGenerator(ReportGenerator):
+    """
+    Composite implementation of ReportGenerator.
+    Delegates generation to a list of strategies.
+    """
+    def __init__(self, strategies: List[ReportGenerator]):
+        self.strategies = strategies
+
+    def generate(self,
+                 anomalies: Dict[str, pd.DataFrame],
+                 strategy: str,
+                 base_filename: str) -> None:
+        """Generates reports using all registered strategies."""
+        errors = []
+        for strat in self.strategies:
+            try:
+                strat.generate(anomalies, strategy, base_filename)
+            except Exception as e:
+                error_msg = f"Strategy {type(strat).__name__} failed: {e}"
+                logger.error(error_msg)
+                errors.append(error_msg)
+
+        if len(errors) == len(self.strategies) and self.strategies:
+             raise RuntimeError(f"All report strategies failed: {'; '.join(errors)}")

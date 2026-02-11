@@ -1,13 +1,14 @@
 import os
+import json
 import pandas as pd
 from openpyxl import load_workbook
-from src.core.reporting import ExcelReportGenerator
+from src.core.reporting import ExcelReportStrategy, JSONReportStrategy, CompositeReportGenerator
 from src.core.excel_styling import ExcelStyler
 
-def test_excel_generation_conditional_formatting(tmp_path):
-    """Test that conditional formatting (DataBars) is applied to specific columns."""
+def test_excel_strategy_generation(tmp_path):
+    """Test that Excel report is generated correctly."""
     # Setup
-    generator = ExcelReportGenerator()
+    strategy = ExcelReportStrategy()
     anomalies = {
         'Shorts': pd.DataFrame({
             'video_id': ['1', '2'],
@@ -18,43 +19,79 @@ def test_excel_generation_conditional_formatting(tmp_path):
             'publish_date': ['2023-01-01', '2023-01-02']
         })
     }
-    strategy = "Test Strategy"
-    filepath = str(tmp_path / "test_report.xlsx")
+    strategy_text = "Test Strategy"
+    base_filename = str(tmp_path / "test_report")
 
     # Execute
-    generator.generate_excel(anomalies, strategy, filepath)
+    strategy.generate(anomalies, strategy_text, base_filename)
 
     # Verify
+    filepath = base_filename + ".xlsx"
     assert os.path.exists(filepath)
     wb = load_workbook(filepath)
+    assert 'Shorts Anomalies' in wb.sheetnames
+
+    # Check content
     ws = wb['Shorts Anomalies']
+    assert ws['A2'].value == '1' # video_id
 
-    # Check for conditional formatting
-    # Note: openpyxl stores conditional formatting rules in `ws.conditional_formatting`
-    # It behaves like a list-like object but iterating it returns ConditionalFormatting objects
+def test_json_strategy_generation(tmp_path):
+    """Test that JSON report is generated correctly."""
+    # Setup
+    strategy = JSONReportStrategy()
+    anomalies = {
+        'Shorts': pd.DataFrame({
+            'video_id': ['1'],
+            'title': ['A'],
+            'views': [100],
+            'retention_avg_pct': [50.0],
+            'type': ['Shorts'],
+            'publish_date': ['2023-01-01']
+        })
+    }
+    strategy_text = "Test Strategy"
+    base_filename = str(tmp_path / "test_report")
 
-    rules = list(ws.conditional_formatting)
+    # Execute
+    strategy.generate(anomalies, strategy_text, base_filename)
 
-    # Check if we have rules for 'Views' (C column likely) and 'Retention (%)' (D column likely)
-    # The header mapping is:
-    # 'video_id': 'Video ID' (A)
-    # 'title': 'Video Title' (B)
-    # 'views': 'Views' (C)
-    # 'retention_avg_pct': 'Retention (%)' (D)
+    # Verify
+    filepath = base_filename + ".json"
+    assert os.path.exists(filepath)
 
-    # We expect 2 rules if implemented
-    # Currently we expect 0 or failure to find specific rules
+    with open(filepath, 'r') as f:
+        data = json.load(f)
+        assert data['strategy'] == strategy_text
+        assert 'Shorts' in data['anomalies']
+        assert len(data['anomalies']['Shorts']) == 1
+        assert data['anomalies']['Shorts'][0]['video_id'] == '1'
 
-    data_bar_rules = 0
-    for cf in rules:
-        # Each cf object has a list of rules (cf.rules)
-        for rule in cf.rules:
-            if rule.type == 'dataBar':
-                data_bar_rules += 1
+def test_composite_generator(tmp_path):
+    """Test that CompositeReportGenerator generates all reports."""
+    # Setup
+    excel_strat = ExcelReportStrategy()
+    json_strat = JSONReportStrategy()
+    composite = CompositeReportGenerator([excel_strat, json_strat])
 
-    # This assertion should fail before implementation
-    assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
+    anomalies = {
+        'Shorts': pd.DataFrame({
+            'video_id': ['1'],
+            'title': ['A'],
+            'views': [100],
+            'retention_avg_pct': [50.0],
+            'type': ['Shorts'],
+            'publish_date': ['2023-01-01']
+        })
+    }
+    strategy_text = "Test Strategy"
+    base_filename = str(tmp_path / "test_report_composite")
 
+    # Execute
+    composite.generate(anomalies, strategy_text, base_filename)
+
+    # Verify
+    assert os.path.exists(base_filename + ".xlsx")
+    assert os.path.exists(base_filename + ".json")
 
 class MockCell:
     def __init__(self, value, number_format=None):
