@@ -1,7 +1,7 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional, ContextManager, Any, AsyncGenerator
+from typing import Union, Optional, ContextManager, Any, AsyncGenerator, Literal
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
@@ -36,7 +36,7 @@ class RichConsoleUI(UserInterface):
         table = Table(title=title, box=box.ROUNDED)
 
         for col_name in data.columns:
-            justify = "left"
+            justify: Literal["default", "left", "center", "right", "full"] = "left"
             style = "cyan"
 
             # specific columns should be right aligned and green
