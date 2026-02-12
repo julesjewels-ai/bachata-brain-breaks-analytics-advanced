@@ -87,3 +87,21 @@ class Visualizer(Protocol):
             BytesIO: Image data stream (e.g., PNG).
         """
         ...
+
+
+class CacheBackend(Protocol):
+    """
+    Protocol for caching operations.
+    Supports generic storage backends (e.g., In-Memory, Redis).
+    """
+    def get(self, key: str) -> Optional[Any]:
+        """Retrieves a value from the cache."""
+        ...
+
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """Sets a value in the cache with an optional TTL."""
+        ...
+
+    def delete(self, key: str) -> None:
+        """Deletes a value from the cache."""
+        ...

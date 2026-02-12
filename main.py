@@ -10,6 +10,7 @@ from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
+from src.core.caching import InMemoryCacheBackend, CachedAIService
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -30,7 +31,11 @@ def main() -> None:
     ui = RichConsoleUI()
 
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_ai_service = GeminiThinkingAgent()
+    cache_backend = InMemoryCacheBackend()
+
+    # Wrap AI Service with Caching
+    ai_service = CachedAIService(service=base_ai_service, cache=cache_backend)
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:
