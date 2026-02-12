@@ -141,6 +141,13 @@ class ExcelReportGenerator:
                 # Log or handle error without crashing report
                 logger.warning(f"Failed to generate visualization: {e}")
 
+    def generate_report(self,
+                        anomalies: Dict[str, pd.DataFrame],
+                        strategy: str,
+                        filepath: str) -> None:
+        """Generates a report using Excel strategy."""
+        self.generate_excel(anomalies, strategy, filepath)
+
     def generate_excel(self,
                        anomalies: Dict[str, pd.DataFrame],
                        strategy: str,

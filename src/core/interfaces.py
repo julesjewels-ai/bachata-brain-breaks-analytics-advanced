@@ -2,7 +2,7 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator
+from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
 from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
@@ -85,5 +85,15 @@ class Visualizer(Protocol):
 
         Returns:
             BytesIO: Image data stream (e.g., PNG).
+        """
+        ...
+
+class ReportGenerator(Protocol):
+    """
+    Protocol for generating reports.
+    """
+    def generate_report(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str) -> None:
+        """
+        Generates a report.
         """
         ...
