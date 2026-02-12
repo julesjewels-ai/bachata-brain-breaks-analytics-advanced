@@ -6,7 +6,7 @@ from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
 from src.core.ai import GeminiThinkingAgent
 from src.core.models import VideoAnalysisInput
-from src.core.interfaces import UserInterface, AIService
+from src.core.interfaces import UserInterface, AIService, ReportGenerator
 
 class DummyUI(UserInterface):
     def display_header(self, text: str): pass
@@ -28,14 +28,21 @@ class MockAIService(AIService):
     async def analyze_stream(self, videos):
         yield "Mock Analysis"
 
+class MockReportGenerator(ReportGenerator):
+    def generate_report(self, anomalies, strategy, filepath):
+        pass
+
 def test_agent_initialization():
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
     assert app.ai_service == ai_service
+    assert app.report_generator == report_generator
 
 def test_ingest_data_structure():
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
     df = app.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
@@ -43,7 +50,8 @@ def test_ingest_data_structure():
 
 def test_outlier_detection():
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3'],
         'title': ['A', 'B', 'Viral'],
@@ -61,7 +69,8 @@ def test_outlier_detection():
 def test_outlier_detection_dynamic_types():
     """Test that outlier detection handles arbitrary types dynamically."""
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
     df = pd.DataFrame({
         'video_id': ['1', '2', '3', '4'],
         'title': ['A', 'B', 'C', 'D'],
@@ -77,7 +86,8 @@ def test_outlier_detection_dynamic_types():
 
 def test_prepare_agent_input():
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
     df = pd.DataFrame({
         'video_id': [f'vid_{i}' for i in range(10)],
         'title': [f'Title {i}' for i in range(10)],
