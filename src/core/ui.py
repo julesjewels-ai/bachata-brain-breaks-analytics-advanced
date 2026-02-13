@@ -1,7 +1,7 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional, ContextManager, Any, AsyncGenerator
+from typing import Union, Optional, ContextManager, Any, AsyncGenerator, Literal
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
@@ -36,7 +36,7 @@ class RichConsoleUI(UserInterface):
         table = Table(title=title, box=box.ROUNDED)
 
         for col_name in data.columns:
-            justify = "left"
+            justify: Literal["left", "right", "center", "full", "default"] = "left"
             style = "cyan"
 
             # specific columns should be right aligned and green
@@ -47,15 +47,15 @@ class RichConsoleUI(UserInterface):
 
             table.add_column(str(col_name), justify=justify, style=style)
 
-        for _, row in data.iterrows():
+        for row in data.itertuples(index=False):
             # Convert row values to strings for display
             rendered_row = []
             for val in row:
-                # If it's a float and looks like a percentage (small number?) or huge number?
-                # Actually, let's rely on the caller to format values if specific formatting (like %) is needed.
-                # Or we can do simple formatting here.
-                # Let's just stringify for now to be safe and generic.
-                rendered_row.append(str(val))
+                # Handle None/NaN explicitly to match requirement
+                if val is None or pd.isna(val):
+                    rendered_row.append("nan")
+                else:
+                    rendered_row.append(str(val))
             table.add_row(*rendered_row)
 
         self.console.print(table)
