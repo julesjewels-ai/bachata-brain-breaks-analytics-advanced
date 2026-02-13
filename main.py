@@ -10,6 +10,7 @@ from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
+from src.core.caching import InMemoryCacheBackend, CachedAIService
 from src.core.reporting import ExcelReportGenerator
 
 def main() -> None:
@@ -31,7 +32,9 @@ def main() -> None:
     ui = RichConsoleUI()
 
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_ai_service = GeminiThinkingAgent()
+    cache_backend = InMemoryCacheBackend()
+    ai_service = CachedAIService(service=base_ai_service, cache=cache_backend)
 
     # Initialize Report Generator
     report_generator = ExcelReportGenerator()

@@ -7,6 +7,26 @@ from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
 
+class CacheBackend(Protocol):
+    """
+    Protocol for caching operations.
+    """
+    def get(self, key: str) -> Optional[Any]:
+        """Retrieves a value from the cache."""
+        ...
+
+    def set(self, key: str, value: Any, ttl: int = 300) -> None:
+        """Sets a value in the cache with a time-to-live (default 5 minutes)."""
+        ...
+
+    def delete(self, key: str) -> None:
+        """Deletes a value from the cache."""
+        ...
+
+    def clear(self) -> None:
+        """Clears the entire cache."""
+        ...
+
 class AIService(Protocol):
     """
     Protocol for AI operations.
