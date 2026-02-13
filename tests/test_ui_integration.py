@@ -3,7 +3,11 @@ import pandas as pd
 from typing import Union, Optional, ContextManager, Any, AsyncGenerator
 from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface, AIService
+from src.core.interfaces import UserInterface, AIService, ReportGenerator
+
+class MockReportGenerator(ReportGenerator):
+    def generate_report(self, anomalies: dict, strategy: str, filepath: str) -> None:
+        pass
 
 class MockUI(UserInterface):
     def __init__(self):
@@ -51,7 +55,8 @@ class MockAIService(AIService):
 def test_app_integration_with_ui():
     ui = MockUI()
     ai_service = MockAIService()
-    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service)
+    report_generator = MockReportGenerator()
+    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
     asyncio.run(app.run())
