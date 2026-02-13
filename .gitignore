@@ -14,3 +14,8 @@ mypy_install.log
 mypy_output*.txt
 .dmypy.json
 dmypy.json
+*.mp4
+*.mov
+*.avi
+*.mkv
+output_story.mp4
