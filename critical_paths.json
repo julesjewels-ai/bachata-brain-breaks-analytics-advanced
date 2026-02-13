@@ -1,0 +1,5 @@
+[
+    "src/core/interfaces.py",
+    "src/core/app.py",
+    "main.py"
+]
