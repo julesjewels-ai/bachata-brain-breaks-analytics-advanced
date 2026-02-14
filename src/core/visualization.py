@@ -5,6 +5,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import pandas as pd
 from pydantic import BaseModel, Field
+from src.core.interfaces import Visualizer
 
 # Ensure headless backend for server/CLI environments
 plt.switch_backend('Agg')
@@ -18,7 +19,7 @@ class VisualizationConfig(BaseModel):
     height: int = Field(6, description="Height in inches")
     dpi: int = Field(100, description="DPI of the image")
 
-class MatplotlibVisualizer:
+class MatplotlibVisualizer(Visualizer):
     """Implementation of Visualizer using Matplotlib."""
 
     def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
@@ -41,7 +42,14 @@ class MatplotlibVisualizer:
         if x_col not in df.columns or y_col not in df.columns:
              raise ValueError(f"Columns '{x_col}' or '{y_col}' not found in DataFrame columns: {df.columns.tolist()}")
 
-        config = VisualizationConfig(title=title, x_col=x_col, y_col=y_col)
+        config = VisualizationConfig(
+            title=title,
+            x_col=x_col,
+            y_col=y_col,
+            width=10,
+            height=6,
+            dpi=100
+        )
 
         # Create figure
         fig, ax = plt.subplots(figsize=(config.width, config.height), dpi=config.dpi)

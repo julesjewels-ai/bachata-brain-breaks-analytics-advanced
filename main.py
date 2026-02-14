@@ -11,6 +11,7 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.visualization import MatplotlibVisualizer
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -33,8 +34,11 @@ def main() -> None:
     # Initialize AI Service
     ai_service = GeminiThinkingAgent()
 
+    # Initialize Visualizer
+    visualizer = MatplotlibVisualizer()
+
     # Initialize Report Generator
-    report_generator = ExcelReportGenerator()
+    report_generator = ExcelReportGenerator(visualizer=visualizer)
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:

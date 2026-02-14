@@ -61,7 +61,8 @@ class ExcelStyler:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            if col[0].column is not None:
+                ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
 
     @staticmethod
     def get_header_map(ws: Worksheet) -> Dict[str, int]:

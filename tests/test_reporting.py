@@ -1,13 +1,21 @@
 import os
 import pandas as pd
+from io import BytesIO
 from openpyxl import load_workbook
 from src.core.reporting import ExcelReportGenerator
 from src.core.excel_styling import ExcelStyler
+from src.core.interfaces import Visualizer
+
+class MockVisualizer(Visualizer):
+    def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
+        # Return a valid minimal PNG signature
+        return BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82')
 
 def test_excel_generation_conditional_formatting(tmp_path):
     """Test that conditional formatting (DataBars) is applied to specific columns."""
     # Setup
-    generator = ExcelReportGenerator()
+    visualizer = MockVisualizer()
+    generator = ExcelReportGenerator(visualizer=visualizer)
     anomalies = {
         'Shorts': pd.DataFrame({
             'video_id': ['1', '2'],
@@ -43,8 +51,6 @@ def test_excel_generation_conditional_formatting(tmp_path):
     # 'retention_avg_pct': 'Retention (%)' (D)
 
     # We expect 2 rules if implemented
-    # Currently we expect 0 or failure to find specific rules
-
     data_bar_rules = 0
     for cf in rules:
         # Each cf object has a list of rules (cf.rules)
@@ -52,7 +58,6 @@ def test_excel_generation_conditional_formatting(tmp_path):
             if rule.type == 'dataBar':
                 data_bar_rules += 1
 
-    # This assertion should fail before implementation
     assert data_bar_rules >= 2, f"Expected at least 2 data bar rules, found {data_bar_rules}"
 
 

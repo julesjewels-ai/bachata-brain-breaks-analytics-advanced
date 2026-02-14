@@ -2,7 +2,7 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 import logging
 import pandas as pd
 from openpyxl.styles import Font, Alignment
@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
-from src.core.visualization import MatplotlibVisualizer
 from src.core.excel_styling import ExcelStyler
+from src.core.interfaces import Visualizer
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,9 @@ class ReportConfig(BaseModel):
 
 class ExcelReportGenerator:
     """Generates styled Excel reports for analytics data."""
+
+    def __init__(self, visualizer: Optional[Visualizer] = None):
+        self.visualizer = visualizer
 
     # Mapping from DataFrame columns to Excel headers
     COLUMN_MAPPING = {
@@ -88,7 +91,10 @@ class ExcelReportGenerator:
         chart_config = ChartConfig(
             title=f"Top {v_type} Views",
             x_axis_title="Video Title",
-            y_axis_title="Views"
+            y_axis_title="Views",
+            width=15.0,
+            height=10.0,
+            style=10
         )
 
         # Dynamic anchor: 2 columns to the right of the table
@@ -112,12 +118,14 @@ class ExcelReportGenerator:
 
     def _add_visual_insights(self, writer, anomalies: Dict[str, pd.DataFrame]) -> None:
         """Generates and embeds visual insights chart."""
+        if not self.visualizer:
+            return
+
         # Combine all anomalies to one DF for visualization
         all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
         if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
-            visualizer = MatplotlibVisualizer()
             try:
-                img_stream = visualizer.generate_chart(
+                img_stream = self.visualizer.generate_chart(
                     all_anomalies,
                     title="Views vs Retention Correlation",
                     x_col="retention_avg_pct",
