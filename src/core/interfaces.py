@@ -97,3 +97,15 @@ class ReportGenerator(Protocol):
         Generates a report.
         """
         ...
+
+class CacheBackend(Protocol):
+    """
+    Protocol for caching operations.
+    """
+    def get(self, key: str) -> Optional[Any]:
+        """Retrieves a value from the cache."""
+        ...
+
+    def set(self, key: str, value: Any, ttl: int = 3600) -> None:
+        """Sets a value in the cache with a Time-To-Live (TTL)."""
+        ...

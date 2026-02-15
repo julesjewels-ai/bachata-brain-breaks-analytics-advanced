@@ -11,6 +11,7 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.caching import FileCacheBackend, CachedAIService
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -30,8 +31,12 @@ def main() -> None:
     # Initialize UI
     ui = RichConsoleUI()
 
-    # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    # Initialize Cache
+    cache = FileCacheBackend()
+
+    # Initialize AI Service with Caching
+    base_ai_service = GeminiThinkingAgent()
+    ai_service = CachedAIService(base_ai_service, cache)
 
     # Initialize Report Generator
     report_generator = ExcelReportGenerator()
