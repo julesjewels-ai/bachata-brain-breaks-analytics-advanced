@@ -1,7 +1,7 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional, ContextManager, Any, AsyncGenerator
+from typing import Union, Optional, ContextManager, Any, AsyncGenerator, Literal
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
@@ -16,8 +16,8 @@ class RichConsoleUI(UserInterface):
     """
     Implementation of UserInterface using the Rich library.
     """
-    def __init__(self) -> None:
-        self.console = Console()
+    def __init__(self, console: Optional[Console] = None) -> None:
+        self.console = console or Console()
 
     def display_header(self, text: str) -> None:
         self.console.print(Panel(Text(text, justify="center", style="bold white"), style="bold blue"))
@@ -36,7 +36,7 @@ class RichConsoleUI(UserInterface):
         table = Table(title=title, box=box.ROUNDED)
 
         for col_name in data.columns:
-            justify = "left"
+            justify: Literal["left", "right", "center", "full", "default"] = "left"
             style = "cyan"
 
             # specific columns should be right aligned and green
@@ -47,7 +47,7 @@ class RichConsoleUI(UserInterface):
 
             table.add_column(str(col_name), justify=justify, style=style)
 
-        for _, row in data.iterrows():
+        for row in data.itertuples(index=False, name=None):
             # Convert row values to strings for display
             rendered_row = []
             for val in row:
