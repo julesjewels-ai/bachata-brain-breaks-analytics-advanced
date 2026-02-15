@@ -2,7 +2,7 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
+from typing import Dict, Optional
 import logging
 import pandas as pd
 from openpyxl.styles import Font, Alignment
@@ -14,10 +14,11 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
-from src.core.visualization import MatplotlibVisualizer
 from src.core.excel_styling import ExcelStyler
+from src.core.interfaces import Visualizer
 
 logger = logging.getLogger(__name__)
+
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
@@ -48,7 +49,12 @@ class ExcelReportGenerator:
         'publish_date': 'Publish Date'
     }
 
-    def _create_anomaly_sheet(self, writer, v_type: str, df: pd.DataFrame) -> Worksheet:
+    def __init__(self, visualizer: Optional[Visualizer] = None):
+        self.visualizer = visualizer
+
+    def _create_anomaly_sheet(
+        self, writer, v_type: str, df: pd.DataFrame
+    ) -> Worksheet:
         """Creates and styles a sheet for anomalies."""
         sheet_name = f"{v_type} Anomalies"
         display_df = df.rename(columns=self.COLUMN_MAPPING)
@@ -60,23 +66,23 @@ class ExcelReportGenerator:
         ExcelStyler.adjust_column_widths(ws)
         return ws
 
-    def _add_anomaly_chart(self, ws: Worksheet, v_type: str) -> None:
-        """Adds a bar chart to the anomaly sheet."""
+    def _prepare_anomaly_chart_config(
+        self, ws: Worksheet, v_type: str
+    ) -> Optional[tuple[ChartDataLocation, ChartConfig, str]]:
         headers = ExcelStyler.get_header_map(ws)
 
         if 'Views' not in headers or 'Video Title' not in headers:
-            return
+            return None
 
         # Only add chart if there is data
         if ws.max_row <= 1:
-            return
+            return None
 
         views_col = headers['Views']
         title_col = headers['Video Title']
         max_row = ws.max_row
         max_col = ws.max_column
 
-        chart_builder = ChartBuilder(ws)
         data_loc = ChartDataLocation(
             min_col=views_col,
             min_row=1,  # Include header for series name
@@ -88,16 +94,30 @@ class ExcelReportGenerator:
         chart_config = ChartConfig(
             title=f"Top {v_type} Views",
             x_axis_title="Video Title",
-            y_axis_title="Views"
+            y_axis_title="Views",
+            width=15.0,
+            height=10.0,
+            style=10
         )
 
         # Dynamic anchor: 2 columns to the right of the table
         anchor_col = get_column_letter(max_col + 2)
+        anchor = f"{anchor_col}2"
 
+        return data_loc, chart_config, anchor
+
+    def _add_anomaly_chart(self, ws: Worksheet, v_type: str) -> None:
+        """Adds a bar chart to the anomaly sheet."""
+        result = self._prepare_anomaly_chart_config(ws, v_type)
+        if not result:
+            return
+
+        data_loc, chart_config, anchor = result
+        chart_builder = ChartBuilder(ws)
         chart_builder.add_bar_chart(
             data_loc=data_loc,
             config=chart_config,
-            anchor=f"{anchor_col}2"
+            anchor=anchor
         )
 
     def _add_strategy_sheet(self, writer, strategy: str) -> None:
@@ -108,16 +128,29 @@ class ExcelReportGenerator:
         ws_strat = writer.sheets["Strategy"]
         ExcelStyler.apply_header_style(ws_strat)
         ws_strat.column_dimensions['A'].width = 100
-        ws_strat['A2'].alignment = Alignment(wrap_text=True, horizontal='left', vertical='top')
+        ws_strat['A2'].alignment = Alignment(
+            wrap_text=True, horizontal='left', vertical='top'
+        )
 
-    def _add_visual_insights(self, writer, anomalies: Dict[str, pd.DataFrame]) -> None:
+    def _add_visual_insights(
+        self, writer, anomalies: Dict[str, pd.DataFrame]
+    ) -> None:
         """Generates and embeds visual insights chart."""
         # Combine all anomalies to one DF for visualization
-        all_anomalies = pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
-        if not all_anomalies.empty and 'views' in all_anomalies.columns and 'retention_avg_pct' in all_anomalies.columns:
-            visualizer = MatplotlibVisualizer()
+        all_anomalies = (
+            pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
+        )
+        if (
+            not all_anomalies.empty
+            and 'views' in all_anomalies.columns
+            and 'retention_avg_pct' in all_anomalies.columns
+        ):
+            if not self.visualizer:
+                logger.info("No visualizer provided, skipping chart.")
+                return
+
             try:
-                img_stream = visualizer.generate_chart(
+                img_stream = self.visualizer.generate_chart(
                     all_anomalies,
                     title="Views vs Retention Correlation",
                     x_col="retention_avg_pct",
@@ -134,7 +167,11 @@ class ExcelReportGenerator:
                 ws_viz.add_image(img, "A1")
 
                 # Add description
-                ws_viz["A25"] = "Scatter plot showing relationship between Audience Retention and View Count."
+                desc = (
+                    "Scatter plot showing relationship between "
+                    "Audience Retention and View Count."
+                )
+                ws_viz["A25"] = desc
                 ws_viz["A25"].font = Font(italic=True, color="555555")
 
             except Exception as e:
