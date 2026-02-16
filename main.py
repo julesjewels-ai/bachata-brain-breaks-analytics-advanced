@@ -5,12 +5,14 @@ Handles command-line arguments and initializes the core application logic.
 import argparse
 import sys
 import asyncio
+from pathlib import Path
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.caching import FileCacheBackend, CachedAIService
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -30,8 +32,10 @@ def main() -> None:
     # Initialize UI
     ui = RichConsoleUI()
 
-    # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    # Initialize AI Service (with Caching)
+    base_ai_service = GeminiThinkingAgent()
+    cache_backend = FileCacheBackend(cache_dir=Path(".cache/ai_responses"))
+    ai_service = CachedAIService(service=base_ai_service, backend=cache_backend)
 
     # Initialize Report Generator
     report_generator = ExcelReportGenerator()
