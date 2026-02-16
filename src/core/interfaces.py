@@ -7,6 +7,17 @@ from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
 
+class DataIngestionService(Protocol):
+    """
+    Protocol for ingesting analytics data.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests data from a source and returns a DataFrame.
+        """
+        ...
+
+
 class AIService(Protocol):
     """
     Protocol for AI operations.

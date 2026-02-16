@@ -11,6 +11,7 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.ingestion import SimulationDataIngestionService
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -36,9 +37,17 @@ def main() -> None:
     # Initialize Report Generator
     report_generator = ExcelReportGenerator()
 
+    # Initialize Ingestion Service
+    ingestion_service = SimulationDataIngestionService()
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
-        app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
+        app = BachataAnalyticsApp(
+            ui=ui,
+            ai_service=ai_service,
+            report_generator=report_generator,
+            ingestion_service=ingestion_service
+        )
         asyncio.run(app.run())
     except ValidationError as e:
         ui.display_error(format_validation_error(e))

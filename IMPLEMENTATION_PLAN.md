@@ -5,3 +5,4 @@
 - [x] Implement Dependency Injection in `BachataAnalyticsApp`
 - [x] Update Tests in `tests/test_core.py`
 - [x] Update `main.py`
+- [x] Refactor Data Ingestion to `src/core/ingestion.py` and inject into `BachataAnalyticsApp`
