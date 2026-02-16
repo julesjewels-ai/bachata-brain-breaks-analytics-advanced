@@ -16,8 +16,8 @@ class RichConsoleUI(UserInterface):
     """
     Implementation of UserInterface using the Rich library.
     """
-    def __init__(self) -> None:
-        self.console = Console()
+    def __init__(self, console: Optional[Console] = None) -> None:
+        self.console = console or Console()
 
     def display_header(self, text: str) -> None:
         self.console.print(Panel(Text(text, justify="center", style="bold white"), style="bold blue"))
@@ -47,15 +47,9 @@ class RichConsoleUI(UserInterface):
 
             table.add_column(str(col_name), justify=justify, style=style)
 
-        for _, row in data.iterrows():
+        for row in data.itertuples(index=False, name=None):
             # Convert row values to strings for display
-            rendered_row = []
-            for val in row:
-                # If it's a float and looks like a percentage (small number?) or huge number?
-                # Actually, let's rely on the caller to format values if specific formatting (like %) is needed.
-                # Or we can do simple formatting here.
-                # Let's just stringify for now to be safe and generic.
-                rendered_row.append(str(val))
+            rendered_row = [str(val) for val in row]
             table.add_row(*rendered_row)
 
         self.console.print(table)
