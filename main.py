@@ -11,6 +11,8 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.caching import FileCacheBackend, CachedAIService, CacheError
+from src.core.interfaces import AIService
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -30,8 +32,15 @@ def main() -> None:
     # Initialize UI
     ui = RichConsoleUI()
 
-    # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    # Initialize AI Service with Caching
+    ai_service: AIService
+    try:
+        cache_backend = FileCacheBackend()
+        base_ai_service = GeminiThinkingAgent()
+        ai_service = CachedAIService(base_ai_service, cache_backend)
+    except CacheError as e:
+        ui.display_error(f"Warning: Cache initialization failed: {e}. Proceeding without cache.")
+        ai_service = GeminiThinkingAgent()
 
     # Initialize Report Generator
     report_generator = ExcelReportGenerator()

@@ -19,3 +19,4 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+.cache/
