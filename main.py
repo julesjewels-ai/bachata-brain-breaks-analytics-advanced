@@ -11,14 +11,18 @@ from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
+from src.core.visualization import MatplotlibVisualizer
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Bachata Brain Breaks Analytics: Audience & Retention Dashboard"
+        description=(
+            "Bachata Brain Breaks Analytics: Audience & Retention Dashboard"
+        )
     )
     parser.add_argument(
-        "--version", 
-        action="store_true", 
+        "--version",
+        action="store_true",
         help="Show application version"
     )
     args = parser.parse_args()
@@ -33,12 +37,17 @@ def main() -> None:
     # Initialize AI Service
     ai_service = GeminiThinkingAgent()
 
+    # Initialize Visualizer
+    visualizer = MatplotlibVisualizer()
+
     # Initialize Report Generator
-    report_generator = ExcelReportGenerator()
+    report_generator = ExcelReportGenerator(visualizer=visualizer)
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:
-        app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
+        app = BachataAnalyticsApp(
+            ui=ui, ai_service=ai_service, report_generator=report_generator
+        )
         asyncio.run(app.run())
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
@@ -46,6 +55,7 @@ def main() -> None:
     except Exception as e:
         ui.display_error(f"Critical Error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

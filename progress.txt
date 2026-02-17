@@ -7,3 +7,6 @@
 - Defined `ReportGenerator` protocol in `src/core/interfaces.py`.
 - Updated `ExcelReportGenerator` to implement `ReportGenerator`.
 - Updated `main.py` and `tests/test_core.py` to support the changes.
+- Refactored `ExcelReportGenerator` to use Dependency Injection for `Visualizer`.
+- Updated `main.py` to inject `MatplotlibVisualizer` into `ExcelReportGenerator`.
+- Updated `tests/test_reporting.py` to mock `Visualizer`.
