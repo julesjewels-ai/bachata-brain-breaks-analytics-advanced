@@ -19,3 +19,9 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+
+# Entropy
+tests/quarantine/
+tests/snapshots/
+coverage.json
+entropy_report.json
