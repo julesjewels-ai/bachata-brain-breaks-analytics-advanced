@@ -6,7 +6,10 @@ from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
 from src.core.ai import GeminiThinkingAgent
 from src.core.models import VideoAnalysisInput
-from src.core.interfaces import UserInterface, AIService, ReportGenerator
+from src.core.interfaces import (
+    UserInterface, AIService, ReportGenerator, DataIngestionService
+)
+
 
 class DummyUI(UserInterface):
     def display_header(self, text: str): pass
@@ -18,40 +21,78 @@ class DummyUI(UserInterface):
     def display_info(self, text: str): pass
     def display_message(self, text: str): pass
     def loading(self, text: str): return nullcontext()
+
     async def display_stream(self, generator):
         async for _ in generator:
             pass
 
+
 class MockAIService(AIService):
     def analyze_semantics(self, videos):
         return "Mock Analysis"
+
     async def analyze_stream(self, videos):
         yield "Mock Analysis"
+
 
 class MockReportGenerator(ReportGenerator):
     def generate_report(self, anomalies, strategy, filepath):
         pass
 
+
+class MockDataIngestionService(DataIngestionService):
+    def ingest_data(self) -> pd.DataFrame:
+        return pd.DataFrame({
+            'video_id': ['vid_1', 'vid_2'],
+            'title': ['Title 1', 'Title 2'],
+            'views': [1000, 2000],
+            'retention_avg_pct': [50.0, 60.0],
+            'type': ['Shorts', 'Long']
+        })
+
+
 def test_agent_initialization():
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(
+        ui=DummyUI(),
+        ai_service=ai_service,
+        report_generator=report_generator,
+        data_ingestion_service=data_ingestion_service
+    )
     assert app.ai_service == ai_service
     assert app.report_generator == report_generator
+    assert app.data_ingestion_service == data_ingestion_service
 
-def test_ingest_data_structure():
+
+def test_ingest_data_delegation():
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(
+        ui=DummyUI(),
+        ai_service=ai_service,
+        report_generator=report_generator,
+        data_ingestion_service=data_ingestion_service
+    )
     df = app.ingest_data()
     expected_cols = ['video_id', 'title', 'views', 'retention_avg_pct', 'type']
     assert not df.empty
     assert list(df.columns) == expected_cols
+    assert len(df) == 2
+
 
 def test_outlier_detection():
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(
+        ui=DummyUI(),
+        ai_service=ai_service,
+        report_generator=report_generator,
+        data_ingestion_service=data_ingestion_service
+    )
     df = pd.DataFrame({
         'video_id': ['1', '2', '3'],
         'title': ['A', 'B', 'Viral'],
@@ -61,16 +102,24 @@ def test_outlier_detection():
     })
     anomalies = app.detect_outliers(df)
     assert 'Shorts' in anomalies
-    # The logic looks for > 90th percentile. 
-    # With 3 items, 90th percentile is high. 'Viral' (10000) should be caught or border case depending on interpolation.
+    # The logic looks for > 90th percentile.
+    # With 3 items, 90th percentile is high.
+    # 'Viral' (10000) should be caught or border case depending on interp.
     # For this simple test, we ensure it returns a DataFrame.
     assert isinstance(anomalies['Shorts'], pd.DataFrame)
+
 
 def test_outlier_detection_dynamic_types():
     """Test that outlier detection handles arbitrary types dynamically."""
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(
+        ui=DummyUI(),
+        ai_service=ai_service,
+        report_generator=report_generator,
+        data_ingestion_service=data_ingestion_service
+    )
     df = pd.DataFrame({
         'video_id': ['1', '2', '3', '4'],
         'title': ['A', 'B', 'C', 'D'],
@@ -84,10 +133,17 @@ def test_outlier_detection_dynamic_types():
     assert len(anomalies['NewType1']) == 1  # 1000 should be filtered
     assert len(anomalies['NewType2']) == 1
 
+
 def test_prepare_agent_input():
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=DummyUI(), ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(
+        ui=DummyUI(),
+        ai_service=ai_service,
+        report_generator=report_generator,
+        data_ingestion_service=data_ingestion_service
+    )
     df = pd.DataFrame({
         'video_id': [f'vid_{i}' for i in range(10)],
         'title': [f'Title {i}' for i in range(10)],
@@ -103,6 +159,7 @@ def test_prepare_agent_input():
     # top 5: 90, 80, 70, 60, 50
     # bottom 5 (tail of desc sorted): 40, 30, 20, 10, 0
     assert result[0].retention_avg_pct == 90.0
+
 
 def test_gemini_agent_output():
     agent = GeminiThinkingAgent()
