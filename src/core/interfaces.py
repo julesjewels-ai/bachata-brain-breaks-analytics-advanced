@@ -7,6 +7,22 @@ from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
 
+class CacheBackend(Protocol):
+    """
+    Protocol for caching backend.
+    """
+    def get(self, key: str) -> Optional[str]:
+        """
+        Retrieves a value from the cache.
+        """
+        ...
+
+    def set(self, key: str, value: str) -> None:
+        """
+        Sets a value in the cache.
+        """
+        ...
+
 class AIService(Protocol):
     """
     Protocol for AI operations.

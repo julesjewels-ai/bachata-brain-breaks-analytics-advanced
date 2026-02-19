@@ -9,7 +9,9 @@ from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
+from src.core.interfaces import AIService
 from src.core.ai import GeminiThinkingAgent
+from src.core.caching import CachedAIService, FileCacheBackend, CacheError
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 
@@ -35,7 +37,14 @@ def main() -> None:
     ui = RichConsoleUI()
 
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_service = GeminiThinkingAgent()
+    ai_service: AIService = base_service
+
+    try:
+        cache_backend = FileCacheBackend()
+        ai_service = CachedAIService(service=base_service, cache=cache_backend)
+    except CacheError as e:
+        ui.display_error(f"Warning: Cache initialization failed ({e}). Using uncached service.")
 
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
