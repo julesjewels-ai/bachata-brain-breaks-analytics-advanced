@@ -23,6 +23,17 @@ class AIService(Protocol):
         """
         ...
 
+class DataIngestionService(Protocol):
+    """
+    Protocol for data ingestion.
+    """
+    def fetch_data(self) -> pd.DataFrame:
+        """
+        Fetches channel data (Shorts and Long-form).
+        """
+        ...
+
+
 class UserInterface(Protocol):
     """
     Protocol for user interaction.
