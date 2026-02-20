@@ -8,10 +8,10 @@ kiwisolver==1.4.9
 markdown-it-py==4.0.0
 matplotlib==3.9.0
 mdurl==0.1.2
-numpy==1.26.4
+numpy==2.4.2
 openpyxl==3.1.5
 packaging==26.0
-pandas==2.2.3
+pandas==3.0.1
 pillow==12.1.1
 pluggy==1.6.0
 pydantic==2.10.4
@@ -24,4 +24,3 @@ python-dotenv==1.0.1
 rich==13.7.1
 six==1.17.0
 typing-extensions==4.15.0
-typing-inspection==0.4.2
