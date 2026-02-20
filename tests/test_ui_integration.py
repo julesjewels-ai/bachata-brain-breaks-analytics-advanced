@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Union, Optional, ContextManager, Any, AsyncGenerator
 from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface, AIService, ReportGenerator
+from src.core.interfaces import UserInterface, AIService, ReportGenerator, DataIngestionService
 
 class MockReportGenerator(ReportGenerator):
     def generate_report(self, anomalies, strategy, filepath):
@@ -52,13 +52,21 @@ class MockAIService(AIService):
     async def analyze_stream(self, videos):
         yield "Mock Analysis Strategy"
 
+class MockDataIngestionService(DataIngestionService):
+    def ingest_data(self) -> pd.DataFrame:
+        return pd.DataFrame([
+            {'video_id': 'vid_1', 'title': 'Normal', 'views': 100, 'retention_avg_pct': 50.0, 'type': 'Shorts'},
+            {'video_id': 'vid_2', 'title': 'Viral', 'views': 1000, 'retention_avg_pct': 90.0, 'type': 'Shorts'},
+        ])
+
 def test_app_integration_with_ui():
     ui = MockUI()
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
+    ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator, data_ingestion_service=ingestion_service)
 
-    # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
+    # Run the app
     asyncio.run(app.run())
 
     # Verify sequence of calls
@@ -71,9 +79,6 @@ def test_app_integration_with_ui():
     # Check for stream calls
     assert any(c[0] == 'stream_start' for c in ui.calls)
     assert any(c[0] == 'stream_chunk' and "Mock Analysis Strategy" in c[1] for c in ui.calls)
-
-    # We NO LONGER expect 'info' with strategy because we stream it
-    # assert any(c[0] == 'info' for c in ui.calls)
 
     assert any(c[0] == 'loading' and "Generating Excel Report" in c[1] for c in ui.calls)
     assert any(c[0] == 'success' and "Report saved" in c[1] for c in ui.calls)

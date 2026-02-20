@@ -97,3 +97,16 @@ class ReportGenerator(Protocol):
         Generates a report.
         """
         ...
+
+class DataIngestionService(Protocol):
+    """
+    Protocol for data ingestion operations.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests channel data.
+
+        Returns:
+            pd.DataFrame: DataFrame containing video analysis data.
+        """
+        ...
