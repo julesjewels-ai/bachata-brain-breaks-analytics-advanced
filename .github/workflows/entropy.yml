@@ -1,0 +1,45 @@
+name: Entropy Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  entropy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # To get git history for churn analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest-cov radon
+
+      - name: Run Entropy Scan
+        id: entropy
+        run: |
+          python entropy_scan.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: entropy maintenance"
+          branch: "entropy-maintenance"
+          delete-branch: true
+          title: "[Entropy] Maintenance - Liability Reduction"
+          body-path: "entropy_report.md"
+          labels: "automated-pr, maintenance"
