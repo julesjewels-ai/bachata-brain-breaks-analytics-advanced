@@ -2,10 +2,13 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
+from typing import (
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
+)
 from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
+
 
 class AIService(Protocol):
     """
@@ -17,11 +20,14 @@ class AIService(Protocol):
         """
         ...
 
-    def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
+    def analyze_stream(
+        self, videos: List[VideoAnalysisInput]
+    ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata.
         """
         ...
+
 
 class UserInterface(Protocol):
     """
@@ -40,7 +46,9 @@ class UserInterface(Protocol):
         """Displays a status update or progress message."""
         ...
 
-    def display_table(self, data: pd.DataFrame, title: Optional[str] = None) -> None:
+    def display_table(
+        self, data: pd.DataFrame, title: Optional[str] = None
+    ) -> None:
         """Displays structured data as a table."""
         ...
 
@@ -64,7 +72,9 @@ class UserInterface(Protocol):
         """Returns a context manager for a loading state."""
         ...
 
-    async def display_stream(self, generator: AsyncGenerator[str, None]) -> None:
+    async def display_stream(
+        self, generator: AsyncGenerator[str, None]
+    ) -> None:
         """Displays a streaming response from an async generator."""
         ...
 
@@ -73,7 +83,9 @@ class Visualizer(Protocol):
     """
     Protocol for generating static visualizations.
     """
-    def generate_chart(self, df: pd.DataFrame, title: str, x_col: str, y_col: str) -> BytesIO:
+    def generate_chart(
+        self, df: pd.DataFrame, title: str, x_col: str, y_col: str
+    ) -> BytesIO:
         """
         Generates a chart and returns the image as a byte stream.
 
@@ -88,12 +100,26 @@ class Visualizer(Protocol):
         """
         ...
 
+
 class ReportGenerator(Protocol):
     """
     Protocol for generating reports.
     """
-    def generate_report(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str) -> None:
+    def generate_report(
+        self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
+    ) -> None:
         """
         Generates a report.
+        """
+        ...
+
+
+class DataIngestionService(Protocol):
+    """
+    Protocol for ingesting video data.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests data from a source (e.g., API, database, simulation).
         """
         ...
