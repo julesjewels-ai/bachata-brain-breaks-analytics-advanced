@@ -1,21 +1,16 @@
-venv/
 __pycache__/
 *.pyc
 .env
+venv/
 .pytest_cache/
-.DS_Store
-coverage.xml
 .coverage
-*.xlsx
-
-# Mypy
+coverage.xml
+coverage.json
+entropy_report.json
+htmlcov/
+dist/
+build/
+*.egg-info/
 .mypy_cache/
-mypy_install.log
-mypy_output*.txt
-.dmypy.json
-dmypy.json
-# Video Files
-*.mp4
-*.mov
-*.avi
-*.mkv
+bandit-report.json
+tests/snapshots/
