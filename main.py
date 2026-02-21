@@ -12,6 +12,7 @@ from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
+from src.core.ingestion import SimulationDataIngestionService
 
 
 def main() -> None:
@@ -43,10 +44,16 @@ def main() -> None:
     # Initialize Report Generator
     report_generator = ExcelReportGenerator(visualizer=visualizer)
 
+    # Initialize Ingestion Service
+    ingestion_service = SimulationDataIngestionService()
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
-            ui=ui, ai_service=ai_service, report_generator=report_generator
+            ui=ui,
+            ai_service=ai_service,
+            report_generator=report_generator,
+            ingestion_service=ingestion_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

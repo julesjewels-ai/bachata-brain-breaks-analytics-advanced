@@ -7,6 +7,10 @@ from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
 
+class DataIngestionError(Exception):
+    """Custom exception for data ingestion failures."""
+    pass
+
 class AIService(Protocol):
     """
     Protocol for AI operations.
@@ -95,5 +99,15 @@ class ReportGenerator(Protocol):
     def generate_report(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str) -> None:
         """
         Generates a report.
+        """
+        ...
+
+class DataIngestionService(Protocol):
+    """
+    Protocol for ingesting video data.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests video data and returns a DataFrame.
         """
         ...
