@@ -3,11 +3,21 @@ import pandas as pd
 from typing import Union, Optional, ContextManager, Any, AsyncGenerator
 from contextlib import nullcontext
 from src.core.app import BachataAnalyticsApp
-from src.core.interfaces import UserInterface, AIService, ReportGenerator
+from src.core.interfaces import UserInterface, AIService, ReportGenerator, DataIngestionService
 
 class MockReportGenerator(ReportGenerator):
     def generate_report(self, anomalies, strategy, filepath):
         pass
+
+class MockDataIngestionService(DataIngestionService):
+    def ingest_data(self) -> pd.DataFrame:
+        return pd.DataFrame({
+             'video_id': ['vid_1'],
+             'title': ['Test'],
+             'views': [1000],
+             'retention_avg_pct': [90.0],
+             'type': ['Shorts']
+        })
 
 class MockUI(UserInterface):
     def __init__(self):
@@ -56,7 +66,8 @@ def test_app_integration_with_ui():
     ui = MockUI()
     ai_service = MockAIService()
     report_generator = MockReportGenerator()
-    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator)
+    data_ingestion_service = MockDataIngestionService()
+    app = BachataAnalyticsApp(ui=ui, ai_service=ai_service, report_generator=report_generator, data_ingestion_service=data_ingestion_service)
 
     # Run the app (mocking ingestion/processing implicitly by the app's design which mocks data internally)
     asyncio.run(app.run())

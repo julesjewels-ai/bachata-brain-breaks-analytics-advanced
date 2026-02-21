@@ -7,6 +7,10 @@ from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput
 
+class DataIngestionError(Exception):
+    """Base exception for data ingestion errors."""
+    pass
+
 class AIService(Protocol):
     """
     Protocol for AI operations.
@@ -95,5 +99,17 @@ class ReportGenerator(Protocol):
     def generate_report(self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str) -> None:
         """
         Generates a report.
+        """
+        ...
+
+class DataIngestionService(Protocol):
+    """
+    Protocol for data ingestion strategies.
+    Decouples the source of data (simulation, CSV, API) from the analysis logic.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests video data and returns it as a validated DataFrame.
+        Must return a DataFrame with columns matching VideoAnalysisInput.
         """
         ...

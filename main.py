@@ -12,6 +12,8 @@ from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
+from src.core.ingestion import SimulationDataIngestionService, CSVDataIngestionService
+from src.core.interfaces import DataIngestionService, DataIngestionError
 
 
 def main() -> None:
@@ -24,6 +26,12 @@ def main() -> None:
         "--version",
         action="store_true",
         help="Show application version"
+    )
+    parser.add_argument(
+        "--csv",
+        help="Path to CSV file for data ingestion",
+        type=str,
+        default=None
     )
     args = parser.parse_args()
 
@@ -43,14 +51,27 @@ def main() -> None:
     # Initialize Report Generator
     report_generator = ExcelReportGenerator(visualizer=visualizer)
 
+    # Initialize Data Ingestion Service
+    data_ingestion_service: DataIngestionService
+    if args.csv:
+        data_ingestion_service = CSVDataIngestionService(filepath=args.csv)
+    else:
+        data_ingestion_service = SimulationDataIngestionService()
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
-            ui=ui, ai_service=ai_service, report_generator=report_generator
+            ui=ui,
+            ai_service=ai_service,
+            report_generator=report_generator,
+            data_ingestion_service=data_ingestion_service
         )
         asyncio.run(app.run())
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
+        sys.exit(1)
+    except DataIngestionError as e:
+        ui.display_error(f"Data Ingestion Error: {e}")
         sys.exit(1)
     except Exception as e:
         ui.display_error(f"Critical Error: {e}")

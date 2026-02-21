@@ -2,14 +2,13 @@
 Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
-import random
 import logging
 from typing import List, Dict
 import pandas as pd
 from pydantic import ValidationError
 from src.core.config import AppConfig
 from src.core.formatting import format_validation_error, prepare_display_dataframe
-from src.core.interfaces import UserInterface, AIService, ReportGenerator
+from src.core.interfaces import UserInterface, AIService, ReportGenerator, DataIngestionService
 from src.core.models import VideoAnalysisInput
 
 # Configure logging
@@ -19,40 +18,20 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
-    def __init__(self, ui: UserInterface, ai_service: AIService, report_generator: ReportGenerator):
+    def __init__(self, ui: UserInterface, ai_service: AIService, report_generator: ReportGenerator, data_ingestion_service: DataIngestionService):
         # Securely load configuration
         self.config = AppConfig.get_config()
         self.ai_service = ai_service
         self.ui = ui
         self.report_generator = report_generator
+        self.data_ingestion_service = data_ingestion_service
 
     def ingest_data(self) -> pd.DataFrame:
         """
-        Simulates ingesting channel data (Shorts and Long-form).
-        In a real app, this would connect to YouTube Analytics API.
+        Ingests channel data using the configured service.
         """
         with self.ui.loading("Ingesting channel data..."):
-            # Generate mock data
-            titles = [
-                'Basic Step Tutorial', 'Sensual Bachata Demo', 'Viral Short Dance',
-                'Advanced Footwork', 'Partner Connection Secrets', 'Musicality 101',
-                'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
-            ] * 2
-
-            raw_data = []
-            for i in range(1, 21):
-                raw_data.append({
-                    'video_id': f'vid_{i}',
-                    'title': titles[i-1],
-                    'views': random.randint(500, 500000),
-                    'retention_avg_pct': random.uniform(20.0, 95.0),
-                    'type': 'Long' if i % 3 != 0 else 'Shorts'
-                })
-
-            # Validate data using VideoAnalysisInput (Ensures type safety & security)
-            validated_data = [VideoAnalysisInput(**record).model_dump() for record in raw_data]
-
-            return pd.DataFrame(validated_data)
+            return self.data_ingestion_service.ingest_data()
 
     def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         """
