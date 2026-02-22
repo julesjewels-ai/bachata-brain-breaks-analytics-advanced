@@ -88,6 +88,16 @@ class Visualizer(Protocol):
         """
         ...
 
+class DataIngestionService(Protocol):
+    """
+    Protocol for ingesting data from a source.
+    """
+    def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests data and returns a pandas DataFrame.
+        """
+        ...
+
 class ReportGenerator(Protocol):
     """
     Protocol for generating reports.
