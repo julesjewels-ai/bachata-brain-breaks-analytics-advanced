@@ -10,6 +10,7 @@ from src.core.app import BachataAnalyticsApp
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
+from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 
@@ -35,7 +36,18 @@ def main() -> None:
     ui = RichConsoleUI()
 
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_ai_service = GeminiThinkingAgent()
+    try:
+        cache_backend = FileCacheBackend()
+        ai_service = CachedAIService(
+            service=base_ai_service, cache=cache_backend
+        )
+        ui.display_info("AI Caching Enabled.")
+    except Exception as e:
+        ui.display_error(
+            f"Failed to initialize cache: {e}. Continuing without caching."
+        )
+        ai_service = base_ai_service
 
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()

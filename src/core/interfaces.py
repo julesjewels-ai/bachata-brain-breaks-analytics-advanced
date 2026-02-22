@@ -23,6 +23,23 @@ class AIService(Protocol):
         """
         ...
 
+class CacheBackend(Protocol):
+    """
+    Protocol for caching operations.
+    """
+    def get(self, key: str) -> Optional[str]:
+        """
+        Retrieves a value from the cache.
+        """
+        ...
+
+    def set(self, key: str, value: str) -> None:
+        """
+        Sets a value in the cache.
+        """
+        ...
+
+
 class UserInterface(Protocol):
     """
     Protocol for user interaction.
