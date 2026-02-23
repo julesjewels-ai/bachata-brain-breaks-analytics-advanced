@@ -12,6 +12,9 @@ from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
+from src.core.caching import FileCacheBackend, CachedAIService
+from src.core.config import AppConfig
+from src.core.interfaces import AIService
 
 
 def main() -> None:
@@ -35,7 +38,22 @@ def main() -> None:
     ui = RichConsoleUI()
 
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_ai_service = GeminiThinkingAgent()
+    ai_service: AIService
+
+    # Initialize Caching Layer
+    try:
+        config = AppConfig.get_config()
+        cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
+        ai_service = CachedAIService(
+            service=base_ai_service, backend=cache_backend
+        )
+        ui.display_status(f"AI Caching enabled at: {config.cache_dir}")
+    except Exception as e:
+        ui.display_error(
+            f"Cache initialization failed: {e}. Proceeding without cache."
+        )
+        ai_service = base_ai_service  # Fallback
 
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
