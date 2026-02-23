@@ -14,9 +14,9 @@ class VisualizationConfig(BaseModel):
     title: str
     x_col: str
     y_col: str
-    width: int = Field(10, description="Width in inches")
-    height: int = Field(6, description="Height in inches")
-    dpi: int = Field(100, description="DPI of the image")
+    width: int = Field(default=10, description="Width in inches")
+    height: int = Field(default=6, description="Height in inches")
+    dpi: int = Field(default=100, description="DPI of the image")
 
 class MatplotlibVisualizer:
     """Implementation of Visualizer using Matplotlib."""

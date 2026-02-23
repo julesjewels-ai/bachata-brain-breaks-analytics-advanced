@@ -25,9 +25,9 @@ class ChartConfig(BaseModel):
     title: str = Field(..., description="Title of the chart")
     x_axis_title: str = Field(..., description="Label for X-Axis")
     y_axis_title: str = Field(..., description="Label for Y-Axis")
-    width: float = Field(15.0, description="Chart width in cm")
-    height: float = Field(10.0, description="Chart height in cm")
-    style: int = Field(10, description="Excel chart style index")
+    width: float = Field(default=15.0, description="Chart width in cm")
+    height: float = Field(default=10.0, description="Chart height in cm")
+    style: int = Field(default=10, description="Excel chart style index")
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
