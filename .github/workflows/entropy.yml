@@ -1,0 +1,69 @@
+name: Entropy Sanitation
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  entropy-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for git log churn analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Entropy Scan
+        run: |
+          # Configure git for churn analysis
+          git config --global user.email "entropy-bot@example.com"
+          git config --global user.name "Entropy Bot"
+
+          # Run scan (executes actions like delete/move)
+          python entropy_scan.py
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -f entropy_report.md ]] && grep -q "|" entropy_report.md; then
+             # Check if git status is clean?
+             # Actually, entropy_scan.py modifies files. We want to commit those changes.
+             # But if only report changed (and it's ignored), we might not want PR if no actions taken.
+             # However, entropy_scan.py only writes to report if actions are taken (or suggested).
+             # Wait, my script writes report anyway.
+             # But "Action Taken" column says "NONE" if no action.
+             # I should check if there are actual file changes in git status.
+             if [[ -n $(git status -s) ]]; then
+               echo "changes_detected=true" >> $GITHUB_OUTPUT
+             else
+               echo "changes_detected=false" >> $GITHUB_OUTPUT
+             fi
+          else
+             echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[Entropy] Automated Liability Reduction"
+          title: "[Entropy] Maintenance - Liability Reduction"
+          body-path: entropy_report.md
+          branch: entropy/liability-reduction
+          delete-branch: true
+          base: main
