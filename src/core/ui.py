@@ -36,7 +36,7 @@ class RichConsoleUI(UserInterface):
         table = Table(title=title, box=box.ROUNDED)
 
         for col_name in data.columns:
-            justify = "left"
+            justify: Any = "left"
             style = "cyan"
 
             # specific columns should be right aligned and green
