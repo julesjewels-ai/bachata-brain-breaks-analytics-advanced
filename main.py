@@ -7,9 +7,11 @@ import sys
 import asyncio
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
+from src.core.config import AppConfig
 from src.core.ui import RichConsoleUI
 from src.core.formatting import format_validation_error
 from src.core.ai import GeminiThinkingAgent
+from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 from src.core.ingestion import SimulationDataIngestionService
@@ -35,8 +37,27 @@ def main() -> None:
     # Initialize UI
     ui = RichConsoleUI()
 
+    # Load Configuration
+    try:
+        config = AppConfig.get_config()
+    except ValidationError as e:
+        ui.display_error(f"Configuration Error: {e}")
+        sys.exit(1)
+
     # Initialize AI Service
-    ai_service = GeminiThinkingAgent()
+    base_ai_service = GeminiThinkingAgent()
+
+    # Initialize Caching Layer
+    try:
+        cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
+        ai_service = CachedAIService(
+            ai_service=base_ai_service,
+            cache_backend=cache_backend
+        )
+        ui.display_status(f"Caching enabled at: {config.cache_dir}")
+    except Exception as e:
+        ui.display_error(f"Caching initialization failed: {e}. continuing without cache.")
+        ai_service = base_ai_service
 
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()

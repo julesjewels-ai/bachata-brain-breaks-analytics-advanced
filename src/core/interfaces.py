@@ -123,3 +123,30 @@ class DataIngestionService(Protocol):
         Ingests video data and returns a DataFrame.
         """
         ...
+
+
+class CacheBackend(Protocol):
+    """
+    Protocol for caching string data.
+    """
+    def get(self, key: str) -> Optional[str]:
+        """
+        Retrieves a value from the cache.
+
+        Args:
+            key: Unique cache key.
+
+        Returns:
+            The cached string value, or None if not found.
+        """
+        ...
+
+    def set(self, key: str, value: str) -> None:
+        """
+        Stores a value in the cache.
+
+        Args:
+            key: Unique cache key.
+            value: String value to cache.
+        """
+        ...
