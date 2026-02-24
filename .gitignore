@@ -19,3 +19,8 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+
+# Entropy
+entropy_report.md
+coverage.json
+bandit-report.json

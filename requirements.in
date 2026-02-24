@@ -6,3 +6,8 @@ pydantic>=2.0.0
 rich>=13.0.0
 matplotlib>=3.8.0
 pillow>=10.0.0
+pytest-cov
+pytest-mock
+pytest-asyncio
+coverage
+pip-tools
