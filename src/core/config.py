@@ -28,6 +28,10 @@ class AppConfig(BaseModel):
         pattern=r"^(development|production|testing)$",
         description="Runtime environment"
     )
+    cache_dir: str = Field(
+        default=".cache/ai_responses",
+        description="Directory to store AI response cache"
+    )
 
     @classmethod
     def get_config(cls) -> "AppConfig":
@@ -37,7 +41,8 @@ class AppConfig(BaseModel):
         try:
             return cls(
                 google_api_key=os.getenv("GOOGLE_API_KEY"),
-                environment=os.getenv("APP_ENV", "development")
+                environment=os.getenv("APP_ENV", "development"),
+                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses")
             )
         except ValidationError as e:
             logger.error(f"Configuration validation failed: {e}")
