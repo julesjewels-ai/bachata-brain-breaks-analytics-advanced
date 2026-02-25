@@ -16,8 +16,15 @@ class RichConsoleUI(UserInterface):
     """
     Implementation of UserInterface using the Rich library.
     """
-    def __init__(self) -> None:
-        self.console = Console()
+    def __init__(self, console: Optional[Console] = None) -> None:
+        """
+        Initialize the RichConsoleUI.
+
+        Args:
+            console: Optional Rich Console instance. If None, a new Console is created.
+                     Useful for testing or overriding default console behavior.
+        """
+        self.console = console or Console()
 
     def display_header(self, text: str) -> None:
         self.console.print(Panel(Text(text, justify="center", style="bold white"), style="bold blue"))
