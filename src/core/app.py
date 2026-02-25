@@ -106,14 +106,27 @@ class BachataAnalyticsApp:
         # Stream Strategy
         strategy_chunks: List[str] = []
         with self.ui.loading("Initializing Gemini 3 Stream..."):
-            stream = self.ai_service.analyze_stream(analysis_input)
+            stream_gen = self.ai_service.analyze_stream(analysis_input)
+            try:
+                # Fetch first chunk to maintain loading state during thinking
+                first_chunk = await anext(stream_gen)
+            except StopAsyncIteration:
+                first_chunk = None
+
+        async def _reconstructed_stream():
+            if first_chunk:
+                yield first_chunk
+            async for chunk in stream_gen:
+                yield chunk
 
         async def _capture_wrapper(gen):
             async for chunk in gen:
                 strategy_chunks.append(chunk)
                 yield chunk
 
-        await self.ui.display_stream(_capture_wrapper(stream))
+        await self.ui.display_stream(
+            _capture_wrapper(_reconstructed_stream())
+        )
         strategy = "".join(strategy_chunks)
 
         # 4. Generate Excel Report
