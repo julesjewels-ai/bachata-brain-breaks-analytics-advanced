@@ -3,7 +3,8 @@ Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
-    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
+    Literal
 )
 from io import BytesIO
 import pandas as pd
@@ -148,5 +149,26 @@ class CacheBackend(Protocol):
         Args:
             key: Unique cache key.
             value: String value to cache.
+        """
+        ...
+
+
+class NotificationService(Protocol):
+    """
+    Protocol for notification services.
+    """
+    def notify(
+        self,
+        title: str,
+        message: str,
+        level: Literal["INFO", "WARNING", "ERROR", "SUCCESS"] = "INFO"
+    ) -> None:
+        """
+        Sends a notification.
+
+        Args:
+            title: Title of the notification.
+            message: Content of the notification.
+            level: Severity level (INFO, WARNING, ERROR, SUCCESS).
         """
         ...

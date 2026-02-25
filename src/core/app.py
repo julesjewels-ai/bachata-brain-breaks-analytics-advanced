@@ -11,7 +11,8 @@ from src.core.formatting import (
     format_validation_error, prepare_display_dataframe
 )
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService
+    UserInterface, AIService, ReportGenerator, DataIngestionService,
+    NotificationService
 )
 from src.core.models import VideoAnalysisInput
 
@@ -28,7 +29,8 @@ class BachataAnalyticsApp:
         ui: UserInterface,
         ai_service: AIService,
         report_generator: ReportGenerator,
-        data_ingestion_service: DataIngestionService
+        data_ingestion_service: DataIngestionService,
+        notification_service: NotificationService
     ):
         # Securely load configuration
         self.config = AppConfig.get_config()
@@ -36,6 +38,7 @@ class BachataAnalyticsApp:
         self.ui = ui
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
+        self.notification_service = notification_service
 
     def ingest_data(self) -> pd.DataFrame:
         """
@@ -77,14 +80,34 @@ class BachataAnalyticsApp:
         """
         Executes the analytics pipeline.
         """
+        self.notification_service.notify(
+            "System", "Analytics pipeline started", "INFO"
+        )
+
         # 1. Ingest
         self.ui.display_header("Bachata Analytics Dashboard")
-        df = self.ingest_data()
+        try:
+            df = self.ingest_data()
+        except Exception as e:
+            self.notification_service.notify(
+                "Ingestion", f"Failed: {e}", "ERROR"
+            )
+            raise
+
         self.ui.display_success(f"Data loaded: {len(df)} records.")
+        self.notification_service.notify(
+            "Ingestion", f"Data loaded: {len(df)} records", "INFO"
+        )
 
         # 2. Outlier Detection
         anomalies = self.detect_outliers(df)
         for v_type, data in anomalies.items():
+            if not data.empty:
+                self.notification_service.notify(
+                    "Anomalies",
+                    f"Detected {len(data)} viral {v_type} videos",
+                    "WARNING"
+                )
             self.ui.display_section(f"Viral Anomalies ({v_type})")
             display_df = prepare_display_dataframe(
                 data[['title', 'views', 'retention_avg_pct']]
@@ -118,15 +141,25 @@ class BachataAnalyticsApp:
 
         # 4. Generate Excel Report
         try:
+            report_path = "bachata_analytics.xlsx"
             with self.ui.loading("Generating Excel Report..."):
                 self.report_generator.generate_report(
-                    anomalies, strategy, "bachata_analytics.xlsx"
+                    anomalies, strategy, report_path
                 )
             self.ui.display_success(
-                "Report saved to 'bachata_analytics.xlsx'."
+                f"Report saved to '{report_path}'."
+            )
+            self.notification_service.notify(
+                "Reporting", f"Report generated at {report_path}", "SUCCESS"
             )
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
+            self.notification_service.notify(
+                "Reporting", f"Failed to generate report: {e}", "ERROR"
+            )
             self.ui.display_error(f"Error generating report: {e}")
 
         self.ui.display_success("Dashboard update complete.")
+        self.notification_service.notify(
+            "System", "Analytics pipeline completed", "SUCCESS"
+        )

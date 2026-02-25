@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+
 class AppConfig(BaseModel):
     """
     Application configuration with strict validation.
@@ -32,6 +33,10 @@ class AppConfig(BaseModel):
         default=".cache/ai_responses",
         description="Directory to store AI response cache"
     )
+    notification_log_path: str = Field(
+        default="notifications.jsonl",
+        description="Path to store notification logs"
+    )
 
     @classmethod
     def get_config(cls) -> "AppConfig":
@@ -42,7 +47,10 @@ class AppConfig(BaseModel):
             return cls(
                 google_api_key=os.getenv("GOOGLE_API_KEY"),
                 environment=os.getenv("APP_ENV", "development"),
-                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses")
+                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses"),
+                notification_log_path=os.getenv(
+                    "NOTIFICATION_LOG_PATH", "notifications.jsonl"
+                )
             )
         except ValidationError as e:
             logger.error(f"Configuration validation failed: {e}")
@@ -53,5 +61,7 @@ class AppConfig(BaseModel):
         Retrieves API key with safety check.
         """
         if not self.google_api_key:
-            raise ValueError("GOOGLE_API_KEY is missing in environment variables.")
+            raise ValueError(
+                "GOOGLE_API_KEY is missing in environment variables."
+            )
         return self.google_api_key
