@@ -15,6 +15,10 @@ from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 from src.core.ingestion import SimulationDataIngestionService
+from src.core.notifications import (
+    ConsoleNotificationService, FileNotificationService,
+    CompositeNotificationService
+)
 
 
 def main() -> None:
@@ -56,8 +60,10 @@ def main() -> None:
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
     except Exception as e:
-        ui.display_error(f"Caching initialization failed: {e}. continuing without cache.")
-        ai_service = base_ai_service
+        ui.display_error(
+            f"Caching initialization failed: {e}. continuing without cache."
+        )
+        ai_service = base_ai_service  # type: ignore
 
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
@@ -68,13 +74,21 @@ def main() -> None:
     # Initialize Data Ingestion Service
     data_ingestion_service = SimulationDataIngestionService()
 
+    # Initialize Notification Service
+    console_notifier = ConsoleNotificationService(ui)
+    file_notifier = FileNotificationService("notifications.jsonl")
+    notification_service = CompositeNotificationService(
+        [console_notifier, file_notifier]
+    )
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
             ui=ui,
             ai_service=ai_service,
             report_generator=report_generator,
-            data_ingestion_service=data_ingestion_service
+            data_ingestion_service=data_ingestion_service,
+            notification_service=notification_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

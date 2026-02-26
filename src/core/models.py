@@ -1,6 +1,8 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
+from typing import Literal
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 
 class VideoAnalysisInput(BaseModel):
@@ -18,16 +20,39 @@ class VideoAnalysisInput(BaseModel):
     @classmethod
     def validate_title(cls, v: str) -> str:
         # Basic sanitization and prompt injection check
-        forbidden_patterns = ["Ignore previous instructions", "System:", "User:"]
+        forbidden_patterns = [
+            "Ignore previous instructions",
+            "System:",
+            "User:"
+        ]
         for pattern in forbidden_patterns:
             if pattern in v:
-                raise ValueError(f"Potential prompt injection detected: {pattern}")
+                raise ValueError(
+                    f"Potential prompt injection detected: {pattern}"
+                )
 
         # Formula Injection Prevention
         if v.startswith(('=', '@', '+', '-')):
-            raise ValueError("Title contains potential Formula Injection (starts with =, @, +, -)")
+            raise ValueError(
+                "Title contains potential Formula Injection "
+                "(starts with =, @, +, -)"
+            )
 
         # Ensure no control characters
         if not v.isprintable():
             raise ValueError("Title contains non-printable characters")
         return v
+
+
+class NotificationEvent(BaseModel):
+    """
+    Schema for notification events.
+    """
+    title: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
+    level: Literal['info', 'success', 'warning', 'error'] = Field(
+        default='info'
+    )
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
