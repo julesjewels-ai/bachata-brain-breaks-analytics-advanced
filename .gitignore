@@ -19,3 +19,10 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+
+# Entropy
+.cache/
+coverage.json
+entropy_report.md
+tests/snapshots/
+bandit-report.json
