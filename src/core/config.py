@@ -32,6 +32,10 @@ class AppConfig(BaseModel):
         default=".cache/ai_responses",
         description="Directory to store AI response cache"
     )
+    notification_log_path: str = Field(
+        default="notifications.jsonl",
+        description="Path to store notification logs"
+    )
 
     @classmethod
     def get_config(cls) -> "AppConfig":
@@ -42,7 +46,8 @@ class AppConfig(BaseModel):
             return cls(
                 google_api_key=os.getenv("GOOGLE_API_KEY"),
                 environment=os.getenv("APP_ENV", "development"),
-                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses")
+                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses"),
+                notification_log_path=os.getenv("NOTIFICATION_LOG_PATH", "notifications.jsonl")
             )
         except ValidationError as e:
             logger.error(f"Configuration validation failed: {e}")

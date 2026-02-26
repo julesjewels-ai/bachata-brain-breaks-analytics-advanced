@@ -5,6 +5,8 @@ Handles command-line arguments and initializes the core application logic.
 import argparse
 import sys
 import asyncio
+from pathlib import Path
+from rich.console import Console
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.config import AppConfig
@@ -15,6 +17,9 @@ from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 from src.core.ingestion import SimulationDataIngestionService
+from src.core.notifications import (
+    FileNotificationService, ConsoleNotificationService, CompositeNotificationService
+)
 
 
 def main() -> None:
@@ -34,8 +39,11 @@ def main() -> None:
         print("Bachata Brain Breaks Analytics v1.0.0")
         sys.exit(0)
 
+    # Shared Console
+    console = Console()
+
     # Initialize UI
-    ui = RichConsoleUI()
+    ui = RichConsoleUI(console=console)
 
     # Load Configuration
     try:
@@ -43,6 +51,12 @@ def main() -> None:
     except ValidationError as e:
         ui.display_error(f"Configuration Error: {e}")
         sys.exit(1)
+
+    # Initialize Notification Service
+    notification_service = CompositeNotificationService([
+        ConsoleNotificationService(console=console),
+        FileNotificationService(log_path=Path(config.notification_log_path))
+    ])
 
     # Initialize AI Service
     base_ai_service = GeminiThinkingAgent()
@@ -74,7 +88,8 @@ def main() -> None:
             ui=ui,
             ai_service=ai_service,
             report_generator=report_generator,
-            data_ingestion_service=data_ingestion_service
+            data_ingestion_service=data_ingestion_service,
+            notification_service=notification_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

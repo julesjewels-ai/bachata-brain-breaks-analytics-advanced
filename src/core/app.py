@@ -11,9 +11,10 @@ from src.core.formatting import (
     format_validation_error, prepare_display_dataframe
 )
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService
+    UserInterface, AIService, ReportGenerator, DataIngestionService,
+    NotificationService
 )
-from src.core.models import VideoAnalysisInput
+from src.core.models import VideoAnalysisInput, NotificationEvent
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,7 +29,8 @@ class BachataAnalyticsApp:
         ui: UserInterface,
         ai_service: AIService,
         report_generator: ReportGenerator,
-        data_ingestion_service: DataIngestionService
+        data_ingestion_service: DataIngestionService,
+        notification_service: NotificationService
     ):
         # Securely load configuration
         self.config = AppConfig.get_config()
@@ -36,6 +38,7 @@ class BachataAnalyticsApp:
         self.ui = ui
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
+        self.notification_service = notification_service
 
     def ingest_data(self) -> pd.DataFrame:
         """
@@ -81,6 +84,13 @@ class BachataAnalyticsApp:
         self.ui.display_header("Bachata Analytics Dashboard")
         df = self.ingest_data()
         self.ui.display_success(f"Data loaded: {len(df)} records.")
+        self.notification_service.notify(
+            NotificationEvent(
+                title="Data Ingestion",
+                message=f"Successfully ingested {len(df)} records.",
+                level="INFO"
+            )
+        )
 
         # 2. Outlier Detection
         anomalies = self.detect_outliers(df)
@@ -98,6 +108,13 @@ class BachataAnalyticsApp:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
             logger.error(f"Data validation failed for Gemini Analysis: {e}")
+            self.notification_service.notify(
+                NotificationEvent(
+                    title="Validation Error",
+                    message=f"Data validation failed: {e}",
+                    level="ERROR"
+                )
+            )
             # Decide whether to abort or skip. Aborting is safer for security.
             self.ui.display_error(format_validation_error(e))
             self.ui.display_error("Aborting analysis for security.")
@@ -125,8 +142,22 @@ class BachataAnalyticsApp:
             self.ui.display_success(
                 "Report saved to 'bachata_analytics.xlsx'."
             )
+            self.notification_service.notify(
+                NotificationEvent(
+                    title="Report Generated",
+                    message="Excel report generated successfully.",
+                    level="SUCCESS"
+                )
+            )
         except ValueError as e:
             logger.error(f"Failed to generate report: {e}")
+            self.notification_service.notify(
+                NotificationEvent(
+                    title="Reporting Error",
+                    message=f"Failed to generate report: {e}",
+                    level="ERROR"
+                )
+            )
             self.ui.display_error(f"Error generating report: {e}")
 
         self.ui.display_success("Dashboard update complete.")

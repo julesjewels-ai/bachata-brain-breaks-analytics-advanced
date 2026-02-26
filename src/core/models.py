@@ -1,6 +1,8 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
+from typing import Literal
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 
 class VideoAnalysisInput(BaseModel):
@@ -31,3 +33,14 @@ class VideoAnalysisInput(BaseModel):
         if not v.isprintable():
             raise ValueError("Title contains non-printable characters")
         return v
+
+
+class NotificationEvent(BaseModel):
+    """
+    Domain model for a system notification/alert.
+    Standardizes the structure of events passed to NotificationService.
+    """
+    title: str = Field(..., min_length=1, description="Short summary of the event")
+    message: str = Field(..., description="Detailed description of the event")
+    level: Literal['INFO', 'WARNING', 'ERROR', 'SUCCESS'] = Field(..., description="Severity level")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Time of the event")
