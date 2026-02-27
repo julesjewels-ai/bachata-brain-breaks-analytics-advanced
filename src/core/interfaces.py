@@ -3,11 +3,12 @@ Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
-    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
+    Literal
 )
 from io import BytesIO
 import pandas as pd
-from src.core.models import VideoAnalysisInput
+from src.core.models import VideoAnalysisInput, NotificationEvent
 
 
 class AIService(Protocol):
@@ -148,5 +149,19 @@ class CacheBackend(Protocol):
         Args:
             key: Unique cache key.
             value: String value to cache.
+        """
+        ...
+
+
+class NotificationService(Protocol):
+    """
+    Protocol for sending notifications.
+    """
+    def notify(self, event: NotificationEvent) -> None:
+        """
+        Sends a notification.
+
+        Args:
+            event: The notification event containing details.
         """
         ...
