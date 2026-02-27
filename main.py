@@ -5,6 +5,7 @@ Handles command-line arguments and initializes the core application logic.
 import argparse
 import sys
 import asyncio
+from typing import List
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.config import AppConfig
@@ -15,6 +16,11 @@ from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 from src.core.ingestion import SimulationDataIngestionService
+from src.core.notifications import (
+    FileNotificationService,
+    CompositeNotificationService
+)
+from src.core.interfaces import NotificationService, AIService
 
 
 def main() -> None:
@@ -48,6 +54,7 @@ def main() -> None:
     base_ai_service = GeminiThinkingAgent()
 
     # Initialize Caching Layer
+    ai_service: AIService
     try:
         cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
         ai_service = CachedAIService(
@@ -56,7 +63,9 @@ def main() -> None:
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
     except Exception as e:
-        ui.display_error(f"Caching initialization failed: {e}. continuing without cache.")
+        ui.display_error(
+            f"Caching initialization failed: {e}. continuing without cache."
+        )
         ai_service = base_ai_service
 
     # Initialize Visualizer
@@ -68,13 +77,34 @@ def main() -> None:
     # Initialize Data Ingestion Service
     data_ingestion_service = SimulationDataIngestionService()
 
+    # Initialize Notification Services
+    notification_services: List[NotificationService] = []
+
+    # 1. Console Notifications (Optional, can be verbose)
+    # notification_services.append(ConsoleNotificationService())
+
+    # 2. File Notifications
+    try:
+        file_notifier = FileNotificationService(
+            log_path=config.notification_log_path
+        )
+        notification_services.append(file_notifier)
+    except Exception as e:
+        ui.display_error(f"Failed to initialize FileNotificationService: {e}")
+
+    # Create Composite Service
+    notification_service = CompositeNotificationService(
+        services=notification_services
+    )
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
             ui=ui,
             ai_service=ai_service,
             report_generator=report_generator,
-            data_ingestion_service=data_ingestion_service
+            data_ingestion_service=data_ingestion_service,
+            notification_service=notification_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

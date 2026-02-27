@@ -7,7 +7,7 @@ from typing import (
 )
 from io import BytesIO
 import pandas as pd
-from src.core.models import VideoAnalysisInput
+from src.core.models import VideoAnalysisInput, NotificationEvent
 
 
 class AIService(Protocol):
@@ -148,5 +148,19 @@ class CacheBackend(Protocol):
         Args:
             key: Unique cache key.
             value: String value to cache.
+        """
+        ...
+
+
+class NotificationService(Protocol):
+    """
+    Protocol for sending notifications.
+    """
+    def send(self, event: NotificationEvent) -> None:
+        """
+        Sends a notification event.
+
+        Args:
+            event: The notification event to send.
         """
         ...
