@@ -10,3 +10,4 @@
 - Refactored `ExcelReportGenerator` to use Dependency Injection for `Visualizer`.
 - Updated `main.py` to inject `MatplotlibVisualizer` into `ExcelReportGenerator`.
 - Updated `tests/test_reporting.py` to mock `Visualizer`.
+- Implemented tests/test_app_integration.py to test BachataAnalyticsApp run sequence and mock interactions with newly injected dependencies.
