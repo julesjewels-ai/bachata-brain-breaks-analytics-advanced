@@ -1,0 +1,49 @@
+name: Entropy Scanner
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  entropy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for churn calculation
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install coverage pytest-cov
+
+      - name: Run Entropy Scan
+        run: |
+          python entropy_scan.py
+
+      - name: Check if there are changes
+        id: git-check
+        run: |
+          git status --porcelain
+          echo "changes=$(git status --porcelain | wc -l)" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changes > 0
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: '[Entropy] Maintenance - Liability Reduction'
+          body-path: entropy_report.md
+          branch: entropy-maintenance
+          commit-message: 'chore: entropy maintenance and liability reduction'
+          delete-branch: true

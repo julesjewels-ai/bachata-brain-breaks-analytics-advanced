@@ -19,3 +19,7 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+tests/quarantine/
+coverage.json
+entropy_report.md
+.coverage
