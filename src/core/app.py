@@ -24,6 +24,7 @@ class BachataAnalyticsApp:
     """
     Main application controller.
     """
+
     def __init__(
         self,
         ui: UserInterface,

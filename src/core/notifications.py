@@ -14,6 +14,7 @@ class ConsoleNotificationService(NotificationService):
     """
     Sends notifications to the console via UserInterface.
     """
+
     def __init__(self, ui: UserInterface):
         self.ui = ui
 
@@ -35,6 +36,7 @@ class FileNotificationService(NotificationService):
     """
     Logs notifications to a file (NDJSON format).
     """
+
     def __init__(self, filepath: str):
         self.filepath = filepath
 
@@ -53,6 +55,7 @@ class CompositeNotificationService(NotificationService):
     """
     Broadcasts notifications to multiple services.
     """
+
     def __init__(self, services: List[NotificationService]):
         self.services = services
 

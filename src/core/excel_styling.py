@@ -61,12 +61,14 @@ class ExcelStyler:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            ws.column_dimensions[get_column_letter(
+                col[0].column)].width = adjusted_width
 
     @staticmethod
     def get_header_map(ws: Worksheet) -> Dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
-        return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
+        return {str(cell.value)
+                    : cell.column for cell in ws[1] if cell.value is not None}
 
     @staticmethod
     def apply_header_style(ws: Worksheet):
@@ -101,9 +103,14 @@ class ExcelStyler:
         # Define rules
         # Blue for Views, Green for Retention
         rules = {
-            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
-            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
-        }
+            'Views': DataBarRule(
+                start_type='min',
+                end_type='max',
+                color="638EC6"),
+            'Retention (%)': DataBarRule(
+                start_type='min',
+                end_type='max',
+                color="63C384")}
 
         headers = ExcelStyler.get_header_map(ws)
 

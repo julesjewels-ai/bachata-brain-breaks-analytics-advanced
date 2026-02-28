@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
 from openpyxl.chart import BarChart
 
+
 def test_chart_builder_add_bar_chart():
     """Test that add_bar_chart configures and adds a chart to the worksheet."""
     mock_ws = MagicMock()
@@ -35,11 +36,13 @@ def test_chart_builder_add_bar_chart():
     assert isinstance(chart_arg, BarChart)
 
     # OpenPyXL chart titles are objects; access text content via nested properties
-    # chart.title (Title) -> tx (Text) -> rich (RichText) -> p (Paragraphs) -> r (Run) -> t (Text)
+    # chart.title (Title) -> tx (Text) -> rich (RichText) -> p (Paragraphs) ->
+    # r (Run) -> t (Text)
     try:
         title_text = chart_arg.title.tx.rich.p[0].r[0].t
     except AttributeError:
-        # Fallback if structure is different (e.g. simple string assignment simulation)
+        # Fallback if structure is different (e.g. simple string assignment
+        # simulation)
         title_text = str(chart_arg.title)
 
     assert title_text == "Test Chart"

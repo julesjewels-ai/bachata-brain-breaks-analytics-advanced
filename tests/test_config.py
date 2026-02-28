@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 from src.core.config import AppConfig
 
+
 def test_app_config_load():
     # Mock environment variables
     os.environ['GOOGLE_API_KEY'] = 'test_key'
@@ -17,6 +18,7 @@ def test_app_config_load():
     assert config.environment == 'testing'
     assert config.get_api_key() == 'test_key'
 
+
 def test_app_config_validation_error():
     # Test invalid environment
     os.environ['APP_ENV'] = 'invalid_env'
@@ -24,6 +26,7 @@ def test_app_config_validation_error():
 
     with pytest.raises(ValidationError):
         AppConfig.get_config()
+
 
 def test_missing_api_key_access():
     if 'GOOGLE_API_KEY' in os.environ:

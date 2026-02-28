@@ -6,6 +6,7 @@ from io import BytesIO
 import pytest
 from src.core.visualization import MatplotlibVisualizer
 
+
 def test_generate_chart_success():
     """Test valid chart generation."""
     data = {
@@ -21,6 +22,7 @@ def test_generate_chart_success():
     # Check that some data was written
     assert stream.getbuffer().nbytes > 100
 
+
 def test_generate_chart_missing_columns():
     """Test error when columns missing."""
     data = {'views': [1]}
@@ -29,6 +31,7 @@ def test_generate_chart_missing_columns():
 
     with pytest.raises(ValueError, match="Columns"):
         viz.generate_chart(df, "Title", "missing", "views")
+
 
 def test_generate_chart_empty_df():
     """Test error when DF is empty."""

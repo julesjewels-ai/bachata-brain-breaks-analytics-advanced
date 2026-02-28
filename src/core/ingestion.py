@@ -12,6 +12,7 @@ class SimulationDataIngestionService(DataIngestionService):
     """
     Simulates data ingestion from an external source.
     """
+
     def ingest_data(self) -> pd.DataFrame:
         """
         Generates mock data for testing and development.
@@ -28,7 +29,7 @@ class SimulationDataIngestionService(DataIngestionService):
         for i in range(1, 21):
             raw_data.append({
                 'video_id': f'vid_{i}',
-                'title': titles[i-1],
+                'title': titles[i - 1],
                 'views': random.randint(500, 500000),
                 'retention_avg_pct': random.uniform(20.0, 95.0),
                 'type': 'Long' if i % 3 != 0 else 'Shorts'

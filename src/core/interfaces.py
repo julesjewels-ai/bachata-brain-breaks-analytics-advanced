@@ -8,13 +8,14 @@ from typing import (
 )
 from io import BytesIO
 import pandas as pd
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import VideoAnalysisInput, NotificationEvent, MetricEvent
 
 
 class AIService(Protocol):
     """
     Protocol for AI operations.
     """
+
     def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
         """
         Analyzes video metadata to identify semantic patterns.
@@ -35,6 +36,7 @@ class UserInterface(Protocol):
     Protocol for user interaction.
     Allows swapping the console UI for a web UI or mock UI for testing.
     """
+
     def display_header(self, text: str) -> None:
         """Displays a major section header."""
         ...
@@ -84,6 +86,7 @@ class Visualizer(Protocol):
     """
     Protocol for generating static visualizations.
     """
+
     def generate_chart(
         self, df: pd.DataFrame, title: str, x_col: str, y_col: str
     ) -> BytesIO:
@@ -106,6 +109,7 @@ class ReportGenerator(Protocol):
     """
     Protocol for generating reports.
     """
+
     def generate_report(
         self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
     ) -> None:
@@ -119,6 +123,7 @@ class DataIngestionService(Protocol):
     """
     Protocol for ingesting video data.
     """
+
     def ingest_data(self) -> pd.DataFrame:
         """
         Ingests video data and returns a DataFrame.
@@ -130,6 +135,7 @@ class CacheBackend(Protocol):
     """
     Protocol for caching string data.
     """
+
     def get(self, key: str) -> Optional[str]:
         """
         Retrieves a value from the cache.
@@ -157,11 +163,27 @@ class NotificationService(Protocol):
     """
     Protocol for sending notifications.
     """
+
     def notify(self, event: NotificationEvent) -> None:
         """
         Sends a notification.
 
         Args:
             event: The notification event containing details.
+        """
+        ...
+
+
+class MetricsRepository(Protocol):
+    """
+    Protocol for recording system metrics.
+    """
+
+    def record(self, event: MetricEvent) -> None:
+        """
+        Records a metric event.
+
+        Args:
+            event: The metric event to record.
         """
         ...

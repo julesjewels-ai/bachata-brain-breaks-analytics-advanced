@@ -43,6 +43,7 @@ async def test_app_sends_notifications():
     mock_ai.analyze_stream.side_effect = mock_stream
     # Ensure UI display_stream is awaited
     mock_ui.display_stream = MagicMock()
+
     async def mock_display_stream(gen):
         async for _ in gen:
             pass

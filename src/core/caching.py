@@ -25,6 +25,7 @@ class FileCacheBackend(CacheBackend):
     File-based implementation of CacheBackend.
     Stores cached values in a specified directory using hashed keys as filenames.
     """
+
     def __init__(self, cache_dir: str) -> None:
         self.cache_dir = Path(cache_dir)
         try:
@@ -57,20 +58,26 @@ class FileCacheBackend(CacheBackend):
         except OSError as e:
             logger.warning(f"Failed to write cache file {filepath}: {e}")
             # We log but don't raise here to avoid interrupting the flow on cache write failure
-            # unless strict caching is required. Assuming soft failure is acceptable.
+            # unless strict caching is required. Assuming soft failure is
+            # acceptable.
 
 
 class CachedAIService(AIService):
     """
     Decorator/Proxy for AIService that adds caching capabilities.
     """
-    def __init__(self, ai_service: AIService, cache_backend: CacheBackend) -> None:
+
+    def __init__(
+            self,
+            ai_service: AIService,
+            cache_backend: CacheBackend) -> None:
         self._ai_service = ai_service
         self._cache = cache_backend
 
     def _generate_key(self, videos: List[VideoAnalysisInput]) -> str:
         """Generates a unique, deterministic cache key from the input data."""
-        # Convert list of models to list of dicts, sorted by video_id to ensure consistency
+        # Convert list of models to list of dicts, sorted by video_id to ensure
+        # consistency
         data = [v.model_dump() for v in videos]
         # Sort data to ensure order doesn't affect key if content is same
         # Assuming we want to cache based on the *set* of videos.

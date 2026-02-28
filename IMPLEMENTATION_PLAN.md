@@ -1,7 +1,7 @@
 # Implementation Plan
 
-- [x] Define AIService Interface in `src/core/interfaces.py`
-- [x] Refactor GeminiThinkingAgent to `src/core/ai.py`
-- [x] Implement Dependency Injection in `BachataAnalyticsApp`
-- [x] Update Tests in `tests/test_core.py`
+- [x] Define `MetricEvent` in `src/core/models.py`
+- [x] Define `MetricsRepository` in `src/core/interfaces.py`
+- [x] Implement `src/core/metrics.py` (`FileMetricsRepository`, `MetricsDataIngestionService`, `MetricsReportGenerator`)
 - [x] Update `main.py`
+- [x] Add Tests in `tests/test_metrics.py`
