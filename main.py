@@ -19,7 +19,10 @@ from src.core.notifications import (
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
 )
-
+from src.core.metrics import (
+    FileMetricsRepository, StandardMetricsService,
+    MetricsDataIngestionService, MetricsReportGenerator
+)
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -65,14 +68,26 @@ def main() -> None:
         )
         ai_service = base_ai_service  # type: ignore
 
+    # Initialize Metrics Service
+    metrics_repo = FileMetricsRepository("metrics.jsonl")
+    metrics_service = StandardMetricsService(metrics_repo)
+
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
 
-    # Initialize Report Generator
-    report_generator = ExcelReportGenerator(visualizer=visualizer)
+    # Initialize Report Generator (Decorated)
+    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    report_generator = MetricsReportGenerator(
+        inner_generator=base_report_generator,
+        metrics_service=metrics_service
+    )
 
-    # Initialize Data Ingestion Service
-    data_ingestion_service = SimulationDataIngestionService()
+    # Initialize Data Ingestion Service (Decorated)
+    base_data_ingestion_service = SimulationDataIngestionService()
+    data_ingestion_service = MetricsDataIngestionService(
+        inner_service=base_data_ingestion_service,
+        metrics_service=metrics_service
+    )
 
     # Initialize Notification Service
     console_notifier = ConsoleNotificationService(ui)
@@ -91,6 +106,10 @@ def main() -> None:
             notification_service=notification_service
         )
         asyncio.run(app.run())
+
+        # Export final metrics
+        metrics_service.export("metrics_export.json")
+        ui.display_success("Metrics exported to 'metrics_export.json'")
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
         sys.exit(1)

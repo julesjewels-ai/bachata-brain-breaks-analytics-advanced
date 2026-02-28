@@ -8,7 +8,7 @@ from typing import (
 )
 from io import BytesIO
 import pandas as pd
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import VideoAnalysisInput, NotificationEvent, MetricEvent
 
 
 class AIService(Protocol):
@@ -149,6 +149,40 @@ class CacheBackend(Protocol):
         Args:
             key: Unique cache key.
             value: String value to cache.
+        """
+        ...
+
+
+class MetricsRepository(Protocol):
+    """
+    Protocol for persisting metrics.
+    """
+    def save(self, event: MetricEvent) -> None:
+        """
+        Saves a metric event to storage.
+        """
+        ...
+
+    def get_all(self) -> List[MetricEvent]:
+        """
+        Retrieves all stored metric events.
+        """
+        ...
+
+
+class MetricsService(Protocol):
+    """
+    Protocol for collecting and exporting metrics.
+    """
+    def record(self, event: MetricEvent) -> None:
+        """
+        Records a metric event.
+        """
+        ...
+
+    def export(self, filepath: str) -> None:
+        """
+        Exports all recorded metrics to a specified file.
         """
         ...
 
