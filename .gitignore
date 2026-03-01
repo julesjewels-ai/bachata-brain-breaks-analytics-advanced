@@ -19,3 +19,14 @@ dmypy.json
 *.mov
 *.avi
 *.mkv
+
+# Local Data and Logs
+*.jsonl
+*.log
+
+# Caches and API Responses
+.cache/
+
+# IDE folders
+.vscode/
+.idea/
