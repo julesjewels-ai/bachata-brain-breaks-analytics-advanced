@@ -44,6 +44,19 @@ class VideoAnalysisInput(BaseModel):
         return v
 
 
+class MetricEvent(BaseModel):
+    """
+    Schema for system telemetry events.
+    """
+    metric_name: str = Field(..., min_length=1)
+    value: float
+    unit: str = Field(..., min_length=1)
+    tags: dict[str, str] = Field(default_factory=dict)
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
 class NotificationEvent(BaseModel):
     """
     Schema for notification events.

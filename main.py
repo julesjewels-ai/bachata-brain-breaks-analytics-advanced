@@ -19,6 +19,9 @@ from src.core.notifications import (
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
 )
+from src.core.metrics import (
+    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
+)
 
 
 def main() -> None:
@@ -65,14 +68,23 @@ def main() -> None:
         )
         ai_service = base_ai_service  # type: ignore
 
+    # Initialize Metrics Repository
+    metrics_repository = FileMetricsRepository("metrics.jsonl")
+
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
 
     # Initialize Report Generator
-    report_generator = ExcelReportGenerator(visualizer=visualizer)
+    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    report_generator = MetricsReportGenerator(
+        generator=base_report_generator, repository=metrics_repository
+    )
 
     # Initialize Data Ingestion Service
-    data_ingestion_service = SimulationDataIngestionService()
+    base_data_ingestion_service = SimulationDataIngestionService()
+    data_ingestion_service = MetricsDataIngestionService(
+        service=base_data_ingestion_service, repository=metrics_repository
+    )
 
     # Initialize Notification Service
     console_notifier = ConsoleNotificationService(ui)
