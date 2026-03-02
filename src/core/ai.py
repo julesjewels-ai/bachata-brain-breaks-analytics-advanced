@@ -2,15 +2,32 @@
 AI Services for Bachata Brain Breaks Analytics.
 """
 import asyncio
-import random
 from typing import List, AsyncGenerator
 from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
+from src.core.config import AppConfig
+from google import genai
+from google.genai import types
 
 class GeminiThinkingAgent(AIService):
     """
-    Simulates Gemini 3 'Thinking Mode' to analyze semantic patterns.
+    Connects to Gemini 3 'Thinking Mode' to analyze semantic patterns.
     """
+    def __init__(self):
+        config = AppConfig.get_config()
+        self.client = genai.Client(
+            api_key=config.get_api_key(),
+            http_options={'api_version': 'v1beta', 'timeout': 300_000}
+        )
+        self.model_name = "gemini-3-pro-preview"
+
+    def _build_prompt(self, videos: List[VideoAnalysisInput]) -> str:
+        prompt = "Analyze the following YouTube video data and identify semantic patterns for high retention:\n\n"
+        for v in videos:
+            prompt += f"- ID: {v.video_id} | Title: {v.title} | Views: {v.views} | Retention: {v.retention_avg_pct}% | Type: {v.type}\n"
+        prompt += "\nProvide a strategic recommendation on thumbnail styles, keywords, and overarching topics. Be concise."
+        return prompt
+
     def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
         """
         Analyzes titles and thumbnails (metadata) to find conversion patterns.
@@ -19,26 +36,38 @@ class GeminiThinkingAgent(AIService):
         if not videos:
             return "No data to analyze."
 
-        # Simulated 'Thinking Mode' logic
-        return (
-            "[Gemini 3 Thinking Mode] Analysis Complete:\n"
-            "1. Pattern Identification: High-retention videos often use 'sensual' or 'footwork' keywords.\n"
-            "2. Strategy: Use high-contrast thumbnails with dynamic poses.\n"
-            "3. Recommendation: Rename lower performers to include 'Step-by-Step' hook."
+        prompt = self._build_prompt(videos)
+
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(include_thoughts=True),
+                temperature=1.0,
+            ),
         )
+
+        return response.text if response.text else "No text response generated."
 
     async def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata.
         """
-        full_response = self.analyze_semantics(videos)
+        if not videos:
+            yield "No data to analyze."
+            return
 
-        # Simulate thinking delay
-        await asyncio.sleep(1.0)
+        prompt = self._build_prompt(videos)
 
-        # Stream tokens
-        tokens = full_response.split(' ')
-        for i, token in enumerate(tokens):
-            yield token + " "
-            # Simulate variable network/generation latency
-            await asyncio.sleep(random.uniform(0.01, 0.05))
+        response_stream = await self.client.aio.models.generate_content_stream(
+            model=self.model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(include_thoughts=True),
+                temperature=1.0,
+            ),
+        )
+
+        async for chunk in response_stream:
+            if chunk.text:
+                yield chunk.text

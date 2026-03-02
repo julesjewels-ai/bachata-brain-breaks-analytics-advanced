@@ -88,8 +88,19 @@ def test_video_analysis_input_invalid_type():
         VideoAnalysisInput(**data)
     assert "String should match pattern" in str(exc.value)
 
-def test_agent_analyze_semantics_typed():
-    """Test that the agent accepts the typed list."""
+from unittest.mock import patch, MagicMock
+
+@patch('src.core.ai.genai.Client')
+def test_agent_analyze_semantics_typed(mock_client_class, monkeypatch):
+    """Test that the agent accepts the typed list and returns expected string."""
+    monkeypatch.setenv("GOOGLE_API_KEY", "dummy_key")
+    
+    mock_client = MagicMock()
+    mock_client_class.return_value = mock_client
+    mock_response = MagicMock()
+    mock_response.text = "[Gemini 3 Thinking Mode] Analysis Complete"
+    mock_client.models.generate_content.return_value = mock_response
+    
     agent = GeminiThinkingAgent()
     inputs = [
         VideoAnalysisInput(
@@ -102,3 +113,4 @@ def test_agent_analyze_semantics_typed():
     ]
     result = agent.analyze_semantics(inputs)
     assert "[Gemini 3 Thinking Mode]" in result
+    mock_client.models.generate_content.assert_called_once()

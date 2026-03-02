@@ -48,7 +48,7 @@ class AppConfig(BaseModel):
         """
         try:
             return cls(
-                google_api_key=os.getenv("GOOGLE_API_KEY"),
+                google_api_key=os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"),
                 youtube_api_key=os.getenv("YOUTUBE_API_KEY") or os.getenv("YOUTUBE_DATA_API_KEY"),
                 youtube_channel_id=os.getenv("YOUTUBE_CHANNEL_ID"),
                 environment=os.getenv("APP_ENV", "development"),

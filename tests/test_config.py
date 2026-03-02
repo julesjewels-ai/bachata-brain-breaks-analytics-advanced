@@ -28,6 +28,8 @@ def test_app_config_validation_error():
 def test_missing_api_key_access():
     if 'GOOGLE_API_KEY' in os.environ:
         del os.environ['GOOGLE_API_KEY']
+    if 'GEMINI_API_KEY' in os.environ:
+        del os.environ['GEMINI_API_KEY']
 
     # Reset env to valid state
     os.environ['APP_ENV'] = 'testing'

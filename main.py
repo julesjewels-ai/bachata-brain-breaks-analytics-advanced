@@ -5,6 +5,11 @@ Handles command-line arguments and initializes the core application logic.
 import argparse
 import sys
 import asyncio
+from dotenv import load_dotenv
+
+# Load environment variables BEFORE any imports that use them
+load_dotenv()
+
 from pydantic import ValidationError
 from src.core.app import BachataAnalyticsApp
 from src.core.config import AppConfig
