@@ -8,23 +8,26 @@ import asyncio
 from dotenv import load_dotenv
 
 # Load environment variables BEFORE any imports that use them
-load_dotenv()
+load_dotenv()  # noqa: E402
 
-from pydantic import ValidationError
-from src.core.app import BachataAnalyticsApp
-from src.core.config import AppConfig
-from src.core.ui import RichConsoleUI
-from src.core.formatting import format_validation_error
-from src.core.ai import GeminiThinkingAgent
-from src.core.caching import CachedAIService, FileCacheBackend
-from src.core.reporting import ExcelReportGenerator
-from src.core.visualization import MatplotlibVisualizer
-from src.core.ingestion import SimulationDataIngestionService
-from src.core.youtube import YouTubeAPIClient
-from src.core.youtube_ingestion import YouTubeIngestionService
-from src.core.notifications import (
+from pydantic import ValidationError  # noqa: E402
+from src.core.app import BachataAnalyticsApp  # noqa: E402
+from src.core.config import AppConfig  # noqa: E402
+from src.core.ui import RichConsoleUI  # noqa: E402
+from src.core.formatting import format_validation_error  # noqa: E402
+from src.core.ai import GeminiThinkingAgent  # noqa: E402
+from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
+from src.core.reporting import ExcelReportGenerator  # noqa: E402
+from src.core.visualization import MatplotlibVisualizer  # noqa: E402
+from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
+from src.core.youtube import YouTubeAPIClient  # noqa: E402
+from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
+from src.core.notifications import (  # noqa: E402
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
+)
+from src.core.metrics import (  # noqa: E402
+    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
 
 
@@ -47,7 +50,8 @@ def main() -> None:
     parser.add_argument(
         "--channel-id",
         type=str,
-        help="YouTube Channel ID to fetch data for (defaults to YOUTUBE_CHANNEL_ID config if not provided)"
+        help="YouTube Channel ID to fetch data for "
+             "(defaults to YOUTUBE_CHANNEL_ID config if not provided)"
     )
     args = parser.parse_args()
 
@@ -85,8 +89,14 @@ def main() -> None:
     # Initialize Visualizer
     visualizer = MatplotlibVisualizer()
 
+    # Initialize Metrics Repository
+    metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
+
     # Initialize Report Generator
-    report_generator = ExcelReportGenerator(visualizer=visualizer)
+    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    report_generator = MetricsReportGenerator(
+        inner=base_report_generator, repository=metrics_repo
+    )
 
     # Initialize Data Ingestion Service
     if args.real_data:
@@ -95,23 +105,41 @@ def main() -> None:
             try:
                 target_channel_id = config.get_youtube_channel_id()
             except ValueError:
-                ui.display_error("--channel-id is required when using --real-data unless YOUTUBE_CHANNEL_ID is set in .env")
+                ui.display_error(
+                    "--channel-id is required when using --real-data "
+                    "unless YOUTUBE_CHANNEL_ID is set in .env"
+                )
                 sys.exit(1)
-            
+
         try:
             youtube_client = YouTubeAPIClient(config=config)
-            data_ingestion_service = YouTubeIngestionService(
+            base_data_ingestion_service_yt = YouTubeIngestionService(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
-            ui.display_status(f"Using REAL data integration for channel: {target_channel_id}")
+            data_ingestion_service = MetricsDataIngestionService(
+                inner=base_data_ingestion_service_yt, repository=metrics_repo
+            )
+            ui.display_status(
+                f"Using REAL data integration for channel: "
+                f"{target_channel_id}"
+            )
         except Exception as e:
             ui.display_error(f"Failed to initialize YouTube service: {e}")
             sys.exit(1)
     else:
-        ui.display_status("\n[NOTICE] The '--real-data' flag was not provided. Defaulting to simulation mode.")
-        ui.display_status("[NOTICE] To use live YouTube Data API, run: python main.py --real-data\n")
-        data_ingestion_service = SimulationDataIngestionService()
+        ui.display_status(
+            "\n[NOTICE] The '--real-data' flag was not provided. "
+            "Defaulting to simulation mode."
+        )
+        ui.display_status(
+            "[NOTICE] To use live YouTube Data API, run: "
+            "python main.py --real-data\n"
+        )
+        base_data_ingestion_service_sim = SimulationDataIngestionService()
+        data_ingestion_service = MetricsDataIngestionService(
+            inner=base_data_ingestion_service_sim, repository=metrics_repo
+        )
         ui.display_status("Using SIMULATED data ingestion")
 
     # Initialize Notification Service
