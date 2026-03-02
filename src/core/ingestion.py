@@ -12,7 +12,7 @@ class SimulationDataIngestionService(DataIngestionService):
     """
     Simulates data ingestion from an external source.
     """
-    def ingest_data(self) -> pd.DataFrame:
+    async def ingest_data(self) -> pd.DataFrame:
         """
         Generates mock data for testing and development.
         """

@@ -10,7 +10,7 @@ class VideoAnalysisInput(BaseModel):
     Schema for video data to be analyzed by the agent.
     Strictly validates input to prevent injection and ensure data integrity.
     """
-    video_id: str = Field(..., pattern=r"^vid_\d+$")
+    video_id: str = Field(..., pattern=r"^[\w-]+$")
     title: str = Field(..., min_length=1, max_length=200)
     views: int = Field(..., ge=0)
     retention_avg_pct: float = Field(..., ge=0.0, le=100.0)

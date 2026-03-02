@@ -9,6 +9,9 @@ install: venv
 run:
 	. venv/bin/activate && python main.py
 
+run-real:
+	. venv/bin/activate && python main.py --real-data
+
 test:
 	. venv/bin/activate && pytest
 

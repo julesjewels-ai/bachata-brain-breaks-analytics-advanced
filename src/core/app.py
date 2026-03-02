@@ -40,12 +40,12 @@ class BachataAnalyticsApp:
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
 
-    def ingest_data(self) -> pd.DataFrame:
+    async def ingest_data(self) -> pd.DataFrame:
         """
         Ingests channel data using the injected service.
         """
         with self.ui.loading("Ingesting channel data..."):
-            return self.data_ingestion_service.ingest_data()
+            return await self.data_ingestion_service.ingest_data()
 
     def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         """
@@ -82,7 +82,7 @@ class BachataAnalyticsApp:
         """
         # 1. Ingest
         self.ui.display_header("Bachata Analytics Dashboard")
-        df = self.ingest_data()
+        df = await self.ingest_data()
         self.notification_service.notify(NotificationEvent(
             title="Ingestion",
             message=f"Data loaded: {len(df)} records.",

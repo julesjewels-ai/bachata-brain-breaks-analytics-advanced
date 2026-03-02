@@ -119,7 +119,7 @@ class DataIngestionService(Protocol):
     """
     Protocol for ingesting video data.
     """
-    def ingest_data(self) -> pd.DataFrame:
+    async def ingest_data(self) -> pd.DataFrame:
         """
         Ingests video data and returns a DataFrame.
         """

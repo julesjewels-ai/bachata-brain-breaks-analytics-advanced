@@ -15,6 +15,8 @@ from src.core.caching import CachedAIService, FileCacheBackend
 from src.core.reporting import ExcelReportGenerator
 from src.core.visualization import MatplotlibVisualizer
 from src.core.ingestion import SimulationDataIngestionService
+from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
 from src.core.notifications import (
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
@@ -31,6 +33,16 @@ def main() -> None:
         "--version",
         action="store_true",
         help="Show application version"
+    )
+    parser.add_argument(
+        "--real-data",
+        action="store_true",
+        help="Use real data from YouTube API instead of simulation"
+    )
+    parser.add_argument(
+        "--channel-id",
+        type=str,
+        help="YouTube Channel ID to fetch data for (defaults to YOUTUBE_CHANNEL_ID config if not provided)"
     )
     args = parser.parse_args()
 
@@ -72,7 +84,30 @@ def main() -> None:
     report_generator = ExcelReportGenerator(visualizer=visualizer)
 
     # Initialize Data Ingestion Service
-    data_ingestion_service = SimulationDataIngestionService()
+    if args.real_data:
+        target_channel_id = args.channel_id
+        if not target_channel_id:
+            try:
+                target_channel_id = config.get_youtube_channel_id()
+            except ValueError:
+                ui.display_error("--channel-id is required when using --real-data unless YOUTUBE_CHANNEL_ID is set in .env")
+                sys.exit(1)
+            
+        try:
+            youtube_client = YouTubeAPIClient(config=config)
+            data_ingestion_service = YouTubeIngestionService(
+                youtube_client=youtube_client,
+                target_channel_id=target_channel_id
+            )
+            ui.display_status(f"Using REAL data integration for channel: {target_channel_id}")
+        except Exception as e:
+            ui.display_error(f"Failed to initialize YouTube service: {e}")
+            sys.exit(1)
+    else:
+        ui.display_status("\n[NOTICE] The '--real-data' flag was not provided. Defaulting to simulation mode.")
+        ui.display_status("[NOTICE] To use live YouTube Data API, run: python main.py --real-data\n")
+        data_ingestion_service = SimulationDataIngestionService()
+        ui.display_status("Using SIMULATED data ingestion")
 
     # Initialize Notification Service
     console_notifier = ConsoleNotificationService(ui)
