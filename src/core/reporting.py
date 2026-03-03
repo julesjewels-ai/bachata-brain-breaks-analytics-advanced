@@ -164,13 +164,6 @@ class ExcelReportGenerator:
                         anomalies: Dict[str, pd.DataFrame],
                         strategy: str,
                         filepath: str) -> None:
-        """Generates a report using Excel strategy."""
-        self.generate_excel(anomalies, strategy, filepath)
-
-    def generate_excel(self,
-                       anomalies: Dict[str, pd.DataFrame],
-                       strategy: str,
-                       filepath: str):
         """Creates an Excel report with anomalies and strategy analysis."""
         try:
             config = ReportConfig(filepath=filepath)

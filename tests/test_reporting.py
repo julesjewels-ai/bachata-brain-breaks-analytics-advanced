@@ -39,7 +39,7 @@ def test_excel_generation_conditional_formatting(tmp_path):
     filepath = str(tmp_path / "test_report.xlsx")
 
     # Execute
-    generator.generate_excel(anomalies, strategy, filepath)
+    generator.generate_report(anomalies, strategy, filepath)
 
     # Verify
     assert os.path.exists(filepath)
