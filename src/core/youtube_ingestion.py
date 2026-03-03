@@ -1,13 +1,17 @@
 """
 Real Data Ingestion Service using YouTube Data API.
 """
-import asyncio
-import pandas as pd
+import logging
 import random
 from typing import List, Dict, Any
+
+import pandas as pd
+
 from src.core.interfaces import DataIngestionService
 from src.core.models import VideoAnalysisInput
 from src.core.youtube import YouTubeAPIClient
+
+logger = logging.getLogger(__name__)
 
 class YouTubeIngestionService(DataIngestionService):
     """
@@ -58,7 +62,9 @@ class YouTubeIngestionService(DataIngestionService):
                 validated_model = VideoAnalysisInput(**record)
                 validated_data.append(validated_model.model_dump())
             except Exception as e:
-                # Log or ignore videos that fail strict validation
-                pass
+                logger.warning(
+                    "Skipping video %s: %s",
+                    video.get("video_id", "unknown"), e
+                )
                 
         return validated_data
