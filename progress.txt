@@ -10,3 +10,7 @@
 - Refactored `ExcelReportGenerator` to use Dependency Injection for `Visualizer`.
 - Updated `main.py` to inject `MatplotlibVisualizer` into `ExcelReportGenerator`.
 - Updated `tests/test_reporting.py` to mock `Visualizer`.
+- Implemented Metrics Tracking System in `src/core/metrics.py` utilizing the Decorator pattern.
+- Added `MetricEvent` schema to `src/core/models.py`.
+- Updated `main.py` to inject `FileMetricsRepository` and wrap services using `MetricsDataIngestionService` and `MetricsReportGenerator`.
+- Successfully verified tests, types, format, and dependency structure.
