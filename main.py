@@ -2,24 +2,6 @@
 Entry point for the Bachata Brain Breaks Analytics Advanced application.
 Handles command-line arguments and initializes the core application logic.
 """
-
-from src.core.notifications import (
-    ConsoleNotificationService,
-    FileNotificationService,
-    CompositeNotificationService,
-)
-from src.core.youtube_ingestion import YouTubeIngestionService
-from src.core.youtube import YouTubeAPIClient
-from src.core.ingestion import SimulationDataIngestionService
-from src.core.visualization import MatplotlibVisualizer
-from src.core.reporting import ExcelReportGenerator
-from src.core.caching import CachedAIService, FileCacheBackend
-from src.core.ai import GeminiThinkingAgent
-from src.core.formatting import format_validation_error
-from src.core.ui import RichConsoleUI
-from src.core.config import AppConfig
-from src.core.app import BachataAnalyticsApp
-from pydantic import ValidationError
 import argparse
 import sys
 import asyncio
@@ -27,6 +9,23 @@ from dotenv import load_dotenv
 
 # Load environment variables BEFORE any imports that use them
 load_dotenv()
+
+from pydantic import ValidationError
+from src.core.app import BachataAnalyticsApp
+from src.core.config import AppConfig
+from src.core.ui import RichConsoleUI
+from src.core.formatting import format_validation_error
+from src.core.ai import GeminiThinkingAgent
+from src.core.caching import CachedAIService, FileCacheBackend
+from src.core.reporting import ExcelReportGenerator
+from src.core.visualization import MatplotlibVisualizer
+from src.core.ingestion import SimulationDataIngestionService
+from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
+from src.core.notifications import (
+    ConsoleNotificationService, FileNotificationService,
+    CompositeNotificationService
+)
 
 
 def main() -> None:
@@ -36,17 +35,19 @@ def main() -> None:
         )
     )
     parser.add_argument(
-        "--version", action="store_true", help="Show application version"
+        "--version",
+        action="store_true",
+        help="Show application version"
     )
     parser.add_argument(
         "--real-data",
         action="store_true",
-        help="Use real data from YouTube API instead of simulation",
+        help="Use real data from YouTube API instead of simulation"
     )
     parser.add_argument(
         "--channel-id",
         type=str,
-        help="YouTube Channel ID to fetch data for (defaults to YOUTUBE_CHANNEL_ID config if not provided)",
+        help="YouTube Channel ID to fetch data for (defaults to YOUTUBE_CHANNEL_ID config if not provided)"
     )
     args = parser.parse_args()
 
@@ -71,7 +72,8 @@ def main() -> None:
     try:
         cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
         ai_service = CachedAIService(
-            ai_service=base_ai_service, cache_backend=cache_backend
+            ai_service=base_ai_service,
+            cache_backend=cache_backend
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
     except Exception as e:
@@ -93,30 +95,22 @@ def main() -> None:
             try:
                 target_channel_id = config.get_youtube_channel_id()
             except ValueError:
-                ui.display_error(
-                    "--channel-id is required when using --real-data unless YOUTUBE_CHANNEL_ID is set in .env"
-                )
+                ui.display_error("--channel-id is required when using --real-data unless YOUTUBE_CHANNEL_ID is set in .env")
                 sys.exit(1)
 
         try:
             youtube_client = YouTubeAPIClient(config=config)
             data_ingestion_service = YouTubeIngestionService(
                 youtube_client=youtube_client,
-                target_channel_id=target_channel_id,
+                target_channel_id=target_channel_id
             )
-            ui.display_status(
-                f"Using REAL data integration for channel: {target_channel_id}"
-            )
+            ui.display_status(f"Using REAL data integration for channel: {target_channel_id}")
         except Exception as e:
             ui.display_error(f"Failed to initialize YouTube service: {e}")
             sys.exit(1)
     else:
-        ui.display_status(
-            "\n[NOTICE] The '--real-data' flag was not provided. Defaulting to simulation mode."
-        )
-        ui.display_status(
-            "[NOTICE] To use live YouTube Data API, run: python main.py --real-data\n"
-        )
+        ui.display_status("\n[NOTICE] The '--real-data' flag was not provided. Defaulting to simulation mode.")
+        ui.display_status("[NOTICE] To use live YouTube Data API, run: python main.py --real-data\n")
         data_ingestion_service = SimulationDataIngestionService()  # type: ignore
         ui.display_status("Using SIMULATED data ingestion")
 
@@ -134,7 +128,7 @@ def main() -> None:
             ai_service=ai_service,
             report_generator=report_generator,
             data_ingestion_service=data_ingestion_service,
-            notification_service=notification_service,
+            notification_service=notification_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

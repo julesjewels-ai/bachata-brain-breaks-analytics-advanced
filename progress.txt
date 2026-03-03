@@ -11,3 +11,4 @@
 - Updated `main.py` to inject `MatplotlibVisualizer` into `ExcelReportGenerator`.
 - Updated `tests/test_reporting.py` to mock `Visualizer`.
 - Passed all Validation Gates (pytest, mypy, flake8, pydeps).
+- Fixed pip-audit failing due to CVE-2026-25990 by bumping pillow to 12.1.1 in requirements.txt
