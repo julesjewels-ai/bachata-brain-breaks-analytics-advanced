@@ -13,10 +13,10 @@ class MockVisualizer(Visualizer):
     ) -> BytesIO:
         # Return a valid, minimal PNG signature
         return BytesIO(
-            b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00'
-            b'\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\n'
-            b'IDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00'
-            b'\x00IEND\xaeB`\x82'
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00"
+            b"\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\n"
+            b"IDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00"
+            b"\x00IEND\xaeB`\x82"
         )
 
 
@@ -26,14 +26,16 @@ def test_excel_generation_conditional_formatting(tmp_path):
     visualizer = MockVisualizer()
     generator = ExcelReportGenerator(visualizer=visualizer)
     anomalies = {
-        'Shorts': pd.DataFrame({
-            'video_id': ['1', '2'],
-            'title': ['A', 'B'],
-            'views': [100, 1000],
-            'retention_avg_pct': [50.0, 90.0],
-            'type': ['Shorts', 'Shorts'],
-            'publish_date': ['2023-01-01', '2023-01-02']
-        })
+        "Shorts": pd.DataFrame(
+            {
+                "video_id": ["1", "2"],
+                "title": ["A", "B"],
+                "views": [100, 1000],
+                "retention_avg_pct": [50.0, 90.0],
+                "type": ["Shorts", "Shorts"],
+                "publish_date": ["2023-01-01", "2023-01-02"],
+            }
+        )
     }
     strategy = "Test Strategy"
     filepath = str(tmp_path / "test_report.xlsx")
@@ -44,7 +46,7 @@ def test_excel_generation_conditional_formatting(tmp_path):
     # Verify
     assert os.path.exists(filepath)
     wb = load_workbook(filepath)
-    ws = wb['Shorts Anomalies']
+    ws = wb["Shorts Anomalies"]
 
     # Check for conditional formatting
     # Note: openpyxl stores rules in `ws.conditional_formatting`
@@ -67,13 +69,13 @@ def test_excel_generation_conditional_formatting(tmp_path):
     for cf in rules:
         # Each cf object has a list of rules (cf.rules)
         for rule in cf.rules:
-            if rule.type == 'dataBar':
+            if rule.type == "dataBar":
                 data_bar_rules += 1
 
     # This assertion should fail before implementation
-    assert data_bar_rules >= 2, (
-        f"Expected at least 2 data bar rules, found {data_bar_rules}"
-    )
+    assert (
+        data_bar_rules >= 2
+    ), f"Expected at least 2 data bar rules, found {data_bar_rules}"
 
 
 class MockCell:
@@ -98,18 +100,18 @@ def test_estimate_cell_width():
 
     # Test Formatted Number (#,##0)
     # 1234 -> 1,234 (length 5)
-    assert ExcelStyler.estimate_cell_width(MockCell(1234, '#,##0')) == 5
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, "#,##0")) == 5
 
     # Test Formatted Number with decimals (#,##0.00)
     # 1234.56 -> 1,234.56 (length 8)
-    assert ExcelStyler.estimate_cell_width(MockCell(1234.56, '#,##0.00')) == 8
+    assert ExcelStyler.estimate_cell_width(MockCell(1234.56, "#,##0.00")) == 8
 
     # Test Percentage (0.00%)
     # 95.5 -> 95.50% (length 6)
-    assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00%')) == 6
+    assert ExcelStyler.estimate_cell_width(MockCell(95.5, "0.00%")) == 6
 
     # Test Percentage with quotes (0.00"%")
     assert ExcelStyler.estimate_cell_width(MockCell(95.5, '0.00"%"')) == 6
 
     # Test Unknown Format
-    assert ExcelStyler.estimate_cell_width(MockCell(1234, 'General')) == 4
+    assert ExcelStyler.estimate_cell_width(MockCell(1234, "General")) == 4

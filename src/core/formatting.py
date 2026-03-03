@@ -2,8 +2,10 @@
 Formatting utilities for user-facing output.
 Handles string manipulation, error message processing, and display formatting.
 """
+
 from pydantic import ValidationError
 import pandas as pd
+
 
 def format_validation_error(e: ValidationError) -> str:
     """
@@ -31,6 +33,7 @@ def format_validation_error(e: ValidationError) -> str:
 
     return "Validation Error:\n" + "\n".join(messages)
 
+
 def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepares a DataFrame for CLI display by formatting numbers and renaming columns.
@@ -47,18 +50,22 @@ def prepare_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     display_df = df.copy()
 
     # Format Views (Comma separated)
-    if 'views' in display_df.columns:
-        display_df['views'] = display_df['views'].apply(lambda x: f"{x:,.0f}")
+    if "views" in display_df.columns:
+        display_df["views"] = display_df["views"].apply(lambda x: f"{x:,.0f}")
 
     # Format Retention (Percentage)
-    if 'retention_avg_pct' in display_df.columns:
-        display_df['retention_avg_pct'] = display_df['retention_avg_pct'].apply(lambda x: f"{x:.1f}%")
+    if "retention_avg_pct" in display_df.columns:
+        display_df["retention_avg_pct"] = display_df[
+            "retention_avg_pct"
+        ].apply(lambda x: f"{x:.1f}%")
 
     # Rename columns for display
-    return display_df.rename(columns={
-        'title': 'Video Title',
-        'views': 'Views',
-        'retention_avg_pct': 'Retention',
-        'video_id': 'ID',
-        'type': 'Type'
-    })
+    return display_df.rename(
+        columns={
+            "title": "Video Title",
+            "views": "Views",
+            "retention_avg_pct": "Retention",
+            "video_id": "ID",
+            "type": "Type",
+        }
+    )

@@ -1,12 +1,14 @@
 """
 Tests for notification services.
 """
+
 import json
 import os
 from unittest.mock import Mock
 from src.core.notifications import (
-    ConsoleNotificationService, FileNotificationService,
-    CompositeNotificationService
+    ConsoleNotificationService,
+    FileNotificationService,
+    CompositeNotificationService,
 )
 from src.core.models import NotificationEvent
 from src.core.interfaces import UserInterface
@@ -17,7 +19,7 @@ class TestConsoleNotificationService:
         ui = Mock(spec=UserInterface)
         service = ConsoleNotificationService(ui)
         event = NotificationEvent(
-            title="Info", message="Info Message", level='info'
+            title="Info", message="Info Message", level="info"
         )
 
         service.notify(event)
@@ -28,7 +30,7 @@ class TestConsoleNotificationService:
         ui = Mock(spec=UserInterface)
         service = ConsoleNotificationService(ui)
         event = NotificationEvent(
-            title="Warning", message="Warning Message", level='warning'
+            title="Warning", message="Warning Message", level="warning"
         )
 
         service.notify(event)
@@ -41,7 +43,7 @@ class TestConsoleNotificationService:
         ui = Mock(spec=UserInterface)
         service = ConsoleNotificationService(ui)
         event = NotificationEvent(
-            title="Error", message="Error Message", level='error'
+            title="Error", message="Error Message", level="error"
         )
 
         service.notify(event)
@@ -52,7 +54,7 @@ class TestConsoleNotificationService:
         ui = Mock(spec=UserInterface)
         service = ConsoleNotificationService(ui)
         event = NotificationEvent(
-            title="Success", message="Success Message", level='success'
+            title="Success", message="Success Message", level="success"
         )
 
         service.notify(event)
@@ -65,19 +67,19 @@ class TestFileNotificationService:
         filepath = tmp_path / "notifications.jsonl"
         service = FileNotificationService(str(filepath))
         event = NotificationEvent(
-            title="Test", message="Test Message", level='info'
+            title="Test", message="Test Message", level="info"
         )
 
         service.notify(event)
 
         assert os.path.exists(filepath)
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             line = f.readline()
             data = json.loads(line)
-            assert data['title'] == "Test"
-            assert data['message'] == "Test Message"
-            assert data['level'] == "info"
-            assert 'timestamp' in data
+            assert data["title"] == "Test"
+            assert data["message"] == "Test Message"
+            assert data["level"] == "info"
+            assert "timestamp" in data
 
 
 class TestCompositeNotificationService:
@@ -86,7 +88,7 @@ class TestCompositeNotificationService:
         service2 = Mock()
         composite = CompositeNotificationService([service1, service2])
         event = NotificationEvent(
-            title="Test", message="Test Message", level='info'
+            title="Test", message="Test Message", level="info"
         )
 
         composite.notify(event)
@@ -99,7 +101,7 @@ class TestCompositeNotificationService:
         service2 = Mock()
         composite = CompositeNotificationService([service1, service2])
         event = NotificationEvent(
-            title="Test", message="Test Message", level='info'
+            title="Test", message="Test Message", level="info"
         )
 
         # Should not raise exception

@@ -1,8 +1,9 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from aioresponses import aioresponses
 from src.core.youtube import YouTubeAPIClient
 from src.core.config import AppConfig
+
 
 @pytest.fixture
 def mock_config():
@@ -10,15 +11,17 @@ def mock_config():
     config.get_youtube_api_key.return_value = "TEST_API_KEY"
     return config
 
+
 @pytest.fixture
 def youtube_client(mock_config):
     return YouTubeAPIClient(config=mock_config)
+
 
 @pytest.mark.asyncio
 async def test_get_channel_videos_success(youtube_client):
     channel_id = "UC12345"
     uploads_id = "UU12345"
-    
+
     with aioresponses() as m:
         # Mock channel request
         m.get(
@@ -27,15 +30,13 @@ async def test_get_channel_videos_success(youtube_client):
                 "items": [
                     {
                         "contentDetails": {
-                            "relatedPlaylists": {
-                                "uploads": uploads_id
-                            }
+                            "relatedPlaylists": {"uploads": uploads_id}
                         }
                     }
                 ]
-            }
+            },
         )
-        
+
         # Mock playlistItems request
         m.get(
             f"https://www.googleapis.com/youtube/v3/playlistItems?key=TEST_API_KEY&maxResults=50&part=snippet&playlistId={uploads_id}",
@@ -45,16 +46,16 @@ async def test_get_channel_videos_success(youtube_client):
                         "snippet": {
                             "title": "Test Video",
                             "publishedAt": "2026-03-01T12:00:00Z",
-                            "resourceId": {"videoId": "VID_1"}
+                            "resourceId": {"videoId": "VID_1"},
                         }
                     }
                 ]
-            }
+            },
         )
-        
+
         # Mock videos statistics request
         m.get(
-            f"https://www.googleapis.com/youtube/v3/videos?id=VID_1&key=TEST_API_KEY&part=statistics",
+            "https://www.googleapis.com/youtube/v3/videos?id=VID_1&key=TEST_API_KEY&part=statistics",
             payload={
                 "items": [
                     {
@@ -62,15 +63,15 @@ async def test_get_channel_videos_success(youtube_client):
                         "statistics": {
                             "viewCount": "1500",
                             "likeCount": "100",
-                            "commentCount": "10"
-                        }
+                            "commentCount": "10",
+                        },
                     }
                 ]
-            }
+            },
         )
-        
+
         videos = await youtube_client.get_channel_videos(channel_id)
-        
+
         assert len(videos) == 1
         assert videos[0]["video_id"] == "VID_1"
         assert videos[0]["title"] == "Test Video"
@@ -78,17 +79,18 @@ async def test_get_channel_videos_success(youtube_client):
         assert videos[0]["likes"] == 100
         assert videos[0]["comments"] == 10
 
+
 @pytest.mark.asyncio
 async def test_get_channel_videos_no_uploads(youtube_client, caplog):
     channel_id = "UC_NO_UPLOADS"
-    
+
     with aioresponses() as m:
         m.get(
             f"https://www.googleapis.com/youtube/v3/channels?id={channel_id}&key=TEST_API_KEY&part=contentDetails",
-            payload={"items": []}
+            payload={"items": []},
         )
-        
+
         videos = await youtube_client.get_channel_videos(channel_id)
-        
+
         assert videos == []
         assert "Could not find uploads playlist" in caplog.text

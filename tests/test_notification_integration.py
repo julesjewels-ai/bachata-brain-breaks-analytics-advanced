@@ -1,13 +1,17 @@
 """
 Integration tests for notifications.
 """
+
 from unittest.mock import Mock, MagicMock
 import pytest
 import pandas as pd
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    UserInterface,
+    AIService,
+    ReportGenerator,
+    DataIngestionService,
+    NotificationService,
 )
 
 
@@ -25,13 +29,15 @@ async def test_app_sends_notifications():
 
     # Setup return values
     # Ingest data must return a DataFrame
-    mock_ingest.ingest_data.return_value = pd.DataFrame({
-        'video_id': ['vid_1'],
-        'title': ['Test'],
-        'views': [100],
-        'retention_avg_pct': [50.0],
-        'type': ['Shorts']
-    })
+    mock_ingest.ingest_data.return_value = pd.DataFrame(
+        {
+            "video_id": ["vid_1"],
+            "title": ["Test"],
+            "views": [100],
+            "retention_avg_pct": [50.0],
+            "type": ["Shorts"],
+        }
+    )
 
     # Configure loading context manager
     mock_ui.loading.return_value.__enter__.return_value = None
@@ -43,9 +49,11 @@ async def test_app_sends_notifications():
     mock_ai.analyze_stream.side_effect = mock_stream
     # Ensure UI display_stream is awaited
     mock_ui.display_stream = MagicMock()
+
     async def mock_display_stream(gen):
         async for _ in gen:
             pass
+
     mock_ui.display_stream.side_effect = mock_display_stream
 
     # Initialize app
@@ -54,7 +62,7 @@ async def test_app_sends_notifications():
         ai_service=mock_ai,
         report_generator=mock_report,
         data_ingestion_service=mock_ingest,
-        notification_service=mock_notification
+        notification_service=mock_notification,
     )
 
     # Run app
@@ -75,11 +83,11 @@ async def test_app_sends_notifications():
         (c for c in calls if c[0][0].title == "Ingestion"), None
     )
     assert ingestion_call
-    assert ingestion_call[0][0].level == 'success'
+    assert ingestion_call[0][0].level == "success"
 
     # Check if 'Complete' notification was sent
     complete_call = next(
         (c for c in calls if c[0][0].title == "Complete"), None
     )
     assert complete_call
-    assert complete_call[0][0].level == 'success'
+    assert complete_call[0][0].level == "success"

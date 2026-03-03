@@ -1,16 +1,16 @@
 """
 Tests for caching mechanisms.
 """
+
 import pytest
-import asyncio
-import json
 import hashlib
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
 from src.core.caching import FileCacheBackend, CachedAIService, CacheError
 from src.core.models import VideoAnalysisInput
 
 # Sample input data for tests
+
+
 @pytest.fixture
 def sample_videos():
     return [
@@ -19,19 +19,23 @@ def sample_videos():
             title="Test Video",
             views=100,
             retention_avg_pct=50.0,
-            type="Long"
+            type="Long",
         )
     ]
 
+
 # Helper for async generator
+
+
 async def async_gen_from_list(items):
     for item in items:
         yield item
 
+
 class TestFileCacheBackend:
     def test_init_creates_directory(self, tmp_path):
         cache_dir = tmp_path / "cache"
-        backend = FileCacheBackend(str(cache_dir))
+        FileCacheBackend(str(cache_dir))
         assert cache_dir.exists()
 
     def test_set_get(self, tmp_path):
@@ -45,7 +49,9 @@ class TestFileCacheBackend:
 
         # Verify file content
         hashed_key = hashlib.md5(key.encode("utf-8")).hexdigest()
-        assert (cache_dir / f"{hashed_key}.txt").read_text(encoding="utf-8") == value
+        assert (cache_dir / f"{hashed_key}.txt").read_text(
+            encoding="utf-8"
+        ) == value
 
     def test_get_missing(self, tmp_path):
         cache_dir = tmp_path / "cache"
@@ -55,16 +61,21 @@ class TestFileCacheBackend:
     def test_init_error(self):
         # Trying to create cache in a read-only location or invalid path
         # In a sandbox, permissions are tricky. We can mock Path.mkdir
-        with patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied")):
+        with patch(
+            "pathlib.Path.mkdir", side_effect=OSError("Permission denied")
+        ):
             with pytest.raises(CacheError):
                 FileCacheBackend("/invalid/path")
+
 
 class TestCachedAIService:
     @pytest.fixture
     def mock_ai_service(self):
         service = Mock()
         service.analyze_semantics.return_value = "AI Response"
-        service.analyze_stream.return_value = async_gen_from_list(["AI ", "Stream "])
+        service.analyze_stream.return_value = async_gen_from_list(
+            ["AI ", "Stream "]
+        )
         return service
 
     @pytest.fixture
@@ -73,17 +84,23 @@ class TestCachedAIService:
         backend.get.return_value = None
         return backend
 
-    def test_analyze_semantics_cache_miss(self, mock_ai_service, mock_cache_backend, sample_videos):
+    def test_analyze_semantics_cache_miss(
+        self, mock_ai_service, mock_cache_backend, sample_videos
+    ):
         cached_service = CachedAIService(mock_ai_service, mock_cache_backend)
 
         result = cached_service.analyze_semantics(sample_videos)
 
         assert result == "AI Response"
-        mock_ai_service.analyze_semantics.assert_called_once_with(sample_videos)
+        mock_ai_service.analyze_semantics.assert_called_once_with(
+            sample_videos
+        )
         mock_cache_backend.get.assert_called_once()
         mock_cache_backend.set.assert_called_once()
 
-    def test_analyze_semantics_cache_hit(self, mock_ai_service, mock_cache_backend, sample_videos):
+    def test_analyze_semantics_cache_hit(
+        self, mock_ai_service, mock_cache_backend, sample_videos
+    ):
         mock_cache_backend.get.return_value = "Cached Response"
         cached_service = CachedAIService(mock_ai_service, mock_cache_backend)
 
@@ -94,11 +111,14 @@ class TestCachedAIService:
         mock_cache_backend.set.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_analyze_stream_cache_miss(self, mock_ai_service, mock_cache_backend, sample_videos):
+    async def test_analyze_stream_cache_miss(
+        self, mock_ai_service, mock_cache_backend, sample_videos
+    ):
         # Setup mock stream
         async def mock_stream(videos):
             yield "AI "
             yield "Stream "
+
         # Use side_effect so we can assert called
         mock_ai_service.analyze_stream = Mock(side_effect=mock_stream)
 
@@ -119,7 +139,9 @@ class TestCachedAIService:
         assert args[1] == "AI Stream"
 
     @pytest.mark.asyncio
-    async def test_analyze_stream_cache_hit(self, mock_ai_service, mock_cache_backend, sample_videos):
+    async def test_analyze_stream_cache_hit(
+        self, mock_ai_service, mock_cache_backend, sample_videos
+    ):
         mock_cache_backend.get.return_value = "Cached Stream"
         cached_service = CachedAIService(mock_ai_service, mock_cache_backend)
 

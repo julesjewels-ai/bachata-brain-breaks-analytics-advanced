@@ -2,6 +2,7 @@
 Excel styling utilities.
 Handles low-level styling, formatting, and layout for Excel reports.
 """
+
 from typing import Dict
 from numbers import Number
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -20,12 +21,12 @@ class ExcelStyler:
     def _get_formatted_number_length(val, fmt) -> int:
         """Helper to calculate length of formatted number."""
         # Thousands separator (e.g., #,##0)
-        if '#,##0' in fmt:
-            precision = 2 if '.00' in fmt else 0
+        if "#,##0" in fmt:
+            precision = 2 if ".00" in fmt else 0
             return len(f"{val:,.{precision}f}")
 
         # Percentage (e.g., 0.00%)
-        if '0.00%' in fmt or '0.00"%"' in fmt:
+        if "0.00%" in fmt or '0.00"%"' in fmt:
             return len(f"{val:.2f}%")
 
         return len(str(val))
@@ -61,12 +62,18 @@ class ExcelStyler:
 
             # Apply padding and clamp between min and max
             adjusted_width = max(min_width, min(max_length + 2, max_width))
-            ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            ws.column_dimensions[get_column_letter(col[0].column)].width = (
+                adjusted_width
+            )
 
     @staticmethod
     def get_header_map(ws: Worksheet) -> Dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
-        return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
+        return {
+            str(cell.value): cell.column
+            for cell in ws[1]
+            if cell.value is not None
+        }
 
     @staticmethod
     def apply_header_style(ws: Worksheet):
@@ -75,16 +82,13 @@ class ExcelStyler:
             cell.font = ExcelStyler.HEADER_FONT
             cell.fill = ExcelStyler.HEADER_FILL
             cell.alignment = Alignment(horizontal="center", vertical="center")
-        ws.freeze_panes = 'A2'
+        ws.freeze_panes = "A2"
 
     @staticmethod
     def apply_number_formats(ws: Worksheet):
         """Applies number formatting to specific columns."""
         # Map column headers to their respective formats
-        format_map = {
-            'Views': '#,##0',
-            'Retention (%)': '0.00"%"'
-        }
+        format_map = {"Views": "#,##0", "Retention (%)": '0.00"%"'}
 
         headers = ExcelStyler.get_header_map(ws)
 
@@ -101,8 +105,12 @@ class ExcelStyler:
         # Define rules
         # Blue for Views, Green for Retention
         rules = {
-            'Views': DataBarRule(start_type='min', end_type='max', color="638EC6"),
-            'Retention (%)': DataBarRule(start_type='min', end_type='max', color="63C384")
+            "Views": DataBarRule(
+                start_type="min", end_type="max", color="638EC6"
+            ),
+            "Retention (%)": DataBarRule(
+                start_type="min", end_type="max", color="63C384"
+            ),
         }
 
         headers = ExcelStyler.get_header_map(ws)

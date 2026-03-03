@@ -1,7 +1,7 @@
 """
 Notification services for Bachata Brain Breaks Analytics.
 """
-import json
+
 import logging
 from typing import List
 from src.core.interfaces import NotificationService, UserInterface
@@ -14,6 +14,7 @@ class ConsoleNotificationService(NotificationService):
     """
     Sends notifications to the console via UserInterface.
     """
+
     def __init__(self, ui: UserInterface):
         self.ui = ui
 
@@ -21,11 +22,11 @@ class ConsoleNotificationService(NotificationService):
         """
         Displays notification on the console.
         """
-        if event.level == 'error':
+        if event.level == "error":
             self.ui.display_error(f"{event.title}: {event.message}")
-        elif event.level == 'success':
+        elif event.level == "success":
             self.ui.display_success(f"{event.title}: {event.message}")
-        elif event.level == 'warning':
+        elif event.level == "warning":
             self.ui.display_status(f"WARNING: {event.title} - {event.message}")
         else:
             self.ui.display_info(f"{event.title}: {event.message}")
@@ -35,6 +36,7 @@ class FileNotificationService(NotificationService):
     """
     Logs notifications to a file (NDJSON format).
     """
+
     def __init__(self, filepath: str):
         self.filepath = filepath
 
@@ -43,8 +45,8 @@ class FileNotificationService(NotificationService):
         Appends notification to a file.
         """
         try:
-            with open(self.filepath, 'a') as f:
-                f.write(event.model_dump_json() + '\n')
+            with open(self.filepath, "a") as f:
+                f.write(event.model_dump_json() + "\n")
         except Exception as e:
             logger.error(f"Failed to log notification to file: {e}")
 
@@ -53,6 +55,7 @@ class CompositeNotificationService(NotificationService):
     """
     Broadcasts notifications to multiple services.
     """
+
     def __init__(self, services: List[NotificationService]):
         self.services = services
 

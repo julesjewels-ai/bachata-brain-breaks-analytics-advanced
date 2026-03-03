@@ -1,7 +1,7 @@
 """
 AI Services for Bachata Brain Breaks Analytics.
 """
-import asyncio
+
 from typing import List, AsyncGenerator
 from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
@@ -9,10 +9,12 @@ from src.core.config import AppConfig
 from google import genai
 from google.genai import types
 
+
 class GeminiThinkingAgent(AIService):
     """
     Connects to Gemini 3 'Thinking Mode' to analyze semantic patterns.
     """
+
     PRIMARY_MODEL = "gemini-3-pro-preview"
     FALLBACK_MODEL = "gemini-2.5-flash"
 
@@ -20,7 +22,7 @@ class GeminiThinkingAgent(AIService):
         config = AppConfig.get_config()
         self.client = genai.Client(
             api_key=config.get_api_key(),
-            http_options={'api_version': 'v1beta', 'timeout': 300_000}
+            http_options={"api_version": "v1beta", "timeout": 300_000},
         )
 
     def _build_prompt(self, videos: List[VideoAnalysisInput]) -> str:
@@ -52,9 +54,13 @@ class GeminiThinkingAgent(AIService):
             ),
         )
 
-        return response.text if response.text else "No text response generated."
+        return (
+            response.text if response.text else "No text response generated."
+        )
 
-    async def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
+    async def analyze_stream(
+        self, videos: List[VideoAnalysisInput]
+    ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata with a fallback mechanism.
         """
@@ -66,15 +72,19 @@ class GeminiThinkingAgent(AIService):
 
         try:
             # Attempt primary model (Gemini 3 Pro Preview with Thinking)
-            response_stream = await self.client.aio.models.generate_content_stream(
-                model=self.PRIMARY_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(include_thoughts=True),
-                    temperature=1.0,
-                ),
+            response_stream = (
+                await self.client.aio.models.generate_content_stream(
+                    model=self.PRIMARY_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        thinking_config=types.ThinkingConfig(
+                            include_thoughts=True
+                        ),
+                        temperature=1.0,
+                    ),
+                )
             )
-            
+
             async for chunk in response_stream:
                 if chunk.text:
                     yield chunk.text
@@ -88,13 +98,13 @@ class GeminiThinkingAgent(AIService):
                     model=self.FALLBACK_MODEL,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.7, # standard temperature for 2.5 flash
+                        temperature=0.7,  # standard temperature for 2.5 flash
                     ),
                 )
-                
+
                 async for chunk in fallback_stream:
                     if chunk.text:
                         yield chunk.text
-                        
+
             except Exception as fallback_err:
                 yield f"\n[error] Fallback model also failed: {fallback_err}. Please try again later.[/error]\n"

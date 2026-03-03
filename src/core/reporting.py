@@ -2,6 +2,7 @@
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
+
 from typing import Dict
 import logging
 import pandas as pd
@@ -22,16 +23,17 @@ logger = logging.getLogger(__name__)
 
 class ReportConfig(BaseModel):
     """Configuration for report generation validation."""
+
     filepath: str = Field(..., description="Path to save the Excel report")
 
-    @field_validator('filepath')
+    @field_validator("filepath")
     @classmethod
     def validate_filepath(cls, v: str) -> str:
-        if not v.endswith('.xlsx'):
+        if not v.endswith(".xlsx"):
             raise ValueError("File must be an Excel (.xlsx) file")
-        if '..' in v:
+        if ".." in v:
             raise ValueError("Path traversal detected")
-        if not re.match(r'^[\w\-. /]+$', v):
+        if not re.match(r"^[\w\-. /]+$", v):
             raise ValueError("File path contains invalid characters")
         return v
 
@@ -41,12 +43,12 @@ class ExcelReportGenerator:
 
     # Mapping from DataFrame columns to Excel headers
     COLUMN_MAPPING = {
-        'video_id': 'Video ID',
-        'title': 'Video Title',
-        'views': 'Views',
-        'retention_avg_pct': 'Retention (%)',
-        'type': 'Type',
-        'publish_date': 'Publish Date'
+        "video_id": "Video ID",
+        "title": "Video Title",
+        "views": "Views",
+        "retention_avg_pct": "Retention (%)",
+        "type": "Type",
+        "publish_date": "Publish Date",
     }
 
     def __init__(self, visualizer: Visualizer):
@@ -70,15 +72,15 @@ class ExcelReportGenerator:
         """Adds a bar chart to the anomaly sheet."""
         headers = ExcelStyler.get_header_map(ws)
 
-        if 'Views' not in headers or 'Video Title' not in headers:
+        if "Views" not in headers or "Video Title" not in headers:
             return
 
         # Only add chart if there is data
         if ws.max_row <= 1:
             return
 
-        views_col = headers['Views']
-        title_col = headers['Video Title']
+        views_col = headers["Views"]
+        title_col = headers["Video Title"]
         max_row = ws.max_row
         max_col = ws.max_column
 
@@ -89,33 +91,31 @@ class ExcelReportGenerator:
             max_col=views_col,
             max_row=max_row,
             title_from_data=True,
-            cats_min_col=title_col
+            cats_min_col=title_col,
         )
         chart_config = ChartConfig(
             title=f"Top {v_type} Views",
             x_axis_title="Video Title",
-            y_axis_title="Views"
+            y_axis_title="Views",
         )
 
         # Dynamic anchor: 2 columns to the right of the table
         anchor_col = get_column_letter(max_col + 2)
 
         chart_builder.add_bar_chart(
-            data_loc=data_loc,
-            config=chart_config,
-            anchor=f"{anchor_col}2"
+            data_loc=data_loc, config=chart_config, anchor=f"{anchor_col}2"
         )
 
     def _add_strategy_sheet(self, writer, strategy: str) -> None:
         """Creates the strategy analysis sheet."""
-        pd.DataFrame({'Gemini Analysis': [strategy]}).to_excel(
+        pd.DataFrame({"Gemini Analysis": [strategy]}).to_excel(
             writer, sheet_name="Strategy", index=False
         )
         ws_strat = writer.sheets["Strategy"]
         ExcelStyler.apply_header_style(ws_strat)
-        ws_strat.column_dimensions['A'].width = 100
-        ws_strat['A2'].alignment = Alignment(
-            wrap_text=True, horizontal='left', vertical='top'
+        ws_strat.column_dimensions["A"].width = 100
+        ws_strat["A2"].alignment = Alignment(
+            wrap_text=True, horizontal="left", vertical="top"
         )
 
     def _add_visual_insights(
@@ -127,8 +127,8 @@ class ExcelReportGenerator:
             pd.concat(anomalies.values()) if anomalies else pd.DataFrame()
         )
         has_cols = (
-            'views' in all_anomalies.columns and
-            'retention_avg_pct' in all_anomalies.columns
+            "views" in all_anomalies.columns
+            and "retention_avg_pct" in all_anomalies.columns
         )
 
         if not all_anomalies.empty and has_cols:
@@ -137,7 +137,7 @@ class ExcelReportGenerator:
                     all_anomalies,
                     title="Views vs Retention Correlation",
                     x_col="retention_avg_pct",
-                    y_col="views"
+                    y_col="views",
                 )
 
                 # Create sheet
@@ -160,17 +160,15 @@ class ExcelReportGenerator:
                 # Log or handle error without crashing report
                 logger.warning(f"Failed to generate visualization: {e}")
 
-    def generate_report(self,
-                        anomalies: Dict[str, pd.DataFrame],
-                        strategy: str,
-                        filepath: str) -> None:
+    def generate_report(
+        self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
+    ) -> None:
         """Generates a report using Excel strategy."""
         self.generate_excel(anomalies, strategy, filepath)
 
-    def generate_excel(self,
-                       anomalies: Dict[str, pd.DataFrame],
-                       strategy: str,
-                       filepath: str):
+    def generate_excel(
+        self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
+    ):
         """Creates an Excel report with anomalies and strategy analysis."""
         try:
             config = ReportConfig(filepath=filepath)
@@ -178,7 +176,7 @@ class ExcelReportGenerator:
         except ValidationError as e:
             raise ValueError(f"Security validation failed: {e}")
 
-        with pd.ExcelWriter(safe_path, engine='openpyxl') as writer:
+        with pd.ExcelWriter(safe_path, engine="openpyxl") as writer:
             # 1. Anomalies Sheets
             for v_type, df in anomalies.items():
                 if not df.empty:
