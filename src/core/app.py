@@ -117,7 +117,7 @@ class BachataAnalyticsApp:
         try:
             analysis_input = self._prepare_agent_input(df)
         except ValidationError as e:
-            logger.error(f"Data validation failed for Gemini Analysis: {e}")
+            logger.error("Data validation failed for Gemini Analysis: %s", e)
             error_msg = format_validation_error(e)
             self.notification_service.notify(NotificationEvent(
                 title="Validation Error",
@@ -135,7 +135,7 @@ class BachataAnalyticsApp:
         except StopAsyncIteration:
             pass
         except Exception as e:
-            logger.error(f"Stream initialization failed: {e}")
+            logger.error("Stream initialization failed: %s", e)
             self.ui.display_error(f"Failed to generate analysis: {e}")
             return None
 
@@ -156,7 +156,7 @@ class BachataAnalyticsApp:
                 level='success'
             ))
         except ValueError as e:
-            logger.error(f"Failed to generate report: {e}")
+            logger.error("Failed to generate report: %s", e)
             self.notification_service.notify(NotificationEvent(
                 title="Report Generation Error",
                 message=str(e),

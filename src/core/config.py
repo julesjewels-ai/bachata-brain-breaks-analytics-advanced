@@ -55,7 +55,7 @@ class AppConfig(BaseModel):
                 cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses")
             )
         except ValidationError as e:
-            logger.error(f"Configuration validation failed: {e}")
+            logger.error("Configuration validation failed: %s", e)
             raise
 
     def get_api_key(self) -> str:

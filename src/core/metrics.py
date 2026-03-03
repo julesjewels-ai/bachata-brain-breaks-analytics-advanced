@@ -39,7 +39,7 @@ class FileMetricsRepository:
                 json_str = json.dumps(event_dict)
                 f.write(json_str + '\n')
         except Exception as e:
-            logger.error(f"Failed to write metric to {self.filepath}: {e}")
+            logger.error("Failed to write metric to %s: %s", self.filepath, e)
             raise MetricsError(f"Persistence error: {e}") from e
 
 

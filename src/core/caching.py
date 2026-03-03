@@ -30,7 +30,7 @@ class FileCacheBackend(CacheBackend):
         try:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            logger.error(f"Failed to create cache directory {cache_dir}: {e}")
+            logger.error("Failed to create cache directory %s: %s", cache_dir, e)
             raise CacheError(f"Failed to create cache directory: {e}") from e
 
     def _get_filepath(self, key: str) -> Path:
@@ -45,7 +45,7 @@ class FileCacheBackend(CacheBackend):
             try:
                 return filepath.read_text(encoding="utf-8")
             except OSError as e:
-                logger.warning(f"Failed to read cache file {filepath}: {e}")
+                logger.warning("Failed to read cache file %s: %s", filepath, e)
                 return None
         return None
 
@@ -55,7 +55,7 @@ class FileCacheBackend(CacheBackend):
         try:
             filepath.write_text(value, encoding="utf-8")
         except OSError as e:
-            logger.warning(f"Failed to write cache file {filepath}: {e}")
+            logger.warning("Failed to write cache file %s: %s", filepath, e)
             # We log but don't raise here to avoid interrupting the flow on cache write failure
             # unless strict caching is required. Assuming soft failure is acceptable.
 

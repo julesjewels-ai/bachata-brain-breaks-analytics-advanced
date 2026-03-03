@@ -46,7 +46,7 @@ class FileNotificationService(NotificationService):
             with open(self.filepath, 'a') as f:
                 f.write(event.model_dump_json() + '\n')
         except Exception as e:
-            logger.error(f"Failed to log notification to file: {e}")
+            logger.error("Failed to log notification to file: %s", e)
 
 
 class CompositeNotificationService(NotificationService):
@@ -64,4 +64,4 @@ class CompositeNotificationService(NotificationService):
             try:
                 service.notify(event)
             except Exception as e:
-                logger.error(f"Notification service failed: {e}")
+                logger.error("Notification service failed: %s", e)

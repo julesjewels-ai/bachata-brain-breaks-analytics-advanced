@@ -158,7 +158,7 @@ class ExcelReportGenerator:
 
             except Exception as e:
                 # Log or handle error without crashing report
-                logger.warning(f"Failed to generate visualization: {e}")
+                logger.warning("Failed to generate visualization: %s", e)
 
     def generate_report(self,
                         anomalies: Dict[str, pd.DataFrame],
