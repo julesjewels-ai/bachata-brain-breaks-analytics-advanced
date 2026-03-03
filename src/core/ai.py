@@ -1,13 +1,13 @@
 """
 AI Services for Bachata Brain Breaks Analytics.
 """
-import asyncio
 from typing import List, AsyncGenerator
 from src.core.interfaces import AIService
 from src.core.models import VideoAnalysisInput
 from src.core.config import AppConfig
 from google import genai
 from google.genai import types
+
 
 class GeminiThinkingAgent(AIService):
     """
@@ -24,13 +24,19 @@ class GeminiThinkingAgent(AIService):
         )
 
     def _build_prompt(self, videos: List[VideoAnalysisInput]) -> str:
-        header = "Analyze the following YouTube video data and identify semantic patterns for high retention:\n\n"
+        header = (
+            "Analyze the following YouTube video data and identify "
+            "semantic patterns for high retention:\n\n"
+        )
         lines = [
             f"- ID: {v.video_id} | Title: {v.title} | Views: {v.views}"
             f" | Retention: {v.retention_avg_pct}% | Type: {v.type}"
             for v in videos
         ]
-        footer = "\nProvide a strategic recommendation on thumbnail styles, keywords, and overarching topics. Be concise."
+        footer = (
+            "\nProvide a strategic recommendation on thumbnail styles, "
+            "keywords, and overarching topics. Be concise."
+        )
         return header + "\n".join(lines) + footer
 
     def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
@@ -52,9 +58,47 @@ class GeminiThinkingAgent(AIService):
             ),
         )
 
-        return response.text if response.text else "No text response generated."
+        return response.text if response.text else (
+            "No text response generated."
+        )
 
-    async def analyze_stream(self, videos: List[VideoAnalysisInput]) -> AsyncGenerator[str, None]:
+    async def _stream_primary_model(
+        self, prompt: str
+    ) -> AsyncGenerator[str, None]:
+        """
+        Attempts to generate content stream using the primary model.
+        """
+        response_stream = await self.client.aio.models.generate_content_stream(
+            model=self.PRIMARY_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(include_thoughts=True),
+                temperature=1.0,
+            ),
+        )
+        async for chunk in response_stream:
+            if chunk.text:
+                yield chunk.text
+
+    async def _stream_fallback_model(
+            self, prompt: str) -> AsyncGenerator[str, None]:
+        """
+        Attempts to generate content stream using the fallback model.
+        """
+        fallback_stream = await self.client.aio.models.generate_content_stream(
+            model=self.FALLBACK_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.7,  # standard temperature for 2.5 flash
+            ),
+        )
+        async for chunk in fallback_stream:
+            if chunk.text:
+                yield chunk.text
+
+    async def analyze_stream(
+        self, videos: List[VideoAnalysisInput]
+    ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata with a fallback mechanism.
         """
@@ -66,35 +110,20 @@ class GeminiThinkingAgent(AIService):
 
         try:
             # Attempt primary model (Gemini 3 Pro Preview with Thinking)
-            response_stream = await self.client.aio.models.generate_content_stream(
-                model=self.PRIMARY_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(include_thoughts=True),
-                    temperature=1.0,
-                ),
-            )
-            
-            async for chunk in response_stream:
-                if chunk.text:
-                    yield chunk.text
-
+            async for text in self._stream_primary_model(prompt):
+                yield text
         except Exception as primary_err:
             # Yield a clear fallback message
-            yield f"\n[warning] Primary model failed ({primary_err}). Falling back to {self.FALLBACK_MODEL}...[/warning]\n\n"
+            yield (
+                f"\n[warning] Primary model failed ({primary_err}). "
+                f"Falling back to {self.FALLBACK_MODEL}...[/warning]\n\n"
+            )
 
             try:
-                fallback_stream = await self.client.aio.models.generate_content_stream(
-                    model=self.FALLBACK_MODEL,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0.7, # standard temperature for 2.5 flash
-                    ),
-                )
-                
-                async for chunk in fallback_stream:
-                    if chunk.text:
-                        yield chunk.text
-                        
+                async for text in self._stream_fallback_model(prompt):
+                    yield text
             except Exception as fallback_err:
-                yield f"\n[error] Fallback model also failed: {fallback_err}. Please try again later.[/error]\n"
+                yield (
+                    f"\n[error] Fallback model also failed: {fallback_err}. "
+                    "Please try again later.[/error]\n"
+                )
