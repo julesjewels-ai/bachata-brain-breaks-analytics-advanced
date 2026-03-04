@@ -14,3 +14,10 @@
 - Added `MetricEvent` schema to `src/core/models.py`.
 - Updated `main.py` to inject `FileMetricsRepository` and wrap services using `MetricsDataIngestionService` and `MetricsReportGenerator`.
 - Successfully verified tests, types, format, and dependency structure.
+- Generated Gap Analysis to find Danger Zones (functions with complexity >= 8).
+- Identified two tests needing refactoring: `test_display_table_columns` and `test_app_sends_notifications`.
+- Updated `IMPLEMENTATION_PLAN.md` with new "Refactoring Debt (Ockham Protocol)" tasks.
+- Refactored `test_display_table_columns` in `tests/test_ui_unit.py` (Complexity 11 -> 6).
+- Refactored `test_app_sends_notifications` in `tests/test_notification_integration.py` (Complexity 11 -> 5).
+- Fixed a strict typing issue in `src/core/youtube.py` (`maxResults` parameter cast to string).
+- Verified everything with `pytest`, `mypy`, `flake8`, and `pydeps`.

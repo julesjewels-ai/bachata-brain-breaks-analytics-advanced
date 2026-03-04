@@ -1,6 +1,23 @@
 [
   {
-    "filepath": "src/core/ai.py",
-    "timestamp": "2026-03-03T15:30:34.525138+00:00"
+    "date": "2026-03-03",
+    "target": "analyze_stream",
+    "file": "src/core/ai.py",
+    "old_complexity": 8,
+    "new_complexity": 6
+  },
+  {
+    "date": "2025-05-XX",
+    "target": "test_display_table_columns",
+    "file": "tests/test_ui_unit.py",
+    "old_complexity": 11,
+    "new_complexity": 6
+  },
+  {
+    "date": "2025-05-XX",
+    "target": "test_app_sends_notifications",
+    "file": "tests/test_notification_integration.py",
+    "old_complexity": 11,
+    "new_complexity": 5
   }
 ]

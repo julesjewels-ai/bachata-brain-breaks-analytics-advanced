@@ -43,6 +43,7 @@ async def test_app_sends_notifications():
     mock_ai.analyze_stream.side_effect = mock_stream
     # Ensure UI display_stream is awaited
     mock_ui.display_stream = MagicMock()
+
     async def mock_display_stream(gen):
         async for _ in gen:
             pass
@@ -69,17 +70,17 @@ async def test_app_sends_notifications():
     # 3. Complete
     assert mock_notification.notify.call_count >= 3
 
-    # Check if 'Ingestion' notification was sent
+    # Check specific notifications using any
     calls = mock_notification.notify.call_args_list
-    ingestion_call = next(
-        (c for c in calls if c[0][0].title == "Ingestion"), None
+
+    # Check if 'Ingestion' notification was sent
+    assert any(
+        c[0][0].title == "Ingestion" and c[0][0].level == 'success'
+        for c in calls
     )
-    assert ingestion_call
-    assert ingestion_call[0][0].level == 'success'
 
     # Check if 'Complete' notification was sent
-    complete_call = next(
-        (c for c in calls if c[0][0].title == "Complete"), None
+    assert any(
+        c[0][0].title == "Complete" and c[0][0].level == 'success'
+        for c in calls
     )
-    assert complete_call
-    assert complete_call[0][0].level == 'success'

@@ -8,6 +8,7 @@ from src.core.config import AppConfig
 
 logger = logging.getLogger(__name__)
 
+
 class YouTubeAPIClient:
     """
     Client for interacting with the YouTube Data API v3 asynchronously.
@@ -17,7 +18,8 @@ class YouTubeAPIClient:
     def __init__(self, config: AppConfig):
         self.api_key = config.get_youtube_api_key()
 
-    async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> List[Dict[str, Any]]:
+    async def get_channel_videos(
+            self, channel_id: str, max_results: int = 50) -> List[Dict[str, Any]]:
         """
         Fetches the latest videos for a given channel ID.
         Uses a single shared aiohttp session for all API calls.
@@ -26,7 +28,9 @@ class YouTubeAPIClient:
             # First get the uploads playlist ID for the channel
             uploads_playlist_id = await self._get_uploads_playlist_id(session, channel_id)
             if not uploads_playlist_id:
-                logger.warning("Could not find uploads playlist for channel %s", channel_id)
+                logger.warning(
+                    "Could not find uploads playlist for channel %s",
+                    channel_id)
                 return []
 
             # Then fetch videos from the uploads playlist
@@ -67,13 +71,17 @@ class YouTubeAPIClient:
         async with session.get(f"{self.BASE_URL}/channels", params=params) as response:
             if response.status != 200:
                 error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /channels: %s", response.status, error_text)
+                logger.error(
+                    "YouTube API Error (%s) on /channels: %s",
+                    response.status,
+                    error_text)
             response.raise_for_status()
             data = await response.json()
             items = data.get("items", [])
             if not items:
                 return None
-            return items[0].get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
+            return items[0].get("contentDetails", {}).get(
+                "relatedPlaylists", {}).get("uploads")
 
     async def _get_playlist_items(
         self, session: aiohttp.ClientSession, playlist_id: str, max_results: int
@@ -82,13 +90,16 @@ class YouTubeAPIClient:
         params = {
             "part": "snippet",
             "playlistId": playlist_id,
-            "maxResults": min(max_results, 50),
+            "maxResults": str(min(max_results, 50)),
             "key": self.api_key
         }
         async with session.get(f"{self.BASE_URL}/playlistItems", params=params) as response:
             if response.status != 200:
                 error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /playlistItems: %s", response.status, error_text)
+                logger.error(
+                    "YouTube API Error (%s) on /playlistItems: %s",
+                    response.status,
+                    error_text)
             response.raise_for_status()
             data = await response.json()
             return data.get("items", [])
@@ -112,7 +123,10 @@ class YouTubeAPIClient:
         async with session.get(f"{self.BASE_URL}/videos", params=params) as response:
             if response.status != 200:
                 error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /videos: %s", response.status, error_text)
+                logger.error(
+                    "YouTube API Error (%s) on /videos: %s",
+                    response.status,
+                    error_text)
             response.raise_for_status()
             data = await response.json()
 
