@@ -1,0 +1,21 @@
+[
+    {
+        "video_id": "VID_LONG_1",
+        "title": "A normal bachata video",
+        "views": 1000,
+        "likes": 50,
+        "comments": 5
+    },
+    {
+        "video_id": "VID_SHORT_2",
+        "title": "Quick Bachata #shorts",
+        "views": 5000,
+        "likes": 200,
+        "comments": 10
+    },
+    {
+        "video_id": "INVALID",
+        "title": "",
+        "views": 10
+    }
+]
