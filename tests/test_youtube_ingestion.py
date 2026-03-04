@@ -1,34 +1,21 @@
+import json
 import pytest
+import os
 import pandas as pd
 from unittest.mock import AsyncMock, MagicMock
 from src.core.youtube_ingestion import YouTubeIngestionService
 from src.core.youtube import YouTubeAPIClient
 
+def load_snapshot(filename):
+    filepath = os.path.join(os.path.dirname(__file__), "snapshots", filename)
+    with open(filepath, "r") as f:
+        return json.load(f)
+
 @pytest.fixture
 def mock_youtube_client():
     client = MagicMock(spec=YouTubeAPIClient)
     # Mock the async method to return some sample data
-    client.get_channel_videos = AsyncMock(return_value=[
-        {
-            "video_id": "VID_LONG_1",
-            "title": "A normal bachata video",
-            "views": 1000,
-            "likes": 50,
-            "comments": 5
-        },
-        {
-            "video_id": "VID_SHORT_2",
-            "title": "Quick Bachata #shorts",
-            "views": 5000,
-            "likes": 200,
-            "comments": 10
-        },
-        {
-            "video_id": "INVALID",
-            "title": "", # Invalid empty title
-            "views": 10
-        }
-    ])
+    client.get_channel_videos = AsyncMock(return_value=load_snapshot("youtube_ingestion_mock_data.json"))
     return client
 
 @pytest.mark.asyncio
@@ -65,18 +52,7 @@ async def test_ingest_data(mock_youtube_client):
 @pytest.mark.asyncio
 async def test_ingest_data_validation_drop(mock_youtube_client):
     # If a video violates validation strongly and we can't clean it
-    mock_youtube_client.get_channel_videos = AsyncMock(return_value=[
-        {
-            "video_id": "VID_1", # Good
-            "title": "Good Video",
-            "views": 100
-        },
-        {
-            "video_id": "VID_2", # Bad views
-            "title": "Bad Video",
-            "views": -50 
-        }
-    ])
+    mock_youtube_client.get_channel_videos = AsyncMock(return_value=load_snapshot("youtube_ingestion_validation_data.json"))
     service = YouTubeIngestionService(
         youtube_client=mock_youtube_client,
         target_channel_id="UC123"

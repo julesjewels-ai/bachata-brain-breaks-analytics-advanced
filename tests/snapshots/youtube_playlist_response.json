@@ -1,0 +1,11 @@
+{
+    "items": [
+        {
+            "snippet": {
+                "title": "Test Video",
+                "publishedAt": "2026-03-01T12:00:00Z",
+                "resourceId": {"videoId": "VID_1"}
+            }
+        }
+    ]
+}

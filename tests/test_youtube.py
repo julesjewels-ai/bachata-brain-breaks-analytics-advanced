@@ -1,8 +1,15 @@
+import json
 import pytest
+import os
 from unittest.mock import patch, MagicMock
 from aioresponses import aioresponses
 from src.core.youtube import YouTubeAPIClient
 from src.core.config import AppConfig
+
+def load_snapshot(filename):
+    filepath = os.path.join(os.path.dirname(__file__), "snapshots", filename)
+    with open(filepath, "r") as f:
+        return json.load(f)
 
 @pytest.fixture
 def mock_config():
@@ -23,50 +30,19 @@ async def test_get_channel_videos_success(youtube_client):
         # Mock channel request
         m.get(
             f"https://www.googleapis.com/youtube/v3/channels?id={channel_id}&key=TEST_API_KEY&part=contentDetails",
-            payload={
-                "items": [
-                    {
-                        "contentDetails": {
-                            "relatedPlaylists": {
-                                "uploads": uploads_id
-                            }
-                        }
-                    }
-                ]
-            }
+            payload=load_snapshot("youtube_channel_response.json")
         )
         
         # Mock playlistItems request
         m.get(
             f"https://www.googleapis.com/youtube/v3/playlistItems?key=TEST_API_KEY&maxResults=50&part=snippet&playlistId={uploads_id}",
-            payload={
-                "items": [
-                    {
-                        "snippet": {
-                            "title": "Test Video",
-                            "publishedAt": "2026-03-01T12:00:00Z",
-                            "resourceId": {"videoId": "VID_1"}
-                        }
-                    }
-                ]
-            }
+            payload=load_snapshot("youtube_playlist_response.json")
         )
         
         # Mock videos statistics request
         m.get(
             f"https://www.googleapis.com/youtube/v3/videos?id=VID_1&key=TEST_API_KEY&part=statistics",
-            payload={
-                "items": [
-                    {
-                        "id": "VID_1",
-                        "statistics": {
-                            "viewCount": "1500",
-                            "likeCount": "100",
-                            "commentCount": "10"
-                        }
-                    }
-                ]
-            }
+            payload=load_snapshot("youtube_videos_response.json")
         )
         
         videos = await youtube_client.get_channel_videos(channel_id)
