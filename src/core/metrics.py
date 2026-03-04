@@ -14,6 +14,8 @@ from src.core.interfaces import DataIngestionService, ReportGenerator
 logger = logging.getLogger(__name__)
 
 
+from contextlib import contextmanager
+
 class MetricsError(Exception):
     """Domain-specific exception for metrics operations."""
     pass
@@ -43,6 +45,32 @@ class FileMetricsRepository:
             raise MetricsError(f"Persistence error: {e}") from e
 
 
+@contextmanager
+def record_telemetry(repository: FileMetricsRepository, metric_name: str):
+    """
+    A context manager to wrap execution and record success/failure telemetry.
+    """
+    try:
+        yield
+        repository.record(MetricEvent(
+            metric_name=metric_name,
+            value=1.0,
+            unit="count",
+            tags={"status": "success"}
+        ))
+    except BaseException as e:
+        repository.record(MetricEvent(
+            metric_name=metric_name,
+            value=1.0,
+            unit="count",
+            tags={
+                "status": "failure",
+                "base_error": type(e).__name__
+            }
+        ))
+        raise
+
+
 class MetricsDataIngestionService:
     """
     Decorator for DataIngestionService that records execution telemetry.
@@ -58,26 +86,8 @@ class MetricsDataIngestionService:
         """
         Wraps the inner ingestion service with telemetry tracking.
         """
-        try:
-            result = await self.inner.ingest_data()
-            self.repository.record(MetricEvent(
-                metric_name="ingestion_execution",
-                value=1.0,
-                unit="count",
-                tags={"status": "success"}
-            ))
-            return result
-        except BaseException as e:
-            self.repository.record(MetricEvent(
-                metric_name="ingestion_execution",
-                value=1.0,
-                unit="count",
-                tags={
-                    "status": "failure",
-                    "base_error": type(e).__name__
-                }
-            ))
-            raise
+        with record_telemetry(self.repository, "ingestion_execution"):
+            return await self.inner.ingest_data()
 
 
 class MetricsReportGenerator:
@@ -97,22 +107,5 @@ class MetricsReportGenerator:
         """
         Wraps the inner report generation with telemetry tracking.
         """
-        try:
+        with record_telemetry(self.repository, "report_generation_execution"):
             self.inner.generate_report(anomalies, strategy, filepath)
-            self.repository.record(MetricEvent(
-                metric_name="report_generation_execution",
-                value=1.0,
-                unit="count",
-                tags={"status": "success"}
-            ))
-        except BaseException as e:
-            self.repository.record(MetricEvent(
-                metric_name="report_generation_execution",
-                value=1.0,
-                unit="count",
-                tags={
-                    "status": "failure",
-                    "base_error": type(e).__name__
-                }
-            ))
-            raise
