@@ -58,26 +58,26 @@ class AppConfig(BaseModel):
             logger.error("Configuration validation failed: %s", e)
             raise
 
+    def _require(self, value: Optional[str], env_name: str) -> str:
+        """Helper to ensure a required configuration value is present."""
+        if not value:
+            raise ValueError(f"{env_name} is missing in environment variables.")
+        return value
+
     def get_api_key(self) -> str:
         """
         Retrieves API key with safety check.
         """
-        if not self.google_api_key:
-            raise ValueError("GOOGLE_API_KEY is missing in environment variables.")
-        return self.google_api_key
+        return self._require(self.google_api_key, "GOOGLE_API_KEY")
 
     def get_youtube_api_key(self) -> str:
         """
         Retrieves YouTube API key with safety check.
         """
-        if not self.youtube_api_key:
-            raise ValueError("YOUTUBE_DATA_API_KEY is missing in environment variables.")
-        return self.youtube_api_key
+        return self._require(self.youtube_api_key, "YOUTUBE_DATA_API_KEY")
 
     def get_youtube_channel_id(self) -> str:
         """
         Retrieves the default YouTube channel ID, or raises an error.
         """
-        if not self.youtube_channel_id:
-            raise ValueError("YOUTUBE_CHANNEL_ID is missing in environment variables.")
-        return self.youtube_channel_id
+        return self._require(self.youtube_channel_id, "YOUTUBE_CHANNEL_ID")
