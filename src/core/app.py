@@ -15,6 +15,7 @@ from src.core.interfaces import (
     NotificationService
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.archival import AnomalyArchiver, ArchivalError
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        anomaly_archiver: Optional[AnomalyArchiver] = None
     ):
         # Securely load configuration
         self.config = AppConfig.get_config()
@@ -39,6 +41,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.anomaly_archiver = anomaly_archiver
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -176,6 +179,17 @@ class BachataAnalyticsApp:
 
         anomalies = self.detect_outliers(df)
         self._display_anomalies(anomalies)
+
+        if self.anomaly_archiver:
+            try:
+                self.anomaly_archiver.archive(anomalies)
+            except ArchivalError as e:
+                logger.error("Anomaly archival failed: %s", e)
+                self.notification_service.notify(NotificationEvent(
+                    title="Archival Warning",
+                    message=f"Failed to archive anomalies: {e}",
+                    level='warning'
+                ))
 
         strategy = await self._run_gemini_analysis(df)
         if strategy is None:
