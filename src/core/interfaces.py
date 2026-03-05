@@ -4,10 +4,11 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    TypeVar, Generic
 )
 from io import BytesIO
 import pandas as pd
+from pydantic import BaseModel
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
 
@@ -15,6 +16,7 @@ class AIService(Protocol):
     """
     Protocol for AI operations.
     """
+
     def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
         """
         Analyzes video metadata to identify semantic patterns.
@@ -35,6 +37,7 @@ class UserInterface(Protocol):
     Protocol for user interaction.
     Allows swapping the console UI for a web UI or mock UI for testing.
     """
+
     def display_header(self, text: str) -> None:
         """Displays a major section header."""
         ...
@@ -84,6 +87,7 @@ class Visualizer(Protocol):
     """
     Protocol for generating static visualizations.
     """
+
     def generate_chart(
         self, df: pd.DataFrame, title: str, x_col: str, y_col: str
     ) -> BytesIO:
@@ -106,6 +110,7 @@ class ReportGenerator(Protocol):
     """
     Protocol for generating reports.
     """
+
     def generate_report(
         self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
     ) -> None:
@@ -119,6 +124,7 @@ class DataIngestionService(Protocol):
     """
     Protocol for ingesting video data.
     """
+
     async def ingest_data(self) -> pd.DataFrame:
         """
         Ingests video data and returns a DataFrame.
@@ -130,6 +136,7 @@ class CacheBackend(Protocol):
     """
     Protocol for caching string data.
     """
+
     def get(self, key: str) -> Optional[str]:
         """
         Retrieves a value from the cache.
@@ -157,6 +164,7 @@ class NotificationService(Protocol):
     """
     Protocol for sending notifications.
     """
+
     def notify(self, event: NotificationEvent) -> None:
         """
         Sends a notification.
@@ -164,4 +172,21 @@ class NotificationService(Protocol):
         Args:
             event: The notification event containing details.
         """
+        ...
+
+
+T = TypeVar('T', bound=BaseModel)
+
+
+class Repository(Protocol[T]):
+    """
+    Protocol for generic data persistence.
+    """
+
+    def add(self, entity: T) -> None:
+        """Adds a new entity to the repository."""
+        ...
+
+    def get_all(self) -> List[T]:
+        """Retrieves all entities from the repository."""
         ...

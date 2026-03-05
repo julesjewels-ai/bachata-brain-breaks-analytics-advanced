@@ -12,10 +12,13 @@ from openpyxl.drawing.image import Image as XLImage
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
+import uuid
+from datetime import datetime, timezone
 
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
-from src.core.interfaces import Visualizer
+from src.core.interfaces import Visualizer, ReportGenerator, Repository
 from src.core.excel_styling import ExcelStyler
+from src.core.models import AnalysisRun
 
 logger = logging.getLogger(__name__)
 
@@ -183,3 +186,49 @@ class ExcelReportGenerator:
 
             # 3. Visual Insights (Embedded Matplotlib)
             self._add_visual_insights(writer, anomalies)
+
+
+class ArchivingReportGenerator(ReportGenerator):
+    """
+    Decorator for ReportGenerator that archives each execution summary
+    as an AnalysisRun entity to a provided Repository.
+    """
+
+    def __init__(
+        self,
+        inner: ReportGenerator,
+        repository: Repository[AnalysisRun]
+    ):
+        self._inner = inner
+        self._repository = repository
+
+    def generate_report(
+        self,
+        anomalies: Dict[str, pd.DataFrame],
+        strategy: str,
+        filepath: str
+    ) -> None:
+        """
+        Delegates generation to the inner generator, then persists an archive.
+        """
+        # 1. Delegate core logic
+        self._inner.generate_report(anomalies, strategy, filepath)
+
+        # 2. Extract telemetry and form domain model
+        total_anomalies = sum(len(df) for df in anomalies.values())
+        preview = strategy[:100] + "..." if len(strategy) > 100 else strategy
+
+        run_entity = AnalysisRun(
+            run_id=str(uuid.uuid4()),
+            timestamp=datetime.now(timezone.utc),
+            strategy_preview=preview,
+            total_anomalies=total_anomalies
+        )
+
+        # 3. Persist
+        try:
+            self._repository.add(run_entity)
+            logger.info(f"Archived AnalysisRun with ID {run_entity.run_id}")
+        except Exception as e:
+            logger.error(f"Failed to archive AnalysisRun: {e}")
+            # Continuing execution, reporting succeeded.

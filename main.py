@@ -18,7 +18,10 @@ from src.core.formatting import format_validation_error  # noqa: E402
 from src.core.ai import GeminiThinkingAgent  # noqa: E402
 from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
 from src.core.reporting import ExcelReportGenerator  # noqa: E402
+from src.core.reporting import ArchivingReportGenerator  # noqa: E402
 from src.core.visualization import MatplotlibVisualizer  # noqa: E402
+from src.core.repository import JsonLinesRepository  # noqa: E402
+from src.core.models import AnalysisRun  # noqa: E402
 from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
 from src.core.youtube import YouTubeAPIClient  # noqa: E402
 from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
@@ -94,8 +97,19 @@ def main() -> None:
 
     # Initialize Report Generator
     base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+
+    # Initialize Archiving Repository
+    archive_repo = JsonLinesRepository(
+        filepath="analysis_runs_archive.jsonl",
+        model_class=AnalysisRun
+    )
+
+    archiving_report_generator = ArchivingReportGenerator(
+        inner=base_report_generator, repository=archive_repo
+    )
+
     report_generator = MetricsReportGenerator(
-        inner=base_report_generator, repository=metrics_repo
+        inner=archiving_report_generator, repository=metrics_repo
     )
 
     # Initialize Data Ingestion Service

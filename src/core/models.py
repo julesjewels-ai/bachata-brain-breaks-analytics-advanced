@@ -60,6 +60,18 @@ class NotificationEvent(BaseModel):
     )
 
 
+class AnalysisRun(BaseModel):
+    """
+    Schema representing an execution summary of the system.
+    """
+    run_id: str = Field(..., min_length=1)
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    strategy_preview: str = Field(...)
+    total_anomalies: int = Field(..., ge=0)
+
+
 class MetricEvent(BaseModel):
     """
     Schema for system telemetry events.
