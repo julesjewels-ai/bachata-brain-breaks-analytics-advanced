@@ -14,3 +14,4 @@
 - Added `MetricEvent` schema to `src/core/models.py`.
 - Updated `main.py` to inject `FileMetricsRepository` and wrap services using `MetricsDataIngestionService` and `MetricsReportGenerator`.
 - Successfully verified tests, types, format, and dependency structure.
+Fixed all Ruff/Flake8 linting errors across codebase. Validation gates (pytest, mypy, ruff, pydeps) are now 100% passing.

@@ -6,3 +6,4 @@
 - [x] Update Tests in `tests/test_core.py`
 - [x] Update `main.py`
 - [x] Implement Metrics Tracking System
+- [x] Fix Validation Gates (Ruff/Flake8 linting)

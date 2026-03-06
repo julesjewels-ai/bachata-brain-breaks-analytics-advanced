@@ -10,11 +10,11 @@ import pandas as pd
 from src.core.models import MetricEvent
 from src.core.interfaces import DataIngestionService, ReportGenerator
 
+from contextlib import contextmanager
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
-
-from contextlib import contextmanager
 
 class MetricsError(Exception):
     """Domain-specific exception for metrics operations."""
