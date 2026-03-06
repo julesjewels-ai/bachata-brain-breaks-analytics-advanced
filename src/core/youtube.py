@@ -82,7 +82,7 @@ class YouTubeAPIClient:
         params = {
             "part": "snippet",
             "playlistId": playlist_id,
-            "maxResults": min(max_results, 50),
+            "maxResults": str(min(max_results, 50)),
             "key": self.api_key
         }
         async with session.get(f"{self.BASE_URL}/playlistItems", params=params) as response:

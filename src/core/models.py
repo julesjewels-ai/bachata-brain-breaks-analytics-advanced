@@ -60,6 +60,20 @@ class NotificationEvent(BaseModel):
     )
 
 
+class ViralAnomalyEvent(BaseModel):
+    """
+    Schema for persisting detected viral anomalies.
+    """
+    video_id: str = Field(..., pattern=r"^[\w-]+$")
+    title: str = Field(..., min_length=1)
+    views: int = Field(..., ge=0)
+    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
+    type: str = Field(..., pattern=r"^(Shorts|Long)$")
+    detected_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
 class MetricEvent(BaseModel):
     """
     Schema for system telemetry events.

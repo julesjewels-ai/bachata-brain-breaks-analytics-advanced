@@ -12,9 +12,9 @@ from src.core.formatting import (
 )
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import VideoAnalysisInput, NotificationEvent, ViralAnomalyEvent
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -30,7 +30,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        anomaly_repository: Repository[ViralAnomalyEvent]
     ):
         # Securely load configuration
         self.config = AppConfig.get_config()
@@ -39,6 +40,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.anomaly_repository = anomaly_repository
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -176,6 +178,21 @@ class BachataAnalyticsApp:
 
         anomalies = self.detect_outliers(df)
         self._display_anomalies(anomalies)
+
+        # Persist anomalies to repository
+        for data in anomalies.values():
+            for record in data.to_dict('records'):
+                try:
+                    event = ViralAnomalyEvent(
+                        video_id=record['video_id'],
+                        title=record['title'],
+                        views=record['views'],
+                        retention_avg_pct=record['retention_avg_pct'],
+                        type=record['type']
+                    )
+                    self.anomaly_repository.save(event)
+                except ValidationError as e:
+                    logger.error("Failed to validate anomaly event: %s", e)
 
         strategy = await self._run_gemini_analysis(df)
         if strategy is None:
