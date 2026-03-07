@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch, MagicMock
 from pydantic import ValidationError
 from src.core.models import VideoAnalysisInput
 from src.core.ai import GeminiThinkingAgent
@@ -87,8 +88,6 @@ def test_video_analysis_input_invalid_type():
     with pytest.raises(ValidationError) as exc:
         VideoAnalysisInput(**data)
     assert "String should match pattern" in str(exc.value)
-
-from unittest.mock import patch, MagicMock
 
 @patch('src.core.ai.genai.Client')
 def test_agent_analyze_semantics_typed(mock_client_class, monkeypatch):

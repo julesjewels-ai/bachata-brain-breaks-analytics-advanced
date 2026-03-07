@@ -3,12 +3,30 @@ Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
-    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict, TypeVar
 )
 from io import BytesIO
 import pandas as pd
+from pydantic import BaseModel
 from src.core.models import VideoAnalysisInput, NotificationEvent
+
+T = TypeVar('T', bound=BaseModel)
+
+class Repository(Protocol[T]):
+    """
+    Protocol for data persistence.
+    """
+    def save(self, record: T) -> None:
+        """
+        Saves a single record.
+        """
+        ...
+
+    def save_all(self, records: List[T]) -> None:
+        """
+        Saves a list of records.
+        """
+        ...
 
 
 class AIService(Protocol):

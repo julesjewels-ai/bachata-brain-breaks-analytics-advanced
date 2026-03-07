@@ -14,3 +14,4 @@
 - Added `MetricEvent` schema to `src/core/models.py`.
 - Updated `main.py` to inject `FileMetricsRepository` and wrap services using `MetricsDataIngestionService` and `MetricsReportGenerator`.
 - Successfully verified tests, types, format, and dependency structure.
+- Implemented input archiving using Repository[VideoAnalysisInput] before Gemini AI stream.
