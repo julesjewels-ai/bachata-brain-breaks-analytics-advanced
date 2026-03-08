@@ -7,7 +7,7 @@ import pandas as pd
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
 
 
@@ -22,6 +22,7 @@ async def test_app_sends_notifications():
     mock_report = Mock(spec=ReportGenerator)
     mock_ingest = Mock(spec=DataIngestionService)
     mock_notification = Mock(spec=NotificationService)
+    mock_repo = Mock(spec=Repository)
 
     # Setup return values
     # Ingest data must return a DataFrame
@@ -54,7 +55,8 @@ async def test_app_sends_notifications():
         ai_service=mock_ai,
         report_generator=mock_report,
         data_ingestion_service=mock_ingest,
-        notification_service=mock_notification
+        notification_service=mock_notification,
+        repository=mock_repo
     )
 
     # Run app

@@ -12,7 +12,7 @@ from src.core.formatting import (
 )
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
@@ -30,7 +30,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        repository: Repository[VideoAnalysisInput]
     ):
         # Securely load configuration
         self.config = AppConfig.get_config()
@@ -39,6 +40,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.repository = repository
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -125,6 +127,17 @@ class BachataAnalyticsApp:
                 level='error'
             ))
             return None
+
+        # Archive records before AI execution
+        try:
+            self.repository.save_all(analysis_input)
+        except Exception as e:
+            logger.error("Failed to archive records to repository: %s", e)
+            self.notification_service.notify(NotificationEvent(
+                title="Archival Warning",
+                message="Failed to archive analysis records. Proceeding...",
+                level='warning'
+            ))
 
         stream = self.ai_service.analyze_stream(analysis_input)
 
