@@ -31,7 +31,7 @@ from src.core.metrics import (  # noqa: E402
 )
 
 
-def main() -> None:
+def _parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Bachata Brain Breaks Analytics: Audience & Retention Dashboard"
@@ -59,20 +59,13 @@ def main() -> None:
         print("Bachata Brain Breaks Analytics v1.0.0")
         sys.exit(0)
 
-    # Initialize UI
-    ui = RichConsoleUI()
+    return args
 
-    # Load Configuration
-    try:
-        config = AppConfig.get_config()
-    except ValidationError as e:
-        ui.display_error(f"Configuration Error: {e}")
-        sys.exit(1)
 
-    # Initialize AI Service
+def _initialize_ai_service(
+    config: AppConfig, ui: RichConsoleUI
+) -> CachedAIService | GeminiThinkingAgent:
     base_ai_service = GeminiThinkingAgent()
-
-    # Initialize Caching Layer
     try:
         cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
         ai_service = CachedAIService(
@@ -80,25 +73,20 @@ def main() -> None:
             cache_backend=cache_backend
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
+        return ai_service
     except Exception as e:
         ui.display_error(
             f"Caching initialization failed: {e}. continuing without cache."
         )
-        ai_service = base_ai_service  # type: ignore
+        return base_ai_service
 
-    # Initialize Visualizer
-    visualizer = MatplotlibVisualizer()
 
-    # Initialize Metrics Repository
-    metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
-
-    # Initialize Report Generator
-    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
-    report_generator = MetricsReportGenerator(
-        inner=base_report_generator, repository=metrics_repo
-    )
-
-    # Initialize Data Ingestion Service
+def _initialize_data_ingestion(
+    args: argparse.Namespace,
+    config: AppConfig,
+    ui: RichConsoleUI,
+    metrics_repo: FileMetricsRepository
+) -> MetricsDataIngestionService:
     if args.real_data:
         target_channel_id = args.channel_id
         if not target_channel_id:
@@ -124,6 +112,7 @@ def main() -> None:
                 f"Using REAL data integration for channel: "
                 f"{target_channel_id}"
             )
+            return data_ingestion_service
         except Exception as e:
             ui.display_error(f"Failed to initialize YouTube service: {e}")
             sys.exit(1)
@@ -141,6 +130,41 @@ def main() -> None:
             inner=base_data_ingestion_service_sim, repository=metrics_repo
         )
         ui.display_status("Using SIMULATED data ingestion")
+        return data_ingestion_service
+
+
+def main() -> None:
+    args = _parse_arguments()
+
+    # Initialize UI
+    ui = RichConsoleUI()
+
+    # Load Configuration
+    try:
+        config = AppConfig.get_config()
+    except ValidationError as e:
+        ui.display_error(f"Configuration Error: {e}")
+        sys.exit(1)
+
+    # Initialize AI Service
+    ai_service = _initialize_ai_service(config, ui)
+
+    # Initialize Visualizer
+    visualizer = MatplotlibVisualizer()
+
+    # Initialize Metrics Repository
+    metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
+
+    # Initialize Report Generator
+    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    report_generator = MetricsReportGenerator(
+        inner=base_report_generator, repository=metrics_repo
+    )
+
+    # Initialize Data Ingestion Service
+    data_ingestion_service = _initialize_data_ingestion(
+        args, config, ui, metrics_repo
+    )
 
     # Initialize Notification Service
     console_notifier = ConsoleNotificationService(ui)
