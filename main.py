@@ -29,6 +29,8 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.repository import JsonlRepository  # noqa: E402
+from src.core.models import VideoAnalysisInput  # noqa: E402
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -173,6 +175,9 @@ def main() -> None:
         [console_notifier, file_notifier]
     )
 
+    # Initialize Repository for selected inputs
+    video_repository = JsonlRepository[VideoAnalysisInput]("archived_videos.jsonl")
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
@@ -180,7 +185,8 @@ def main() -> None:
             ai_service=ai_service,
             report_generator=report_generator,
             data_ingestion_service=data_ingestion_service,
-            notification_service=notification_service
+            notification_service=notification_service,
+            repository=video_repository
         )
         asyncio.run(app.run())
     except ValidationError as e:
