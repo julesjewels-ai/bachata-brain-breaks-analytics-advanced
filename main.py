@@ -26,8 +26,10 @@ from src.core.notifications import (  # noqa: E402
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
 )
+from src.core.repository import JsonlRepository  # noqa: E402
+from src.core.models import MetricEvent  # noqa: E402
 from src.core.metrics import (  # noqa: E402
-    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
+    MetricsDataIngestionService, MetricsReportGenerator
 )
 
 
@@ -85,7 +87,7 @@ def _initialize_data_ingestion(
     args: argparse.Namespace,
     config: AppConfig,
     ui: RichConsoleUI,
-    metrics_repo: FileMetricsRepository
+    metrics_repo: JsonlRepository[MetricEvent]
 ) -> MetricsDataIngestionService:
     if args.real_data:
         target_channel_id = args.channel_id
@@ -153,7 +155,7 @@ def main() -> None:
     visualizer = MatplotlibVisualizer()
 
     # Initialize Metrics Repository
-    metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
+    metrics_repo = JsonlRepository[MetricEvent]("telemetry_metrics.jsonl")
 
     # Initialize Report Generator
     base_report_generator = ExcelReportGenerator(visualizer=visualizer)

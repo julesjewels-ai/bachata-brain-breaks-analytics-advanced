@@ -2,51 +2,20 @@
 Metrics tracking system.
 Handles recording execution telemetry and errors.
 """
-import json
+from contextlib import contextmanager
 import logging
 from typing import Dict
 import pandas as pd
 
 from src.core.models import MetricEvent
-from src.core.interfaces import DataIngestionService, ReportGenerator
+from src.core.interfaces import DataIngestionService, ReportGenerator, Repository
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
-from contextlib import contextmanager
-
-class MetricsError(Exception):
-    """Domain-specific exception for metrics operations."""
-    pass
-
-
-class FileMetricsRepository:
-    """
-    Persists metric events to a JSONL file.
-    """
-
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-
-    def record(self, event: MetricEvent) -> None:
-        """
-        Records a metric event by appending it as JSON.
-        """
-        try:
-            with open(self.filepath, 'a') as f:
-                # Use timezone-aware timestamp explicitly per standards
-                event_dict = event.model_dump()
-                event_dict['timestamp'] = event_dict['timestamp'].isoformat()
-                json_str = json.dumps(event_dict)
-                f.write(json_str + '\n')
-        except Exception as e:
-            logger.error("Failed to write metric to %s: %s", self.filepath, e)
-            raise MetricsError(f"Persistence error: {e}") from e
-
-
 @contextmanager
-def record_telemetry(repository: FileMetricsRepository, metric_name: str):
+def record_telemetry(repository: Repository[MetricEvent], metric_name: str):
     """
     A context manager to wrap execution and record success/failure telemetry.
     """
@@ -77,7 +46,7 @@ class MetricsDataIngestionService:
     """
 
     def __init__(
-        self, inner: DataIngestionService, repository: FileMetricsRepository
+        self, inner: DataIngestionService, repository: Repository[MetricEvent]
     ):
         self.inner = inner
         self.repository = repository
@@ -96,7 +65,7 @@ class MetricsReportGenerator:
     """
 
     def __init__(
-        self, inner: ReportGenerator, repository: FileMetricsRepository
+        self, inner: ReportGenerator, repository: Repository[MetricEvent]
     ):
         self.inner = inner
         self.repository = repository
