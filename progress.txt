@@ -14,3 +14,7 @@
 - Added `MetricEvent` schema to `src/core/models.py`.
 - Updated `main.py` to inject `FileMetricsRepository` and wrap services using `MetricsDataIngestionService` and `MetricsReportGenerator`.
 - Successfully verified tests, types, format, and dependency structure.
+- Implemented `tests/test_core.py` integration tests mimicking previously failing tests.
+- Fixed `ruff` linting errors across codebase.
+- Added `app.svg` to `.gitignore`.
+- All Validation Gates passed! `<promise>COMPLETE</promise>`

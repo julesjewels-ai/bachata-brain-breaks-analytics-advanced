@@ -6,3 +6,4 @@
 - [x] Update Tests in `tests/test_core.py`
 - [x] Update `main.py`
 - [x] Implement Metrics Tracking System
+- [ ] Implement `tests/test_core.py` to fix missing tests for `BachataAnalyticsApp`

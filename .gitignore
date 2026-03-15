@@ -30,3 +30,6 @@ dmypy.json
 # IDE folders
 .vscode/
 .idea/
+
+# Generated pydeps diagrams
+app.svg
