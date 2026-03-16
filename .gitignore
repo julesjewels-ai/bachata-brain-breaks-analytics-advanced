@@ -23,6 +23,7 @@ dmypy.json
 # Local Data and Logs
 *.jsonl
 *.log
+*.svg
 
 # Caches and API Responses
 .cache/
