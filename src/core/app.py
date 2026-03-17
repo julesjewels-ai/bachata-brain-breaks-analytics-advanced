@@ -6,7 +6,6 @@ import logging
 from typing import List, Dict, Optional
 import pandas as pd
 from pydantic import ValidationError
-from src.core.config import AppConfig
 from src.core.formatting import (
     format_validation_error, prepare_display_dataframe
 )
@@ -32,8 +31,7 @@ class BachataAnalyticsApp:
         data_ingestion_service: DataIngestionService,
         notification_service: NotificationService
     ):
-        # Securely load configuration
-        self.config = AppConfig.get_config()
+
         self.ai_service = ai_service
         self.ui = ui
         self.report_generator = report_generator
