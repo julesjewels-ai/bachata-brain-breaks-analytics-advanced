@@ -23,6 +23,21 @@ class GeminiThinkingAgent(AIService):
             http_options={'api_version': 'v1beta', 'timeout': 300_000}
         )
 
+    @property
+    def _primary_config(self) -> types.GenerateContentConfig:
+        """Config for the primary model (Gemini 3 Pro with Thinking)."""
+        return types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(include_thoughts=True),
+            temperature=1.0,
+        )
+
+    @property
+    def _fallback_config(self) -> types.GenerateContentConfig:
+        """Config for the fallback model (Gemini 2.5 Flash)."""
+        return types.GenerateContentConfig(
+            temperature=0.7,
+        )
+
     def _build_prompt(self, videos: List[VideoAnalysisInput]) -> str:
         header = (
             "Analyze the following YouTube video data and identify "
@@ -52,10 +67,7 @@ class GeminiThinkingAgent(AIService):
         response = self.client.models.generate_content(
             model=self.PRIMARY_MODEL,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(include_thoughts=True),
-                temperature=1.0,
-            ),
+            config=self._primary_config,
         )
 
         return response.text if response.text else (
@@ -71,10 +83,7 @@ class GeminiThinkingAgent(AIService):
         response_stream = await self.client.aio.models.generate_content_stream(
             model=self.PRIMARY_MODEL,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(include_thoughts=True),
-                temperature=1.0,
-            ),
+            config=self._primary_config,
         )
         async for chunk in response_stream:
             if chunk.text:
@@ -88,9 +97,7 @@ class GeminiThinkingAgent(AIService):
         fallback_stream = await self.client.aio.models.generate_content_stream(
             model=self.FALLBACK_MODEL,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7,  # standard temperature for 2.5 flash
-            ),
+            config=self._fallback_config,
         )
         async for chunk in fallback_stream:
             if chunk.text:
