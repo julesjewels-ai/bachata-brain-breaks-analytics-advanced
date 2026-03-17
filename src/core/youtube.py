@@ -17,6 +17,18 @@ class YouTubeAPIClient:
     def __init__(self, config: AppConfig):
         self.api_key = config.get_youtube_api_key()
 
+    async def _check_response(
+        self, response: aiohttp.ClientResponse, endpoint: str
+    ) -> None:
+        """Validates an API response, logging and raising on failure."""
+        if response.status != 200:
+            error_text = await response.text()
+            logger.error(
+                "YouTube API Error (%s) on %s: %s",
+                response.status, endpoint, error_text
+            )
+            response.raise_for_status()
+
     async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> List[Dict[str, Any]]:
         """
         Fetches the latest videos for a given channel ID.
@@ -65,10 +77,7 @@ class YouTubeAPIClient:
             "key": self.api_key
         }
         async with session.get(f"{self.BASE_URL}/channels", params=params) as response:
-            if response.status != 200:
-                error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /channels: %s", response.status, error_text)
-                response.raise_for_status()
+            await self._check_response(response, "/channels")
             data = await response.json()
             items = data.get("items", [])
             if not items:
@@ -86,10 +95,7 @@ class YouTubeAPIClient:
             "key": self.api_key
         }
         async with session.get(f"{self.BASE_URL}/playlistItems", params=params) as response:
-            if response.status != 200:
-                error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /playlistItems: %s", response.status, error_text)
-                response.raise_for_status()
+            await self._check_response(response, "/playlistItems")
             data = await response.json()
             return data.get("items", [])
 
@@ -110,10 +116,7 @@ class YouTubeAPIClient:
         }
 
         async with session.get(f"{self.BASE_URL}/videos", params=params) as response:
-            if response.status != 200:
-                error_text = await response.text()
-                logger.error("YouTube API Error (%s) on /videos: %s", response.status, error_text)
-                response.raise_for_status()
+            await self._check_response(response, "/videos")
             data = await response.json()
 
             stats_map = {}
