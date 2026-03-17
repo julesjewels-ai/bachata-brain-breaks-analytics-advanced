@@ -1,8 +1,7 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
-from typing import Literal
-from typing import Dict
+from typing import Dict, Literal
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 
