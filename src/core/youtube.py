@@ -68,7 +68,7 @@ class YouTubeAPIClient:
             if response.status != 200:
                 error_text = await response.text()
                 logger.error("YouTube API Error (%s) on /channels: %s", response.status, error_text)
-            response.raise_for_status()
+                response.raise_for_status()
             data = await response.json()
             items = data.get("items", [])
             if not items:
@@ -89,7 +89,7 @@ class YouTubeAPIClient:
             if response.status != 200:
                 error_text = await response.text()
                 logger.error("YouTube API Error (%s) on /playlistItems: %s", response.status, error_text)
-            response.raise_for_status()
+                response.raise_for_status()
             data = await response.json()
             return data.get("items", [])
 
@@ -113,7 +113,7 @@ class YouTubeAPIClient:
             if response.status != 200:
                 error_text = await response.text()
                 logger.error("YouTube API Error (%s) on /videos: %s", response.status, error_text)
-            response.raise_for_status()
+                response.raise_for_status()
             data = await response.json()
 
             stats_map = {}
