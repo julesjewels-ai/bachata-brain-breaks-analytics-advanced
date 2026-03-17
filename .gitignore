@@ -23,6 +23,9 @@ dmypy.json
 # Local Data and Logs
 *.jsonl
 *.log
+progress.txt
+pytest_output*.txt
+refactor_progress.txt
 
 # Caches and API Responses
 .cache/

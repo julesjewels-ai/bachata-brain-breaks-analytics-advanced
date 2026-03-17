@@ -4,6 +4,7 @@ Handles recording execution telemetry and errors.
 """
 import json
 import logging
+from contextlib import contextmanager
 from typing import Dict
 import pandas as pd
 
@@ -12,9 +13,6 @@ from src.core.interfaces import DataIngestionService, ReportGenerator
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-
-from contextlib import contextmanager
 
 class MetricsError(Exception):
     """Domain-specific exception for metrics operations."""
