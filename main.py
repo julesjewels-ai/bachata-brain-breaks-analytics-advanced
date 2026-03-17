@@ -81,6 +81,27 @@ def _initialize_ai_service(
         return base_ai_service
 
 
+def _initialize_reporting(
+    metrics_repo: FileMetricsRepository,
+) -> MetricsReportGenerator:
+    """Creates the report generation stack with visualization."""
+    visualizer = MatplotlibVisualizer()
+    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    return MetricsReportGenerator(
+        inner=base_report_generator, repository=metrics_repo
+    )
+
+
+def _initialize_notifications(
+    ui: RichConsoleUI,
+) -> CompositeNotificationService:
+    """Creates the notification service stack."""
+    return CompositeNotificationService([
+        ConsoleNotificationService(ui),
+        FileNotificationService("notifications.jsonl"),
+    ])
+
+
 def _initialize_data_ingestion(
     args: argparse.Namespace,
     config: AppConfig,
@@ -146,32 +167,14 @@ def main() -> None:
         ui.display_error(f"Configuration Error: {e}")
         sys.exit(1)
 
-    # Initialize AI Service
+    # Initialize services
     ai_service = _initialize_ai_service(config, ui)
-
-    # Initialize Visualizer
-    visualizer = MatplotlibVisualizer()
-
-    # Initialize Metrics Repository
     metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
-
-    # Initialize Report Generator
-    base_report_generator = ExcelReportGenerator(visualizer=visualizer)
-    report_generator = MetricsReportGenerator(
-        inner=base_report_generator, repository=metrics_repo
-    )
-
-    # Initialize Data Ingestion Service
+    report_generator = _initialize_reporting(metrics_repo)
     data_ingestion_service = _initialize_data_ingestion(
         args, config, ui, metrics_repo
     )
-
-    # Initialize Notification Service
-    console_notifier = ConsoleNotificationService(ui)
-    file_notifier = FileNotificationService("notifications.jsonl")
-    notification_service = CompositeNotificationService(
-        [console_notifier, file_notifier]
-    )
+    notification_service = _initialize_notifications(ui)
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:
