@@ -11,7 +11,7 @@ from src.core.formatting import (
 )
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
@@ -29,10 +29,12 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        repository: Repository[VideoAnalysisInput]
     ):
 
         self.ai_service = ai_service
+        self.repository = repository
         self.ui = ui
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
@@ -123,6 +125,9 @@ class BachataAnalyticsApp:
                 level='error'
             ))
             return None
+
+        # Archive the selected records using the generic Repository before starting Gemini stream
+        self.repository.save_all(analysis_input)
 
         stream = self.ai_service.analyze_stream(analysis_input)
 

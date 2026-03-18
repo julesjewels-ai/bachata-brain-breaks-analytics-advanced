@@ -4,10 +4,11 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    TypeVar, Sequence
 )
 from io import BytesIO
 import pandas as pd
+from pydantic import BaseModel
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
 
@@ -164,4 +165,18 @@ class NotificationService(Protocol):
         Args:
             event: The notification event containing details.
         """
+        ...
+
+T = TypeVar('T', bound=BaseModel, contravariant=True)
+
+class Repository(Protocol[T]):
+    """
+    Protocol for data persistence operations.
+    """
+    def save(self, record: T) -> None:
+        """Persists a single record."""
+        ...
+
+    def save_all(self, records: Sequence[T]) -> None:
+        """Persists multiple records."""
         ...
