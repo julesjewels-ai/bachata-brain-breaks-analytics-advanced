@@ -2,11 +2,8 @@
 Tests for caching mechanisms.
 """
 import pytest
-import asyncio
-import json
 import hashlib
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
 from src.core.caching import FileCacheBackend, CachedAIService, CacheError
 from src.core.models import VideoAnalysisInput
 
