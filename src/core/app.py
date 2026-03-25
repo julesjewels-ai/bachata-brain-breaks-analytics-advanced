@@ -14,6 +14,7 @@ from src.core.interfaces import (
     NotificationService
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.repository import Repository
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -29,7 +30,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        repository: Repository[VideoAnalysisInput]
     ):
 
         self.ai_service = ai_service
@@ -37,6 +39,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.repository = repository
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -123,6 +126,8 @@ class BachataAnalyticsApp:
                 level='error'
             ))
             return None
+
+        self.repository.save(analysis_input)
 
         stream = self.ai_service.analyze_stream(analysis_input)
 
