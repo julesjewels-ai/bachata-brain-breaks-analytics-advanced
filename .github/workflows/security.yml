@@ -7,6 +7,8 @@ on:
   pull_request:
     branches: [main]
 
+permissions: read-all
+
 jobs:
   secrets:
     name: Secret Scanning
@@ -32,6 +34,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
       - name: Install Bandit
         run: pip install bandit
       - name: Run Bandit
@@ -52,7 +55,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
       - name: Install pip-audit
         run: pip install pip-audit
       - name: Run pip-audit
-        run: pip-audit -r requirements.txt
+        # Ignore CVE-2026-4539 as there is no patched version of pygments available yet
+        run: pip-audit -r requirements.txt --ignore-vuln CVE-2026-4539

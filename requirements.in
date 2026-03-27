@@ -12,3 +12,7 @@ pillow
 aiohttp
 google-genai
 pytest-cov
+
+# Security overrides for vulnerabilities
+requests>=2.33.0
+pyasn1>=0.6.3

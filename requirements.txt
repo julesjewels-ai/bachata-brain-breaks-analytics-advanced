@@ -99,8 +99,9 @@ propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-pyasn1==0.6.2
+pyasn1==0.6.3
     # via
+    #   -r requirements.in
     #   pyasn1-modules
     #   rsa
 pyasn1-modules==0.4.2
@@ -137,8 +138,10 @@ python-dotenv==1.0.1
     # via -r requirements.in
 pytz==2025.2
     # via pandas
-requests==2.32.5
-    # via google-genai
+requests==2.33.0
+    # via
+    #   -r requirements.in
+    #   google-genai
 rich==13.7.1
     # via -r requirements.in
 rsa==4.9.1
