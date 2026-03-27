@@ -20,6 +20,9 @@ dmypy.json
 *.avi
 *.mkv
 
+# Visualizations
+*.svg
+
 # Local Data and Logs
 *.jsonl
 *.log
