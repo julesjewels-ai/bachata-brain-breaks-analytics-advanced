@@ -11,7 +11,7 @@ from src.core.formatting import (
 )
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
@@ -29,7 +29,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        repository: Repository[VideoAnalysisInput]
     ):
 
         self.ai_service = ai_service
@@ -37,6 +38,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.repository = repository
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -124,6 +126,7 @@ class BachataAnalyticsApp:
             ))
             return None
 
+        self.repository.save_all(analysis_input)
         stream = self.ai_service.analyze_stream(analysis_input)
 
         first_chunk = None
