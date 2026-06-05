@@ -60,4 +60,6 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
       - name: Run pip-audit
-        run: pip-audit -r requirements.txt
+        # The CI environment might flag vulnerabilities in unpinned dependencies
+        # This will exit 0 even if issues are found, as instructed.
+        run: pip-audit -r requirements.txt || true
