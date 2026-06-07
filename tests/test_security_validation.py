@@ -1,3 +1,5 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
 from pydantic import ValidationError
 from src.core.models import VideoAnalysisInput
@@ -88,8 +90,6 @@ def test_video_analysis_input_invalid_type():
         VideoAnalysisInput(**data)
     assert "String should match pattern" in str(exc.value)
 
-from unittest.mock import patch, MagicMock
-
 @patch('src.core.ai.genai.Client')
 def test_agent_analyze_semantics_typed(mock_client_class, monkeypatch):
     """Test that the agent accepts the typed list and returns expected string."""
@@ -114,3 +114,16 @@ def test_agent_analyze_semantics_typed(mock_client_class, monkeypatch):
     result = agent.analyze_semantics(inputs)
     assert "[Gemini 3 Thinking Mode]" in result
     mock_client.models.generate_content.assert_called_once()
+
+def test_video_analysis_input_unprintable():
+    """Test unprintable characters detection in title."""
+    data = {
+        "video_id": "vid_1",
+        "title": "Bad\x00Title",
+        "views": 100,
+        "retention_avg_pct": 50.5,
+        "type": "Shorts"
+    }
+    with pytest.raises(ValidationError) as exc:
+        VideoAnalysisInput(**data)
+    assert "non-printable characters" in str(exc.value)
