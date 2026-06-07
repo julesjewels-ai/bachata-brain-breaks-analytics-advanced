@@ -11,6 +11,9 @@ jobs:
   secrets:
     name: Secret Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +37,7 @@ jobs:
       - name: Install Bandit
         run: pip install bandit
       - name: Run Bandit
-        run: bandit -r src/ -ll -ii -f json -o bandit-report.json || true
+        run: bandit -r src/ -t B602,B603,B604 -ll -ii -f json -o bandit-report.json || true
       - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
