@@ -159,3 +159,4 @@ websockets==15.0.1
     # via google-genai
 yarl==1.22.0
     # via aiohttp
+aioresponses
