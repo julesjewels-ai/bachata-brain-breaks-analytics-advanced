@@ -29,6 +29,8 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.repository import JsonlRepository  # noqa: E402
+from src.core.models import VideoAnalysisInput  # noqa: E402
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -175,6 +177,7 @@ def main() -> None:
         args, config, ui, metrics_repo
     )
     notification_service = _initialize_notifications(ui)
+    analysis_repository = JsonlRepository[VideoAnalysisInput]("archived_analysis.jsonl")
 
     ui.display_status("Initializing Analytics Dashboard...")
     try:
@@ -183,7 +186,8 @@ def main() -> None:
             ai_service=ai_service,
             report_generator=report_generator,
             data_ingestion_service=data_ingestion_service,
-            notification_service=notification_service
+            notification_service=notification_service,
+            repository=analysis_repository
         )
         asyncio.run(app.run())
     except ValidationError as e:

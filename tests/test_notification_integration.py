@@ -7,7 +7,7 @@ import pandas as pd
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, Repository
 )
 
 
@@ -22,6 +22,7 @@ async def test_app_sends_notifications():
     mock_report = Mock(spec=ReportGenerator)
     mock_ingest = Mock(spec=DataIngestionService)
     mock_notification = Mock(spec=NotificationService)
+    mock_repository = Mock(spec=Repository)
 
     # Setup return values
     # Ingest data must return a DataFrame
@@ -54,11 +55,19 @@ async def test_app_sends_notifications():
         ai_service=mock_ai,
         report_generator=mock_report,
         data_ingestion_service=mock_ingest,
-        notification_service=mock_notification
+        notification_service=mock_notification,
+        repository=mock_repository
     )
 
     # Run app
     await app.run()
+
+    # Verify repository was called to save data
+    assert mock_repository.save_all.called
+    saved_items = mock_repository.save_all.call_args[0][0]
+    # In _prepare_agent_input it concatenates top 5 and tail 5
+    assert len(saved_items) == 2
+    assert saved_items[0].video_id == 'vid_1'
 
     # Verify notifications were sent
     assert mock_notification.notify.called
