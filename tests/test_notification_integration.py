@@ -54,7 +54,8 @@ async def test_app_sends_notifications():
         ai_service=mock_ai,
         report_generator=mock_report,
         data_ingestion_service=mock_ingest,
-        notification_service=mock_notification
+        notification_service=mock_notification,
+        archive_repository=Mock()
     )
 
     # Run app
