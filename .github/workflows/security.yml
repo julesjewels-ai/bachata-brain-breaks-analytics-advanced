@@ -2,10 +2,14 @@ name: Security Audit
 on:
   schedule:
     - cron: '0 8 * * 1'  # Weekly on Mondays at 8 AM
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
-permissions: read-all
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   secrets:
@@ -22,7 +26,6 @@ jobs:
 
   sast:
     name: Subprocess & Code Audit
-    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,10 +33,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
       - name: Install Bandit
         run: pip install bandit
       - name: Run Bandit
+        # Focus strictly on high-severity issues and subprocess/os calls
         run: bandit -r src/ -ll -ii -f json -o bandit-report.json || true
       - name: Upload Report
         uses: actions/upload-artifact@v4
@@ -43,7 +46,6 @@ jobs:
 
   deps:
     name: Dependency Audit
-    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +53,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
       - name: Install pip-audit
         run: pip install pip-audit
       - name: Run pip-audit

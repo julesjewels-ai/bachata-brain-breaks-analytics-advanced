@@ -33,3 +33,4 @@ refactor_progress.txt
 # IDE folders
 .vscode/
 .idea/
+*.svg
