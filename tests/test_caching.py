@@ -2,11 +2,8 @@
 Tests for caching mechanisms.
 """
 import pytest
-import asyncio
-import json
 import hashlib
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
 from src.core.caching import FileCacheBackend, CachedAIService, CacheError
 from src.core.models import VideoAnalysisInput
 
@@ -31,7 +28,7 @@ async def async_gen_from_list(items):
 class TestFileCacheBackend:
     def test_init_creates_directory(self, tmp_path):
         cache_dir = tmp_path / "cache"
-        backend = FileCacheBackend(str(cache_dir))
+        _backend = FileCacheBackend(str(cache_dir))
         assert cache_dir.exists()
 
     def test_set_get(self, tmp_path):
