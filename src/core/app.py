@@ -11,7 +11,7 @@ from src.core.formatting import (
 )
 from src.core.interfaces import (
     UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    NotificationService, ArchivalService
 )
 from src.core.models import VideoAnalysisInput, NotificationEvent
 
@@ -29,7 +29,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        archival_service: ArchivalService
     ):
 
         self.ai_service = ai_service
@@ -37,6 +38,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.archival_service = archival_service
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -171,6 +173,15 @@ class BachataAnalyticsApp:
             message=f"Data loaded: {len(df)} records.",
             level='success'
         ))
+
+        try:
+            records = df.to_dict('records')
+            videos = [VideoAnalysisInput(**record) for record in records]
+            self.archival_service.archive_videos(videos)
+        except ValidationError as e:
+            logger.warning("Failed to map ingested data to domain models for archival: %s", e)
+        except Exception as e:
+            logger.warning("Archival process failed: %s", e)
 
         anomalies = self.detect_outliers(df)
         self._display_anomalies(anomalies)
