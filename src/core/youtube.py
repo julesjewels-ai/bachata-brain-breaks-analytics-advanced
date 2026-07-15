@@ -71,7 +71,8 @@ class YouTubeAPIClient:
         self, session: aiohttp.ClientSession, channel_id: str
     ) -> Optional[str]:
         """Gets the playlist ID for the channel's uploads."""
-        params = {
+        from typing import Union
+        params: Dict[str, Union[str, int]] = {
             "part": "contentDetails",
             "id": channel_id,
             "key": self.api_key
@@ -88,7 +89,8 @@ class YouTubeAPIClient:
         self, session: aiohttp.ClientSession, playlist_id: str, max_results: int
     ) -> List[Dict[str, Any]]:
         """Fetches items from a playlist."""
-        params = {
+        from typing import Union
+        params: Dict[str, Union[str, int]] = {
             "part": "snippet",
             "playlistId": playlist_id,
             "maxResults": min(max_results, 50),
@@ -109,7 +111,8 @@ class YouTubeAPIClient:
         if not video_ids:
             return {}
 
-        params = {
+        from typing import Union
+        params: Dict[str, Union[str, int]] = {
             "part": "statistics",
             "id": ",".join(video_ids),
             "key": self.api_key
