@@ -4,11 +4,23 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    Literal, TypeVar, Sequence
 )
 from io import BytesIO
 import pandas as pd
+from pydantic import BaseModel
 from src.core.models import VideoAnalysisInput, NotificationEvent
+
+T = TypeVar('T', bound=BaseModel, contravariant=True)
+
+
+class Repository(Protocol[T]):
+    """
+    Generic Repository protocol for persisting models.
+    """
+    def save_all(self, items: Sequence[T]) -> None:
+        """Saves a collection of items."""
+        ...
 
 
 class AIService(Protocol):

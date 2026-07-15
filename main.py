@@ -29,6 +29,7 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.auditing import JSONLinesAuditRepository, AuditedAIService  # noqa: E402
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -64,21 +65,32 @@ def _parse_arguments() -> argparse.Namespace:
 
 def _initialize_ai_service(
     config: AppConfig, ui: RichConsoleUI
-) -> CachedAIService | GeminiThinkingAgent:
+) -> AuditedAIService:
     base_ai_service = GeminiThinkingAgent()
+
+    # Try initializing cache
     try:
         cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
-        ai_service = CachedAIService(
+        cached_service = CachedAIService(
             ai_service=base_ai_service,
             cache_backend=cache_backend
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
-        return ai_service
+        ai_service_stack = cached_service
     except Exception as e:
         ui.display_error(
             f"Caching initialization failed: {e}. continuing without cache."
         )
-        return base_ai_service
+        ai_service_stack = base_ai_service
+
+    # Wrap with auditing
+    audit_repo = JSONLinesAuditRepository("ai_audit_log.jsonl")
+    audited_service = AuditedAIService(
+        ai_service=ai_service_stack,
+        repository=audit_repo
+    )
+
+    return audited_service
 
 
 def _initialize_reporting(
