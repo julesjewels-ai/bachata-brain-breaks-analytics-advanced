@@ -1,11 +1,10 @@
 import pytest
-from unittest.mock import Mock, call, MagicMock, patch
+from unittest.mock import Mock, patch
 import pandas as pd
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
-from rich.live import Live
 from src.core.ui import RichConsoleUI
 from typing import AsyncGenerator
 

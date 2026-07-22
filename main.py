@@ -16,7 +16,10 @@ from src.core.config import AppConfig  # noqa: E402
 from src.core.ui import RichConsoleUI  # noqa: E402
 from src.core.formatting import format_validation_error  # noqa: E402
 from src.core.ai import GeminiThinkingAgent  # noqa: E402
-from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
+from src.core.caching import (  # noqa: E402
+    CachedAIService, FileCacheBackend,
+    FileDataFrameRepository, CachedDataIngestionService
+)
 from src.core.reporting import ExcelReportGenerator  # noqa: E402
 from src.core.visualization import MatplotlibVisualizer  # noqa: E402
 from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
@@ -126,8 +129,12 @@ def _initialize_data_ingestion(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
+            cached_ingestion_service_yt = CachedDataIngestionService(
+                inner=base_data_ingestion_service_yt,
+                repository=FileDataFrameRepository("youtube_cache.json")
+            )
             data_ingestion_service = MetricsDataIngestionService(
-                inner=base_data_ingestion_service_yt, repository=metrics_repo
+                inner=cached_ingestion_service_yt, repository=metrics_repo
             )
             ui.display_status(
                 f"Using REAL data integration for channel: "
@@ -147,8 +154,12 @@ def _initialize_data_ingestion(
             "python main.py --real-data\n"
         )
         base_data_ingestion_service_sim = SimulationDataIngestionService()
+        cached_ingestion_service_sim = CachedDataIngestionService(
+            inner=base_data_ingestion_service_sim,
+            repository=FileDataFrameRepository("simulation_cache.json")
+        )
         data_ingestion_service = MetricsDataIngestionService(
-            inner=base_data_ingestion_service_sim, repository=metrics_repo
+            inner=cached_ingestion_service_sim, repository=metrics_repo
         )
         ui.display_status("Using SIMULATED data ingestion")
         return data_ingestion_service

@@ -4,7 +4,7 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    TypeVar
 )
 from io import BytesIO
 import pandas as pd
@@ -123,6 +123,22 @@ class DataIngestionService(Protocol):
         """
         Ingests video data and returns a DataFrame.
         """
+        ...
+
+
+T = TypeVar('T')
+
+
+class Repository(Protocol[T]):
+    """
+    Generic Protocol for data persistence.
+    """
+    def get(self) -> Optional[T]:
+        """Retrieves the data."""
+        ...
+
+    def save(self, data: T) -> None:
+        """Saves the data."""
         ...
 
 

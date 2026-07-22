@@ -9,7 +9,8 @@ import logging
 import re
 from pathlib import Path
 from typing import Optional, List, AsyncGenerator
-from src.core.interfaces import CacheBackend, AIService
+import pandas as pd
+from src.core.interfaces import CacheBackend, AIService, Repository, DataIngestionService
 from src.core.models import VideoAnalysisInput
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,64 @@ logger = logging.getLogger(__name__)
 class CacheError(Exception):
     """Base exception for caching errors."""
     pass
+
+
+class DataPersistenceError(Exception):
+    """Exception for data persistence errors."""
+    pass
+
+
+class FileDataFrameRepository(Repository[pd.DataFrame]):
+    """
+    Persists a pandas DataFrame to a JSON file.
+    """
+    def __init__(self, filepath: str) -> None:
+        self.filepath = Path(filepath)
+        # Create directory if it doesn't exist
+        if self.filepath.parent:
+            self.filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    def get(self) -> Optional[pd.DataFrame]:
+        """Retrieves the DataFrame from the file."""
+        if self.filepath.exists():
+            try:
+                return pd.read_json(self.filepath, orient='records')
+            except Exception as e:
+                logger.warning("Failed to load DataFrame cache from %s: %s", self.filepath, e)
+                return None
+        return None
+
+    def save(self, data: pd.DataFrame) -> None:
+        """Saves the DataFrame to the file."""
+        try:
+            # Saving as JSON records for easy cross-compatibility
+            data.to_json(self.filepath, orient='records')
+        except Exception as e:
+            logger.error("Failed to save DataFrame cache to %s: %s", self.filepath, e)
+            raise DataPersistenceError(f"Failed to persist data: {e}") from e
+
+
+class CachedDataIngestionService(DataIngestionService):
+    """
+    Decorator for DataIngestionService that adds caching capabilities using a Repository.
+    """
+    def __init__(self, inner: DataIngestionService, repository: Repository[pd.DataFrame]) -> None:
+        self._inner = inner
+        self._repository = repository
+
+    async def ingest_data(self) -> pd.DataFrame:
+        """
+        Ingests data, checking cache first.
+        """
+        cached_data = self._repository.get()
+        if cached_data is not None:
+            logger.info("Cache hit for data ingestion.")
+            return cached_data
+
+        logger.info("Cache miss for data ingestion. Calling inner service.")
+        data = await self._inner.ingest_data()
+        self._repository.save(data)
+        return data
 
 
 class FileCacheBackend(CacheBackend):
