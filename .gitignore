@@ -33,3 +33,10 @@ refactor_progress.txt
 # IDE folders
 .vscode/
 .idea/
+
+# Visualization outputs
+*.svg
+
+# Coverage artifacts
+coverage.json
+tests/quarantine/
