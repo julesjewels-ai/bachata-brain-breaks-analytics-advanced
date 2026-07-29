@@ -29,6 +29,9 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.archival import (  # noqa: E402
+    FileAnomalyRepository, ArchivalReportGenerator
+)
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -84,11 +87,19 @@ def _initialize_ai_service(
 def _initialize_reporting(
     metrics_repo: FileMetricsRepository,
 ) -> MetricsReportGenerator:
-    """Creates the report generation stack with visualization."""
+    """Creates the report generation stack with visualization and anomaly archival."""
     visualizer = MatplotlibVisualizer()
     base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+
+    # Decorate with archival functionality
+    anomaly_repo = FileAnomalyRepository("archived_anomalies.jsonl")
+    archival_report_generator = ArchivalReportGenerator(
+        inner=base_report_generator, repository=anomaly_repo
+    )
+
+    # Decorate with metrics tracking
     return MetricsReportGenerator(
-        inner=base_report_generator, repository=metrics_repo
+        inner=archival_report_generator, repository=metrics_repo
     )
 
 

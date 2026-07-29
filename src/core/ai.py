@@ -1,12 +1,14 @@
 """
 AI Services for Bachata Brain Breaks Analytics.
 """
-from typing import List, AsyncGenerator
-from src.core.interfaces import AIService
-from src.core.models import VideoAnalysisInput
-from src.core.config import AppConfig
+from collections.abc import AsyncGenerator
+
 from google import genai
 from google.genai import types
+
+from src.core.config import AppConfig
+from src.core.interfaces import AIService
+from src.core.models import VideoAnalysisInput
 
 
 class GeminiThinkingAgent(AIService):
@@ -38,7 +40,7 @@ class GeminiThinkingAgent(AIService):
             temperature=0.7,
         )
 
-    def _build_prompt(self, videos: List[VideoAnalysisInput]) -> str:
+    def _build_prompt(self, videos: list[VideoAnalysisInput]) -> str:
         header = (
             "Analyze the following YouTube video data and identify "
             "semantic patterns for high retention:\n\n"
@@ -54,7 +56,7 @@ class GeminiThinkingAgent(AIService):
         )
         return header + "\n".join(lines) + footer
 
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
+    def analyze_semantics(self, videos: list[VideoAnalysisInput]) -> str:
         """
         Analyzes titles and thumbnails (metadata) to find conversion patterns.
         Now strictly typed for security.
@@ -104,7 +106,7 @@ class GeminiThinkingAgent(AIService):
                 yield chunk.text
 
     async def analyze_stream(
-        self, videos: List[VideoAnalysisInput]
+        self, videos: list[VideoAnalysisInput]
     ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata with a fallback mechanism.
