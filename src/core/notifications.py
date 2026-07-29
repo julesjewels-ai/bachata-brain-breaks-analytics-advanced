@@ -1,9 +1,8 @@
 """
 Notification services for Bachata Brain Breaks Analytics.
 """
-import json
 import logging
-from typing import List
+
 from src.core.interfaces import NotificationService, UserInterface
 from src.core.models import NotificationEvent
 
@@ -53,7 +52,7 @@ class CompositeNotificationService(NotificationService):
     """
     Broadcasts notifications to multiple services.
     """
-    def __init__(self, services: List[NotificationService]):
+    def __init__(self, services: list[NotificationService]):
         self.services = services
 
     def notify(self, event: NotificationEvent) -> None:
