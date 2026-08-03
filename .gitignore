@@ -33,3 +33,5 @@ refactor_progress.txt
 # IDE folders
 .vscode/
 .idea/
+coverage.json
+entropy_report.md
