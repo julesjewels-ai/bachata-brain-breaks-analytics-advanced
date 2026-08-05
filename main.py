@@ -29,6 +29,10 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.exporting import (  # noqa: E402
+    JsonLinesExporter, ExportingDataIngestionService
+)
+from src.core.models import VideoAnalysisInput  # noqa: E402
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -107,7 +111,7 @@ def _initialize_data_ingestion(
     config: AppConfig,
     ui: RichConsoleUI,
     metrics_repo: FileMetricsRepository
-) -> MetricsDataIngestionService:
+) -> ExportingDataIngestionService:
     if args.real_data:
         target_channel_id = args.channel_id
         if not target_channel_id:
@@ -126,8 +130,14 @@ def _initialize_data_ingestion(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
-            data_ingestion_service = MetricsDataIngestionService(
+            metrics_ingestion_service = MetricsDataIngestionService(
                 inner=base_data_ingestion_service_yt, repository=metrics_repo
+            )
+            data_ingestion_service = ExportingDataIngestionService(
+                inner=metrics_ingestion_service,
+                exporter=JsonLinesExporter[VideoAnalysisInput](),
+                model_class=VideoAnalysisInput,
+                export_filepath="raw_ingestion_backup.jsonl"
             )
             ui.display_status(
                 f"Using REAL data integration for channel: "
@@ -147,8 +157,14 @@ def _initialize_data_ingestion(
             "python main.py --real-data\n"
         )
         base_data_ingestion_service_sim = SimulationDataIngestionService()
-        data_ingestion_service = MetricsDataIngestionService(
+        metrics_ingestion_service = MetricsDataIngestionService(
             inner=base_data_ingestion_service_sim, repository=metrics_repo
+        )
+        data_ingestion_service = ExportingDataIngestionService(
+            inner=metrics_ingestion_service,
+            exporter=JsonLinesExporter[VideoAnalysisInput](),
+            model_class=VideoAnalysisInput,
+            export_filepath="raw_ingestion_backup.jsonl"
         )
         ui.display_status("Using SIMULATED data ingestion")
         return data_ingestion_service
