@@ -4,7 +4,7 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    Literal, TypeVar
 )
 from io import BytesIO
 import pandas as pd
@@ -163,5 +163,19 @@ class NotificationService(Protocol):
 
         Args:
             event: The notification event containing details.
+        """
+        ...
+
+
+T = TypeVar('T', contravariant=True)
+
+
+class Repository(Protocol[T]):
+    """
+    Protocol for a generic repository to persist domain models.
+    """
+    def save(self, item: T) -> None:
+        """
+        Persists an item to the underlying storage.
         """
         ...

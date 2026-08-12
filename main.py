@@ -22,6 +22,9 @@ from src.core.visualization import MatplotlibVisualizer  # noqa: E402
 from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
 from src.core.youtube import YouTubeAPIClient  # noqa: E402
 from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
+from src.core.archiving import (  # noqa: E402
+    JsonlVideoRepository, ArchivingDataIngestionService
+)
 from src.core.notifications import (  # noqa: E402
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
@@ -126,8 +129,15 @@ def _initialize_data_ingestion(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
+
+            # Add archiving decorator
+            archive_repo = JsonlVideoRepository("data_archive.jsonl")
+            archiving_service = ArchivingDataIngestionService(
+                inner=base_data_ingestion_service_yt, repository=archive_repo
+            )
+
             data_ingestion_service = MetricsDataIngestionService(
-                inner=base_data_ingestion_service_yt, repository=metrics_repo
+                inner=archiving_service, repository=metrics_repo
             )
             ui.display_status(
                 f"Using REAL data integration for channel: "
@@ -147,8 +157,15 @@ def _initialize_data_ingestion(
             "python main.py --real-data\n"
         )
         base_data_ingestion_service_sim = SimulationDataIngestionService()
+
+        # Add archiving decorator
+        archive_repo = JsonlVideoRepository("data_archive.jsonl")
+        archiving_service = ArchivingDataIngestionService(
+            inner=base_data_ingestion_service_sim, repository=archive_repo
+        )
+
         data_ingestion_service = MetricsDataIngestionService(
-            inner=base_data_ingestion_service_sim, repository=metrics_repo
+            inner=archiving_service, repository=metrics_repo
         )
         ui.display_status("Using SIMULATED data ingestion")
         return data_ingestion_service
