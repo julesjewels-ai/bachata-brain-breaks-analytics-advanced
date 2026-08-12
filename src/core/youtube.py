@@ -3,7 +3,7 @@ YouTube Data API Client for fetching channel and video statistics.
 """
 import aiohttp
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 from src.core.config import AppConfig
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ class YouTubeAPIClient:
         self, session: aiohttp.ClientSession, playlist_id: str, max_results: int
     ) -> List[Dict[str, Any]]:
         """Fetches items from a playlist."""
-        params = {
+        params: Dict[str, Union[str, int]] = {
             "part": "snippet",
             "playlistId": playlist_id,
             "maxResults": min(max_results, 50),
