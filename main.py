@@ -26,6 +26,9 @@ from src.core.notifications import (  # noqa: E402
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
 )
+from src.core.audit import (  # noqa: E402
+    FileAuditUnitOfWork, StandardAuditService, AuditedDataIngestionService
+)
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
@@ -176,13 +179,19 @@ def main() -> None:
     )
     notification_service = _initialize_notifications(ui)
 
+    audit_uow = FileAuditUnitOfWork("audit_log.jsonl")
+    audit_service = StandardAuditService(uow=audit_uow)
+    audited_data_ingestion = AuditedDataIngestionService(
+        inner=data_ingestion_service, audit_service=audit_service
+    )
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
             ui=ui,
             ai_service=ai_service,
             report_generator=report_generator,
-            data_ingestion_service=data_ingestion_service,
+            data_ingestion_service=audited_data_ingestion,
             notification_service=notification_service
         )
         asyncio.run(app.run())

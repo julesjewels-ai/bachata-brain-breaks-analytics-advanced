@@ -4,12 +4,14 @@ Tests for notification services.
 import json
 import os
 from unittest.mock import Mock
-from src.core.notifications import (
-    ConsoleNotificationService, FileNotificationService,
-    CompositeNotificationService
-)
-from src.core.models import NotificationEvent
+
 from src.core.interfaces import UserInterface
+from src.core.models import NotificationEvent
+from src.core.notifications import (
+    CompositeNotificationService,
+    ConsoleNotificationService,
+    FileNotificationService,
+)
 
 
 class TestConsoleNotificationService:
