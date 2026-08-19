@@ -3,7 +3,7 @@ Real Data Ingestion Service using YouTube Data API.
 """
 import logging
 import random
-from typing import List, Dict, Any
+from typing import Any
 
 import pandas as pd
 
@@ -30,7 +30,7 @@ class YouTubeIngestionService(DataIngestionService):
         raw_data = await self._fetch_and_transform()
         return pd.DataFrame(raw_data)
 
-    async def _fetch_and_transform(self) -> List[Dict[str, Any]]:
+    async def _fetch_and_transform(self) -> list[dict[str, Any]]:
         """
         Fetches the latest videos and maps them into the expected schema.
         """
