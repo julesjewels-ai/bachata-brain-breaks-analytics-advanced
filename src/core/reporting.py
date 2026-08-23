@@ -1,21 +1,23 @@
+import typing
+
 """
 Reporting module for generating Excel reports.
 Handles styling and formatting logic for Excel output.
 """
-from typing import Dict
 import logging
-import pandas as pd
-from openpyxl.styles import Font, Alignment
-from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.drawing.image import Image as XLImage
-from PIL import Image as PILImage
-from pydantic import BaseModel, Field, ValidationError, field_validator
 import re
 
+import pandas as pd
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
+from PIL import Image as PILImage
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
 from src.core.charting import ChartBuilder, ChartConfig, ChartDataLocation
-from src.core.interfaces import Visualizer
 from src.core.excel_styling import ExcelStyler
+from src.core.interfaces import Visualizer
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ class ExcelReportGenerator:
     """Generates styled Excel reports for analytics data."""
 
     # Mapping from DataFrame columns to Excel headers
-    COLUMN_MAPPING = {
+    COLUMN_MAPPING: typing.ClassVar = {
         'video_id': 'Video ID',
         'title': 'Video Title',
         'views': 'Views',
@@ -119,7 +121,7 @@ class ExcelReportGenerator:
         )
 
     def _add_visual_insights(
-        self, writer, anomalies: Dict[str, pd.DataFrame]
+        self, writer, anomalies: dict[str, pd.DataFrame]
     ) -> None:
         """Generates and embeds visual insights chart."""
         # Combine all anomalies to one DF for visualization
@@ -156,12 +158,12 @@ class ExcelReportGenerator:
                 )
                 ws_viz["A25"].font = Font(italic=True, color="555555")
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 # Log or handle error without crashing report
                 logger.warning("Failed to generate visualization: %s", e)
 
     def generate_report(self,
-                        anomalies: Dict[str, pd.DataFrame],
+                        anomalies: dict[str, pd.DataFrame],
                         strategy: str,
                         filepath: str) -> None:
         """Creates an Excel report with anomalies and strategy analysis."""
