@@ -33,3 +33,12 @@ refactor_progress.txt
 # IDE folders
 .vscode/
 .idea/
+.env
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.svg
+coverage.json
+.coverage
+tests/quarantine/
