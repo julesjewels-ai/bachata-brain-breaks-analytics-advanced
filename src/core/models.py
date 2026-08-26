@@ -1,8 +1,9 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
-from typing import Dict, Literal
 from datetime import datetime, timezone
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -59,6 +60,19 @@ class NotificationEvent(BaseModel):
     )
 
 
+class AnomalyRecord(BaseModel):
+    """
+    Schema for an anomaly record to be archived.
+    """
+    video_id: str = Field(..., pattern=r"^[\w-]+$")
+    title: str = Field(..., min_length=1, max_length=200)
+    views: int = Field(..., ge=0)
+    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
+    type: str = Field(..., pattern=r"^(Shorts|Long)$")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
 class MetricEvent(BaseModel):
     """
     Schema for system telemetry events.
@@ -66,7 +80,7 @@ class MetricEvent(BaseModel):
     metric_name: str = Field(..., min_length=1)
     value: float
     unit: str = Field(..., min_length=1)
-    tags: Dict[str, str] = Field(default_factory=dict)
+    tags: dict[str, str] = Field(default_factory=dict)
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
