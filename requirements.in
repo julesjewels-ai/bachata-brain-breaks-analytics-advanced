@@ -1,5 +1,5 @@
 pandas
-numpy
+numpy<2.0.0
 python-dotenv
 pytest
 pytest-asyncio
@@ -9,6 +9,6 @@ pydantic
 rich
 matplotlib
 pillow
-aiohttp
+aiohttp<3.14
 google-genai
 pytest-cov

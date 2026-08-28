@@ -36,3 +36,7 @@ refactor_progress.txt
 *.svg
 coverage.json
 tests/quarantine/
+*.mp4
+*.mov
+*.avi
+*.mkv
