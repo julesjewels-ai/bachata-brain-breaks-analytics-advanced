@@ -1,0 +1,58 @@
+name: Entropy - Test Suite Sanitation
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  entropy_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for git churn tracking
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-mock aioresponses
+
+      - name: Run Entropy Audit
+        run: |
+          # The script relies on git tracking, ensure git is configured
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          python scripts/entropy.py
+
+      - name: Check for modified files
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[Entropy] Maintenance - Liability Reduction"
+          branch: "entropy/liability-reduction"
+          title: "[Entropy] Maintenance - Liability Reduction"
+          body-path: "entropy_report.md"
+          delete-branch: true
