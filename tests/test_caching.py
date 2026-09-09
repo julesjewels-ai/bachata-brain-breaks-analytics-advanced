@@ -1,14 +1,14 @@
 """
 Tests for caching mechanisms.
 """
-import pytest
-import asyncio
-import json
 import hashlib
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
-from src.core.caching import FileCacheBackend, CachedAIService, CacheError
+from unittest.mock import Mock, patch
+
+import pytest
+
+from src.core.caching import CachedAIService, CacheError, FileCacheBackend
 from src.core.models import VideoAnalysisInput
+
 
 # Sample input data for tests
 @pytest.fixture
@@ -31,7 +31,7 @@ async def async_gen_from_list(items):
 class TestFileCacheBackend:
     def test_init_creates_directory(self, tmp_path):
         cache_dir = tmp_path / "cache"
-        backend = FileCacheBackend(str(cache_dir))
+        backend = FileCacheBackend(str(cache_dir))  # noqa: F841
         assert cache_dir.exists()
 
     def test_set_get(self, tmp_path):
@@ -55,7 +55,7 @@ class TestFileCacheBackend:
     def test_init_error(self):
         # Trying to create cache in a read-only location or invalid path
         # In a sandbox, permissions are tricky. We can mock Path.mkdir
-        with patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied")):
+        with patch("pathlib.Path.mkdir", side_effect=OSError("Permission denied")):  # noqa: SIM117
             with pytest.raises(CacheError):
                 FileCacheBackend("/invalid/path")
 

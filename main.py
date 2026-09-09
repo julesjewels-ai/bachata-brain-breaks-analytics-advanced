@@ -3,32 +3,38 @@ Entry point for the Bachata Brain Breaks Analytics Advanced application.
 Handles command-line arguments and initializes the core application logic.
 """
 import argparse
-import sys
 import asyncio
+import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables BEFORE any imports that use them
-load_dotenv()  # noqa: E402
+load_dotenv()
 
-from pydantic import ValidationError  # noqa: E402
-from src.core.app import BachataAnalyticsApp  # noqa: E402
-from src.core.config import AppConfig  # noqa: E402
-from src.core.ui import RichConsoleUI  # noqa: E402
-from src.core.formatting import format_validation_error  # noqa: E402
-from src.core.ai import GeminiThinkingAgent  # noqa: E402
-from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
-from src.core.reporting import ExcelReportGenerator  # noqa: E402
-from src.core.visualization import MatplotlibVisualizer  # noqa: E402
-from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
-from src.core.youtube import YouTubeAPIClient  # noqa: E402
-from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
-from src.core.notifications import (  # noqa: E402
-    ConsoleNotificationService, FileNotificationService,
-    CompositeNotificationService
+from pydantic import ValidationError
+
+from src.core.ai import GeminiThinkingAgent
+from src.core.app import BachataAnalyticsApp
+from src.core.archiving import ArchivingAIService, FileArchiveRepository
+from src.core.caching import CachedAIService, FileCacheBackend
+from src.core.config import AppConfig
+from src.core.formatting import format_validation_error
+from src.core.ingestion import SimulationDataIngestionService
+from src.core.metrics import (
+    FileMetricsRepository,
+    MetricsDataIngestionService,
+    MetricsReportGenerator,
 )
-from src.core.metrics import (  # noqa: E402
-    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
+from src.core.notifications import (
+    CompositeNotificationService,
+    ConsoleNotificationService,
+    FileNotificationService,
 )
+from src.core.reporting import ExcelReportGenerator
+from src.core.ui import RichConsoleUI
+from src.core.visualization import MatplotlibVisualizer
+from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -64,8 +70,10 @@ def _parse_arguments() -> argparse.Namespace:
 
 def _initialize_ai_service(
     config: AppConfig, ui: RichConsoleUI
-) -> CachedAIService | GeminiThinkingAgent:
+) -> ArchivingAIService | CachedAIService | GeminiThinkingAgent:
     base_ai_service = GeminiThinkingAgent()
+
+    # Initialize cache layer if possible
     try:
         cache_backend = FileCacheBackend(cache_dir=config.cache_dir)
         ai_service = CachedAIService(
@@ -73,12 +81,25 @@ def _initialize_ai_service(
             cache_backend=cache_backend
         )
         ui.display_status(f"Caching enabled at: {config.cache_dir}")
-        return ai_service
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         ui.display_error(
             f"Caching initialization failed: {e}. continuing without cache."
         )
-        return base_ai_service
+        ai_service = base_ai_service  # type: ignore
+
+    # Wrap with Archiving layer
+    try:
+        archive_repo = FileArchiveRepository("ai_analysis_archive.jsonl")
+        archiving_service = ArchivingAIService(
+            inner=ai_service, repository=archive_repo
+        )
+        ui.display_status("AI Analysis Archiving enabled")
+        return archiving_service
+    except Exception as e:  # noqa: BLE001
+        ui.display_error(
+            f"Archiving initialization failed: {e}. continuing without archiving."
+        )
+        return ai_service
 
 
 def _initialize_reporting(
@@ -134,7 +155,7 @@ def _initialize_data_ingestion(
                 f"{target_channel_id}"
             )
             return data_ingestion_service
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             ui.display_error(f"Failed to initialize YouTube service: {e}")
             sys.exit(1)
     else:
@@ -189,7 +210,7 @@ def main() -> None:
     except ValidationError as e:
         ui.display_error(format_validation_error(e))
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         ui.display_error(f"Critical Error: {e}")
         sys.exit(1)
 
