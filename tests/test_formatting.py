@@ -1,7 +1,9 @@
-import pytest
 import pandas as pd
-from pydantic import BaseModel, ValidationError, Field, field_validator
+import pytest
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
 from src.core.formatting import format_validation_error, prepare_display_dataframe
+
 
 class ValidationTestModel(BaseModel):
     name: str = Field(..., min_length=3)
