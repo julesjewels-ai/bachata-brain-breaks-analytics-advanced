@@ -22,6 +22,9 @@ from src.core.visualization import MatplotlibVisualizer  # noqa: E402
 from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
 from src.core.youtube import YouTubeAPIClient  # noqa: E402
 from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
+from src.core.archiving import (  # noqa: E402
+    DataArchivingIngestionService, AutomatedDataArchiver
+)
 from src.core.notifications import (  # noqa: E402
     ConsoleNotificationService, FileNotificationService,
     CompositeNotificationService
@@ -126,8 +129,12 @@ def _initialize_data_ingestion(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
-            data_ingestion_service = MetricsDataIngestionService(
+            metrics_ingestion_service = MetricsDataIngestionService(
                 inner=base_data_ingestion_service_yt, repository=metrics_repo
+            )
+            archiver = AutomatedDataArchiver("data_archive.jsonl")
+            data_ingestion_service = DataArchivingIngestionService(
+                inner=metrics_ingestion_service, archiver=archiver
             )
             ui.display_status(
                 f"Using REAL data integration for channel: "
@@ -147,8 +154,12 @@ def _initialize_data_ingestion(
             "python main.py --real-data\n"
         )
         base_data_ingestion_service_sim = SimulationDataIngestionService()
-        data_ingestion_service = MetricsDataIngestionService(
+        metrics_ingestion_service = MetricsDataIngestionService(
             inner=base_data_ingestion_service_sim, repository=metrics_repo
+        )
+        archiver = AutomatedDataArchiver("data_archive.jsonl")
+        data_ingestion_service = DataArchivingIngestionService(
+            inner=metrics_ingestion_service, archiver=archiver
         )
         ui.display_status("Using SIMULATED data ingestion")
         return data_ingestion_service
