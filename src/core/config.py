@@ -2,11 +2,11 @@
 Configuration management for the application.
 Handles loading and validating environment variables securely.
 """
+import logging
 import os
-from typing import Optional
+
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
-import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -19,15 +19,15 @@ class AppConfig(BaseModel):
     Application configuration with strict validation.
     Follows Single Responsibility Principle for configuration.
     """
-    google_api_key: Optional[str] = Field(
+    google_api_key: str | None = Field(
         default=None,
         description="API Key for Google GenAI service"
     )
-    youtube_api_key: Optional[str] = Field(
+    youtube_api_key: str | None = Field(
         default=None,
         description="API Key for YouTube Data API v3"
     )
-    youtube_channel_id: Optional[str] = Field(
+    youtube_channel_id: str | None = Field(
         default=None,
         description="Default YouTube Channel ID to fetch data for"
     )
@@ -58,7 +58,7 @@ class AppConfig(BaseModel):
             logger.error("Configuration validation failed: %s", e)
             raise
 
-    def _require(self, value: Optional[str], env_name: str) -> str:
+    def _require(self, value: str | None, env_name: str) -> str:
         """Helper to ensure a required configuration value is present."""
         if not value:
             raise ValueError(f"{env_name} is missing in environment variables.")
