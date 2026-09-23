@@ -5,18 +5,17 @@ Handles recording execution telemetry and errors.
 import json
 import logging
 from contextlib import contextmanager
-from typing import Dict
+
 import pandas as pd
 
-from src.core.models import MetricEvent
 from src.core.interfaces import DataIngestionService, ReportGenerator
+from src.core.models import MetricEvent
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 class MetricsError(Exception):
     """Domain-specific exception for metrics operations."""
-    pass
 
 
 class FileMetricsRepository:
@@ -100,7 +99,7 @@ class MetricsReportGenerator:
         self.repository = repository
 
     def generate_report(
-        self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
+        self, anomalies: dict[str, pd.DataFrame], strategy: str, filepath: str
     ) -> None:
         """
         Wraps the inner report generation with telemetry tracking.

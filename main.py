@@ -3,32 +3,41 @@ Entry point for the Bachata Brain Breaks Analytics Advanced application.
 Handles command-line arguments and initializes the core application logic.
 """
 import argparse
-import sys
 import asyncio
+import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables BEFORE any imports that use them
-load_dotenv()  # noqa: E402
+load_dotenv()
 
-from pydantic import ValidationError  # noqa: E402
-from src.core.app import BachataAnalyticsApp  # noqa: E402
-from src.core.config import AppConfig  # noqa: E402
-from src.core.ui import RichConsoleUI  # noqa: E402
-from src.core.formatting import format_validation_error  # noqa: E402
-from src.core.ai import GeminiThinkingAgent  # noqa: E402
-from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
-from src.core.reporting import ExcelReportGenerator  # noqa: E402
-from src.core.visualization import MatplotlibVisualizer  # noqa: E402
-from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
-from src.core.youtube import YouTubeAPIClient  # noqa: E402
-from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
-from src.core.notifications import (  # noqa: E402
-    ConsoleNotificationService, FileNotificationService,
-    CompositeNotificationService
+from pydantic import ValidationError
+
+from src.core.ai import GeminiThinkingAgent
+from src.core.app import BachataAnalyticsApp
+from src.core.archiving import (
+    ArchivingDataIngestionService,
+    JSONLArchiveRepository,
 )
-from src.core.metrics import (  # noqa: E402
-    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
+from src.core.caching import CachedAIService, FileCacheBackend
+from src.core.config import AppConfig
+from src.core.formatting import format_validation_error
+from src.core.ingestion import SimulationDataIngestionService
+from src.core.metrics import (
+    FileMetricsRepository,
+    MetricsDataIngestionService,
+    MetricsReportGenerator,
 )
+from src.core.notifications import (
+    CompositeNotificationService,
+    ConsoleNotificationService,
+    FileNotificationService,
+)
+from src.core.reporting import ExcelReportGenerator
+from src.core.ui import RichConsoleUI
+from src.core.visualization import MatplotlibVisualizer
+from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -171,9 +180,18 @@ def main() -> None:
     ai_service = _initialize_ai_service(config, ui)
     metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
     report_generator = _initialize_reporting(metrics_repo)
-    data_ingestion_service = _initialize_data_ingestion(
+
+    # Initialize and wrap data ingestion
+    base_data_ingestion_service = _initialize_data_ingestion(
         args, config, ui, metrics_repo
     )
+
+    archive_repo = JSONLArchiveRepository("data_archive.jsonl")
+    data_ingestion_service = ArchivingDataIngestionService(
+        inner=base_data_ingestion_service,
+        repository=archive_repo
+    )
+
     notification_service = _initialize_notifications(ui)
 
     ui.display_status("Initializing Analytics Dashboard...")
