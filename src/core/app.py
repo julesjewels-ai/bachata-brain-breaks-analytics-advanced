@@ -3,17 +3,19 @@ Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import logging
-from typing import List, Dict, Optional
+
 import pandas as pd
 from pydantic import ValidationError
-from src.core.formatting import (
-    format_validation_error, prepare_display_dataframe
-)
+
+from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    AIService,
+    DataIngestionService,
+    NotificationService,
+    ReportGenerator,
+    UserInterface,
 )
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import NotificationEvent, VideoAnalysisInput
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -45,7 +47,7 @@ class BachataAnalyticsApp:
         with self.ui.loading("Ingesting channel data..."):
             return await self.data_ingestion_service.ingest_data()
 
-    def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def detect_outliers(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         """
         Implements statistical outlier detection for viral anomalies.
         """
@@ -60,7 +62,7 @@ class BachataAnalyticsApp:
 
     def _prepare_agent_input(
         self, df: pd.DataFrame
-    ) -> List[VideoAnalysisInput]:
+    ) -> list[VideoAnalysisInput]:
         """
         Selects top/bottom performing videos and validates them for the agent.
         """
@@ -69,10 +71,10 @@ class BachataAnalyticsApp:
             [sorted_df.head(5), sorted_df.tail(5)]
         ).to_dict('records')
 
-        return [VideoAnalysisInput(**record) for record in records]
+        return [VideoAnalysisInput(**{str(k): v for k, v in record.items()}) for record in records]
 
     def _display_anomalies(
-        self, anomalies: Dict[str, pd.DataFrame]
+        self, anomalies: dict[str, pd.DataFrame]
     ) -> None:
         """Renders outlier tables for each video type."""
         for v_type, data in anomalies.items():
@@ -89,7 +91,7 @@ class BachataAnalyticsApp:
         Wraps an async generator to capture all yielded chunks into a
         single concatenated string while forwarding them to the UI.
         """
-        captured: List[str] = []
+        captured: list[str] = []
 
         async def _wrapper():
             if first_chunk is not None:
@@ -105,7 +107,7 @@ class BachataAnalyticsApp:
         await self.ui.display_stream(_wrapper())
         return "".join(captured)
 
-    async def _run_gemini_analysis(self, df: pd.DataFrame) -> Optional[str]:
+    async def _run_gemini_analysis(self, df: pd.DataFrame) -> str | None:
         """
         Validates data, initializes the Gemini stream, and returns
         the full strategy text. Returns None on failure.
@@ -140,7 +142,7 @@ class BachataAnalyticsApp:
         return await self._stream_with_capture(stream, first_chunk)
 
     def _generate_report(
-        self, anomalies: Dict[str, pd.DataFrame], strategy: str
+        self, anomalies: dict[str, pd.DataFrame], strategy: str
     ) -> None:
         """Generates the Excel report and notifies the user."""
         try:
