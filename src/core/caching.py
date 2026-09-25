@@ -35,7 +35,7 @@ class FileCacheBackend(CacheBackend):
 
     def _get_filepath(self, key: str) -> Path:
         """Generates a file path from a cache key using MD5 hashing."""
-        hashed_key = hashlib.md5(key.encode("utf-8")).hexdigest()
+        hashed_key = hashlib.md5(key.encode("utf-8"), usedforsecurity=False).hexdigest()
         return self.cache_dir / f"{hashed_key}.txt"
 
     def get(self, key: str) -> Optional[str]:
