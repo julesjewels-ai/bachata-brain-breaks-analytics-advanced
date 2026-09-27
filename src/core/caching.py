@@ -2,14 +2,15 @@
 Caching mechanisms for AI services.
 Implements a file-based cache backend and a caching decorator for AIService.
 """
+import asyncio
 import hashlib
 import json
-import asyncio
 import logging
 import re
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Optional, List, AsyncGenerator
-from src.core.interfaces import CacheBackend, AIService
+
+from src.core.interfaces import AIService, CacheBackend
 from src.core.models import VideoAnalysisInput
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 class CacheError(Exception):
     """Base exception for caching errors."""
-    pass
 
 
 class FileCacheBackend(CacheBackend):
@@ -38,7 +38,7 @@ class FileCacheBackend(CacheBackend):
         hashed_key = hashlib.md5(key.encode("utf-8")).hexdigest()
         return self.cache_dir / f"{hashed_key}.txt"
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """Retrieves a value from the cache if it exists."""
         filepath = self._get_filepath(key)
         if filepath.exists():
@@ -68,7 +68,7 @@ class CachedAIService(AIService):
         self._ai_service = ai_service
         self._cache = cache_backend
 
-    def _generate_key(self, videos: List[VideoAnalysisInput]) -> str:
+    def _generate_key(self, videos: list[VideoAnalysisInput]) -> str:
         """Generates a unique, deterministic cache key from the input data."""
         # Convert list of models to list of dicts, sorted by video_id to ensure consistency
         data = [v.model_dump() for v in videos]
@@ -79,7 +79,7 @@ class CachedAIService(AIService):
         # Usually order implies context. I will preserve order.
         return json.dumps(data, sort_keys=True)
 
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
+    def analyze_semantics(self, videos: list[VideoAnalysisInput]) -> str:
         """
         Analyzes semantics, checking cache first.
         """
@@ -95,7 +95,7 @@ class CachedAIService(AIService):
         return response
 
     async def analyze_stream(
-        self, videos: List[VideoAnalysisInput]
+        self, videos: list[VideoAnalysisInput]
     ) -> AsyncGenerator[str, None]:
         """
         Stream analysis with caching.

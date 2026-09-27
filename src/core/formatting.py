@@ -2,8 +2,9 @@
 Formatting utilities for user-facing output.
 Handles string manipulation, error message processing, and display formatting.
 """
-from pydantic import ValidationError
 import pandas as pd
+from pydantic import ValidationError
+
 
 def format_validation_error(e: ValidationError) -> str:
     """

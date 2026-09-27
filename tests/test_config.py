@@ -2,9 +2,12 @@
 Tests for configuration management.
 """
 import os
+
 import pytest
 from pydantic import ValidationError
+
 from src.core.config import AppConfig
+
 
 def test_app_config_load():
     # Mock environment variables

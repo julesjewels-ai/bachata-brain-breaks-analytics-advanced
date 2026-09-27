@@ -1,10 +1,13 @@
 import json
-import pytest
 import os
-import pandas as pd
 from unittest.mock import AsyncMock, MagicMock
-from src.core.youtube_ingestion import YouTubeIngestionService
+
+import pandas as pd
+import pytest
+
 from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
+
 
 def load_snapshot(filename):
     filepath = os.path.join(os.path.dirname(__file__), "snapshots", filename)
