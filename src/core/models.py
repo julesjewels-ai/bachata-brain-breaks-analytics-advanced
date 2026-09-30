@@ -59,6 +59,20 @@ class NotificationEvent(BaseModel):
     )
 
 
+class AnomalyRecord(BaseModel):
+    """
+    Schema for an individual anomaly detected by the system.
+    """
+    video_id: str = Field(..., pattern=r"^[\w-]+$")
+    title: str = Field(..., min_length=1, max_length=200)
+    views: int = Field(..., ge=0)
+    retention_avg_pct: float = Field(..., ge=0.0, le=100.0)
+    type: str = Field(..., pattern=r"^(Shorts|Long)$")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
 class MetricEvent(BaseModel):
     """
     Schema for system telemetry events.

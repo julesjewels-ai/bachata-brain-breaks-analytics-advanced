@@ -19,6 +19,8 @@ from src.core.ai import GeminiThinkingAgent  # noqa: E402
 from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
 from src.core.reporting import ExcelReportGenerator  # noqa: E402
 from src.core.visualization import MatplotlibVisualizer  # noqa: E402
+from src.core.archiving import JSONLRepository, ArchivingReportGenerator  # noqa: E402
+from src.core.models import AnomalyRecord  # noqa: E402
 from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
 from src.core.youtube import YouTubeAPIClient  # noqa: E402
 from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
@@ -83,12 +85,16 @@ def _initialize_ai_service(
 
 def _initialize_reporting(
     metrics_repo: FileMetricsRepository,
-) -> MetricsReportGenerator:
-    """Creates the report generation stack with visualization."""
+) -> ArchivingReportGenerator:
+    """Creates the report generation stack with visualization and archiving."""
     visualizer = MatplotlibVisualizer()
     base_report_generator = ExcelReportGenerator(visualizer=visualizer)
-    return MetricsReportGenerator(
+    metrics_report_generator = MetricsReportGenerator(
         inner=base_report_generator, repository=metrics_repo
+    )
+    anomaly_repo = JSONLRepository[AnomalyRecord]("anomalies_archive.jsonl")
+    return ArchivingReportGenerator(
+        inner=metrics_report_generator, repository=anomaly_repo
     )
 
 
