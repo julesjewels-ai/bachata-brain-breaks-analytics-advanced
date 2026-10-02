@@ -44,7 +44,7 @@ class TestFileCacheBackend:
         assert backend.get(key) == value
 
         # Verify file content
-        hashed_key = hashlib.md5(key.encode("utf-8")).hexdigest()
+        hashed_key = hashlib.sha256(key.encode("utf-8")).hexdigest()
         assert (cache_dir / f"{hashed_key}.txt").read_text(encoding="utf-8") == value
 
     def test_get_missing(self, tmp_path):
