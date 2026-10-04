@@ -2,8 +2,10 @@
 Data ingestion services for Bachata Brain Breaks Analytics.
 """
 import random
-from typing import Any, List, Dict
+from typing import Any
+
 import pandas as pd
+
 from src.core.interfaces import DataIngestionService
 from src.core.models import VideoAnalysisInput
 
@@ -24,7 +26,7 @@ class SimulationDataIngestionService(DataIngestionService):
             'Funny Bloopers', 'Festival Vlog', 'Dip Technique', 'Spin Drill'
         ] * 2
 
-        raw_data: List[Dict[str, Any]] = []
+        raw_data: list[dict[str, Any]] = []
         for i in range(1, 21):
             raw_data.append({
                 'video_id': f'vid_{i}',

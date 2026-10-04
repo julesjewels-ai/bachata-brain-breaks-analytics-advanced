@@ -383,3 +383,7 @@ All `make` commands activate the venv automatically, but if you run `python main
 **Solution:**
 Ensure your `.env` file matches the format in `.env.example`. The `APP_ENV` variable must be one of: `development`, `production`, or `testing`.
 
+
+## New Features
+- Implementation of Gap Analysis and State Persistence for AI Tasks.
+- Strict formatting checks enforced for testing validity across pipelines.
