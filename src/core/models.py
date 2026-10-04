@@ -1,8 +1,9 @@
 """
 Domain models for Bachata Brain Breaks Analytics.
 """
-from typing import Dict, Literal
 from datetime import datetime, timezone
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -66,7 +67,7 @@ class MetricEvent(BaseModel):
     metric_name: str = Field(..., min_length=1)
     value: float
     unit: str = Field(..., min_length=1)
-    tags: Dict[str, str] = Field(default_factory=dict)
+    tags: dict[str, str] = Field(default_factory=dict)
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )

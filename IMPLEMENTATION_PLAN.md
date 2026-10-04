@@ -6,3 +6,6 @@
 - [x] Update Tests in `tests/test_core.py`
 - [x] Update `main.py`
 - [x] Implement Metrics Tracking System
+
+- [x] Update README documentation
+- [ ] Improve test coverage
