@@ -3,32 +3,42 @@ Entry point for the Bachata Brain Breaks Analytics Advanced application.
 Handles command-line arguments and initializes the core application logic.
 """
 import argparse
-import sys
 import asyncio
+import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables BEFORE any imports that use them
-load_dotenv()  # noqa: E402
+load_dotenv()
 
-from pydantic import ValidationError  # noqa: E402
-from src.core.app import BachataAnalyticsApp  # noqa: E402
-from src.core.config import AppConfig  # noqa: E402
-from src.core.ui import RichConsoleUI  # noqa: E402
-from src.core.formatting import format_validation_error  # noqa: E402
-from src.core.ai import GeminiThinkingAgent  # noqa: E402
-from src.core.caching import CachedAIService, FileCacheBackend  # noqa: E402
-from src.core.reporting import ExcelReportGenerator  # noqa: E402
-from src.core.visualization import MatplotlibVisualizer  # noqa: E402
-from src.core.ingestion import SimulationDataIngestionService  # noqa: E402
-from src.core.youtube import YouTubeAPIClient  # noqa: E402
-from src.core.youtube_ingestion import YouTubeIngestionService  # noqa: E402
-from src.core.notifications import (  # noqa: E402
-    ConsoleNotificationService, FileNotificationService,
-    CompositeNotificationService
+from pydantic import ValidationError
+
+from src.core.ai import GeminiThinkingAgent
+from src.core.app import BachataAnalyticsApp
+from src.core.archiving import (
+    ArchivingDataIngestionService,
+    JsonLinesRepository,
 )
-from src.core.metrics import (  # noqa: E402
-    FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
+from src.core.caching import CachedAIService, FileCacheBackend
+from src.core.config import AppConfig
+from src.core.formatting import format_validation_error
+from src.core.ingestion import SimulationDataIngestionService
+from src.core.metrics import (
+    FileMetricsRepository,
+    MetricsDataIngestionService,
+    MetricsReportGenerator,
 )
+from src.core.models import VideoAnalysisInput
+from src.core.notifications import (
+    CompositeNotificationService,
+    ConsoleNotificationService,
+    FileNotificationService,
+)
+from src.core.reporting import ExcelReportGenerator
+from src.core.ui import RichConsoleUI
+from src.core.visualization import MatplotlibVisualizer
+from src.core.youtube import YouTubeAPIClient
+from src.core.youtube_ingestion import YouTubeIngestionService
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -126,8 +136,12 @@ def _initialize_data_ingestion(
                 youtube_client=youtube_client,
                 target_channel_id=target_channel_id
             )
+            archived_yt = ArchivingDataIngestionService(
+                inner=base_data_ingestion_service_yt,
+                repository=JsonLinesRepository[VideoAnalysisInput]("archive.jsonl")
+            )
             data_ingestion_service = MetricsDataIngestionService(
-                inner=base_data_ingestion_service_yt, repository=metrics_repo
+                inner=archived_yt, repository=metrics_repo
             )
             ui.display_status(
                 f"Using REAL data integration for channel: "
@@ -147,8 +161,12 @@ def _initialize_data_ingestion(
             "python main.py --real-data\n"
         )
         base_data_ingestion_service_sim = SimulationDataIngestionService()
+        archived_sim = ArchivingDataIngestionService(
+            inner=base_data_ingestion_service_sim,
+            repository=JsonLinesRepository[VideoAnalysisInput]("archive.jsonl")
+        )
         data_ingestion_service = MetricsDataIngestionService(
-            inner=base_data_ingestion_service_sim, repository=metrics_repo
+            inner=archived_sim, repository=metrics_repo
         )
         ui.display_status("Using SIMULATED data ingestion")
         return data_ingestion_service
