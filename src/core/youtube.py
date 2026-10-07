@@ -1,9 +1,11 @@
 """
 YouTube Data API Client for fetching channel and video statistics.
 """
-import aiohttp
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any
+
+import aiohttp
+
 from src.core.config import AppConfig
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ class YouTubeAPIClient:
             )
             response.raise_for_status()
 
-    async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> List[Dict[str, Any]]:
+    async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> list[dict[str, Any]]:
         """
         Fetches the latest videos for a given channel ID.
         Uses a single shared aiohttp session for all API calls.
@@ -69,7 +71,7 @@ class YouTubeAPIClient:
 
     async def _get_uploads_playlist_id(
         self, session: aiohttp.ClientSession, channel_id: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Gets the playlist ID for the channel's uploads."""
         params = {
             "part": "contentDetails",
@@ -86,7 +88,7 @@ class YouTubeAPIClient:
 
     async def _get_playlist_items(
         self, session: aiohttp.ClientSession, playlist_id: str, max_results: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetches items from a playlist."""
         params = {
             "part": "snippet",
@@ -100,8 +102,8 @@ class YouTubeAPIClient:
             return data.get("items", [])
 
     async def get_video_statistics(
-        self, session: aiohttp.ClientSession, video_ids: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, session: aiohttp.ClientSession, video_ids: list[str]
+    ) -> dict[str, dict[str, Any]]:
         """
         Fetches statistics for a batch of video IDs.
         Returns a dictionary mapping video ID to its stats.
