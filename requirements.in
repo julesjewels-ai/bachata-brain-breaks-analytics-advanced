@@ -9,6 +9,6 @@ pydantic
 rich
 matplotlib
 pillow
-aiohttp
+aiohttp==3.13.3
 google-genai
 pytest-cov
