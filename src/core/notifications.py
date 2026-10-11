@@ -1,9 +1,8 @@
 """
 Notification services for Bachata Brain Breaks Analytics.
 """
-import json
 import logging
-from typing import List
+
 from src.core.interfaces import NotificationService, UserInterface
 from src.core.models import NotificationEvent
 
@@ -45,7 +44,7 @@ class FileNotificationService(NotificationService):
         try:
             with open(self.filepath, 'a') as f:
                 f.write(event.model_dump_json() + '\n')
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed to log notification to file: %s", e)
 
 
@@ -53,7 +52,7 @@ class CompositeNotificationService(NotificationService):
     """
     Broadcasts notifications to multiple services.
     """
-    def __init__(self, services: List[NotificationService]):
+    def __init__(self, services: list[NotificationService]):
         self.services = services
 
     def notify(self, event: NotificationEvent) -> None:
@@ -63,5 +62,5 @@ class CompositeNotificationService(NotificationService):
         for service in self.services:
             try:
                 service.notify(event)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error("Notification service failed: %s", e)
