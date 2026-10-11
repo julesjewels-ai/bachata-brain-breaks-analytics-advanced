@@ -1,10 +1,13 @@
 """
 Tests for visualization module.
 """
-import pandas as pd
 from io import BytesIO
+
+import pandas as pd
 import pytest
+
 from src.core.visualization import MatplotlibVisualizer
+
 
 def test_generate_chart_success():
     """Test valid chart generation."""
