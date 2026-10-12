@@ -1,0 +1,50 @@
+name: Entropy Daily Audit
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  entropy-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt pytest-cov aioresponses
+
+      - name: Generate Coverage
+        run: |
+          source venv/bin/activate
+          pytest --cov=src --cov-report=lcov
+
+      - name: Install Node Dependencies
+        run: npm install
+
+      - name: Run Entropy Audit
+        run: npx ts-node scripts/entropy.ts
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[Entropy] Maintenance - Liability Reduction"
+          title: "[Entropy] Maintenance - Liability Reduction"
+          body-path: "entropy_report.md"
+          branch: "chore/entropy-audit"
+          delete-branch: true

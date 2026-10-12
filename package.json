@@ -1,0 +1,30 @@
+{
+  "name": "entropy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"no test specified\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/lcov-parse": "^1.0.2",
+    "@types/node": "^20.19.43",
+    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "@typescript-eslint/parser": "^8.71.1",
+    "axios": "^1.20.0",
+    "child_process": "^1.0.2",
+    "dotenv": "^18.0.7",
+    "eslint": "^10.12.0",
+    "fs-extra": "^11.4.1",
+    "lcov-parse": "^1.0.0",
+    "sync-request": "^6.1.0",
+    "tree-sitter": "^0.25.1",
+    "tree-sitter-python": "^0.25.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
