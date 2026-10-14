@@ -29,6 +29,9 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.archiving import (  # noqa: E402
+    JSONLReportMetadataRepository, ArchivedReportGenerator
+)
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -82,13 +85,18 @@ def _initialize_ai_service(
 
 
 def _initialize_reporting(
+    config: AppConfig,
     metrics_repo: FileMetricsRepository,
 ) -> MetricsReportGenerator:
     """Creates the report generation stack with visualization."""
     visualizer = MatplotlibVisualizer()
     base_report_generator = ExcelReportGenerator(visualizer=visualizer)
+    archiving_repo = JSONLReportMetadataRepository(config.report_metadata_path)
+    archived_report_generator = ArchivedReportGenerator(
+        inner=base_report_generator, repository=archiving_repo
+    )
     return MetricsReportGenerator(
-        inner=base_report_generator, repository=metrics_repo
+        inner=archived_report_generator, repository=metrics_repo
     )
 
 
@@ -170,7 +178,7 @@ def main() -> None:
     # Initialize services
     ai_service = _initialize_ai_service(config, ui)
     metrics_repo = FileMetricsRepository("telemetry_metrics.jsonl")
-    report_generator = _initialize_reporting(metrics_repo)
+    report_generator = _initialize_reporting(config, metrics_repo)
     data_ingestion_service = _initialize_data_ingestion(
         args, config, ui, metrics_repo
     )
