@@ -4,11 +4,22 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    TypeVar
 )
 from io import BytesIO
 import pandas as pd
 from src.core.models import VideoAnalysisInput, NotificationEvent
+
+T_contra = TypeVar('T_contra', contravariant=True)
+
+
+class Repository(Protocol[T_contra]):
+    """
+    Generic protocol for data persistence.
+    """
+    def save(self, item: T_contra) -> None:
+        """Saves an item to the repository."""
+        ...
 
 
 class AIService(Protocol):

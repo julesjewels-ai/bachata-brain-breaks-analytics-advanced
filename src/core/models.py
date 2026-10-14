@@ -59,6 +59,18 @@ class NotificationEvent(BaseModel):
     )
 
 
+class ReportMetadata(BaseModel):
+    """
+    Schema for metadata about generated reports.
+    """
+    filepath: str = Field(..., min_length=1)
+    strategy_preview: str = Field(..., min_length=0)
+    anomaly_count: int = Field(..., ge=0)
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
 class MetricEvent(BaseModel):
     """
     Schema for system telemetry events.

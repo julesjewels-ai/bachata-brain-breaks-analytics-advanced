@@ -40,6 +40,10 @@ class AppConfig(BaseModel):
         default=".cache/ai_responses",
         description="Directory to store AI response cache"
     )
+    report_metadata_path: str = Field(
+        default="report_metadata.jsonl",
+        description="File path for archiving report metadata"
+    )
 
     @classmethod
     def get_config(cls) -> "AppConfig":
@@ -52,7 +56,10 @@ class AppConfig(BaseModel):
                 youtube_api_key=os.getenv("YOUTUBE_API_KEY") or os.getenv("YOUTUBE_DATA_API_KEY"),
                 youtube_channel_id=os.getenv("YOUTUBE_CHANNEL_ID"),
                 environment=os.getenv("APP_ENV", "development"),
-                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses")
+                cache_dir=os.getenv("AI_CACHE_DIR", ".cache/ai_responses"),
+                report_metadata_path=os.getenv(
+                    "REPORT_METADATA_PATH", "report_metadata.jsonl"
+                )
             )
         except ValidationError as e:
             logger.error("Configuration validation failed: %s", e)
