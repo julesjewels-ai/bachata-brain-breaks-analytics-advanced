@@ -1,13 +1,15 @@
-import pytest
-from unittest.mock import Mock, call, MagicMock, patch
+from collections.abc import AsyncGenerator
+from unittest.mock import Mock, patch
+
 import pandas as pd
+import pytest
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
-from rich.live import Live
+
 from src.core.ui import RichConsoleUI
-from typing import AsyncGenerator
+
 
 @pytest.fixture
 def mock_console() -> Mock:

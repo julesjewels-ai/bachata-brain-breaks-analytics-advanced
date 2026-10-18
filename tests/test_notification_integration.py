@@ -1,13 +1,18 @@
 """
 Integration tests for notifications.
 """
-from unittest.mock import Mock, MagicMock
-import pytest
+from unittest.mock import MagicMock, Mock
+
 import pandas as pd
+import pytest
+
 from src.core.app import BachataAnalyticsApp
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    AIService,
+    DataIngestionService,
+    NotificationService,
+    ReportGenerator,
+    UserInterface,
 )
 
 
