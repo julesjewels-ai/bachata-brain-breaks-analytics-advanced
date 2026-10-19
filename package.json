@@ -1,0 +1,44 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "A comprehensive analytics CLI dashboard for the **Bachata Brain Breaks** YouTube channel. It ingests channel data (live or simulated), visualises audience demographics and retention curves, applies statistical outlier detection to isolate viral anomalies in Shorts and Long-form content, and runs a specialised **Gemini 3 Thinking-Mode agent** that analyses semantic patterns across Top/Bottom performers to generate actionable title & thumbnail strategies.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julesjewels-ai/bachata-brain-breaks-analytics-advanced.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/julesjewels-ai/bachata-brain-breaks-analytics-advanced/issues"
+  },
+  "homepage": "https://github.com/julesjewels-ai/bachata-brain-breaks-analytics-advanced#readme",
+  "devDependencies": {
+    "@octokit/rest": "^22.0.1",
+    "@types/fs-extra": "^11.0.4",
+    "@types/glob": "^8.1.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/lcov-parse": "^1.0.2",
+    "@types/node": "^26.6.5",
+    "fs-extra": "^11.4.1",
+    "glob": "^13.0.6",
+    "js-yaml": "^5.5.0",
+    "jsonfile": "^6.2.1",
+    "lcov-parse": "^1.0.0",
+    "octokit": "^5.0.5",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-typescript": "^0.21.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  }
+}
