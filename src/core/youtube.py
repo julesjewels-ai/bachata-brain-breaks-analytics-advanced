@@ -1,9 +1,11 @@
 """
 YouTube Data API Client for fetching channel and video statistics.
 """
-import aiohttp
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any
+
+import aiohttp
+
 from src.core.config import AppConfig
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ class YouTubeAPIClient:
             )
             response.raise_for_status()
 
-    async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> List[Dict[str, Any]]:
+    async def get_channel_videos(self, channel_id: str, max_results: int = 50) -> list[dict[str, Any]]:
         """
         Fetches the latest videos for a given channel ID.
         Uses a single shared aiohttp session for all API calls.
@@ -69,12 +71,12 @@ class YouTubeAPIClient:
 
     async def _get_uploads_playlist_id(
         self, session: aiohttp.ClientSession, channel_id: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Gets the playlist ID for the channel's uploads."""
-        params = {
+        params: dict[str, str] = {
             "part": "contentDetails",
             "id": channel_id,
-            "key": self.api_key
+            "key": str(self.api_key)
         }
         async with session.get(f"{self.BASE_URL}/channels", params=params) as response:
             await self._check_response(response, "/channels")
@@ -85,23 +87,25 @@ class YouTubeAPIClient:
             return items[0].get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
 
     async def _get_playlist_items(
-        self, session: aiohttp.ClientSession, playlist_id: str, max_results: int
-    ) -> List[Dict[str, Any]]:
+        self, session: aiohttp.ClientSession, playlist_id: str, max_results: int, page_token: str | None = None
+    ) -> list[dict[str, Any]]:
         """Fetches items from a playlist."""
-        params = {
+        params: dict[str, str] = {
             "part": "snippet",
             "playlistId": playlist_id,
-            "maxResults": min(max_results, 50),
-            "key": self.api_key
+            "maxResults": str(min(max_results, 50)),
+            "key": str(self.api_key)
         }
+        if page_token:
+            params["pageToken"] = page_token
         async with session.get(f"{self.BASE_URL}/playlistItems", params=params) as response:
             await self._check_response(response, "/playlistItems")
             data = await response.json()
             return data.get("items", [])
 
     async def get_video_statistics(
-        self, session: aiohttp.ClientSession, video_ids: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, session: aiohttp.ClientSession, video_ids: list[str]
+    ) -> dict[str, dict[str, Any]]:
         """
         Fetches statistics for a batch of video IDs.
         Returns a dictionary mapping video ID to its stats.
@@ -109,10 +113,10 @@ class YouTubeAPIClient:
         if not video_ids:
             return {}
 
-        params = {
+        params: dict[str, str] = {
             "part": "statistics",
             "id": ",".join(video_ids),
-            "key": self.api_key
+            "key": str(self.api_key)
         }
 
         async with session.get(f"{self.BASE_URL}/videos", params=params) as response:

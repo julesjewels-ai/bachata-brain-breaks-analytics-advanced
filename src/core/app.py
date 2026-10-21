@@ -3,17 +3,20 @@ Core logic for Bachata Brain Breaks Analytics.
 Contains data ingestion, outlier detection, and the Gemini 3 agent simulation.
 """
 import logging
-from typing import List, Dict, Optional
+
 import pandas as pd
 from pydantic import ValidationError
-from src.core.formatting import (
-    format_validation_error, prepare_display_dataframe
-)
+
+from src.core.formatting import format_validation_error, prepare_display_dataframe
 from src.core.interfaces import (
-    UserInterface, AIService, ReportGenerator, DataIngestionService,
-    NotificationService
+    AIService,
+    DataIngestionService,
+    NotificationService,
+    ReportGenerator,
+    Repository,
+    UserInterface,
 )
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import AnalyticsRun, NotificationEvent, VideoAnalysisInput
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -29,7 +32,8 @@ class BachataAnalyticsApp:
         ai_service: AIService,
         report_generator: ReportGenerator,
         data_ingestion_service: DataIngestionService,
-        notification_service: NotificationService
+        notification_service: NotificationService,
+        archive_repository: Repository[AnalyticsRun] | None = None
     ):
 
         self.ai_service = ai_service
@@ -37,6 +41,7 @@ class BachataAnalyticsApp:
         self.report_generator = report_generator
         self.data_ingestion_service = data_ingestion_service
         self.notification_service = notification_service
+        self.archive_repository = archive_repository
 
     async def ingest_data(self) -> pd.DataFrame:
         """
@@ -45,7 +50,7 @@ class BachataAnalyticsApp:
         with self.ui.loading("Ingesting channel data..."):
             return await self.data_ingestion_service.ingest_data()
 
-    def detect_outliers(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def detect_outliers(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         """
         Implements statistical outlier detection for viral anomalies.
         """
@@ -60,7 +65,7 @@ class BachataAnalyticsApp:
 
     def _prepare_agent_input(
         self, df: pd.DataFrame
-    ) -> List[VideoAnalysisInput]:
+    ) -> list[VideoAnalysisInput]:
         """
         Selects top/bottom performing videos and validates them for the agent.
         """
@@ -72,7 +77,7 @@ class BachataAnalyticsApp:
         return [VideoAnalysisInput(**record) for record in records]
 
     def _display_anomalies(
-        self, anomalies: Dict[str, pd.DataFrame]
+        self, anomalies: dict[str, pd.DataFrame]
     ) -> None:
         """Renders outlier tables for each video type."""
         for v_type, data in anomalies.items():
@@ -89,7 +94,7 @@ class BachataAnalyticsApp:
         Wraps an async generator to capture all yielded chunks into a
         single concatenated string while forwarding them to the UI.
         """
-        captured: List[str] = []
+        captured: list[str] = []
 
         async def _wrapper():
             if first_chunk is not None:
@@ -99,13 +104,13 @@ class BachataAnalyticsApp:
                 async for chunk in stream:
                     captured.append(chunk)
                     yield chunk
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 yield f"\n[error] Stream interrupted: {e}[/error]\n"
 
         await self.ui.display_stream(_wrapper())
         return "".join(captured)
 
-    async def _run_gemini_analysis(self, df: pd.DataFrame) -> Optional[str]:
+    async def _run_gemini_analysis(self, df: pd.DataFrame) -> str | None:
         """
         Validates data, initializes the Gemini stream, and returns
         the full strategy text. Returns None on failure.
@@ -132,7 +137,7 @@ class BachataAnalyticsApp:
                 first_chunk = await stream.__anext__()
         except StopAsyncIteration:
             pass
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Stream initialization failed: %s", e)
             self.ui.display_error(f"Failed to generate analysis: {e}")
             return None
@@ -140,7 +145,7 @@ class BachataAnalyticsApp:
         return await self._stream_with_capture(stream, first_chunk)
 
     def _generate_report(
-        self, anomalies: Dict[str, pd.DataFrame], strategy: str
+        self, anomalies: dict[str, pd.DataFrame], strategy: str
     ) -> None:
         """Generates the Excel report and notifies the user."""
         try:
@@ -180,6 +185,22 @@ class BachataAnalyticsApp:
             return
 
         self._generate_report(anomalies, strategy)
+
+        if self.archive_repository:
+            try:
+                run_summary = {k: len(v) for k, v in anomalies.items()}
+                run_record = AnalyticsRun(
+                    strategy_output=strategy,
+                    anomalies_summary=run_summary
+                )
+                self.archive_repository.save(run_record)
+            except Exception as e:  # noqa: BLE001
+                logger.error("Failed to archive analytics run: %s", e)
+                self.notification_service.notify(NotificationEvent(
+                    title="Archive Error",
+                    message=f"Failed to save run to archive: {e}",
+                    level='warning'
+                ))
 
         self.notification_service.notify(NotificationEvent(
             title="Complete",
