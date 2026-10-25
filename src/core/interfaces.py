@@ -3,8 +3,7 @@ Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
-    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict
 )
 from io import BytesIO
 import pandas as pd

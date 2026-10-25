@@ -1,7 +1,6 @@
 """
 Notification services for Bachata Brain Breaks Analytics.
 """
-import json
 import logging
 from typing import List
 from src.core.interfaces import NotificationService, UserInterface
