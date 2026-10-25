@@ -1,7 +1,7 @@
 import json
 import pytest
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from aioresponses import aioresponses
 from src.core.youtube import YouTubeAPIClient
 from src.core.config import AppConfig
@@ -41,7 +41,7 @@ async def test_get_channel_videos_success(youtube_client):
         
         # Mock videos statistics request
         m.get(
-            f"https://www.googleapis.com/youtube/v3/videos?id=VID_1&key=TEST_API_KEY&part=statistics",
+            "https://www.googleapis.com/youtube/v3/videos?id=VID_1&key=TEST_API_KEY&part=statistics",
             payload=load_snapshot("youtube_videos_response.json")
         )
         
