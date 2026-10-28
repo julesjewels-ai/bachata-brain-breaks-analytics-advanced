@@ -2,11 +2,11 @@
 Excel styling utilities.
 Handles low-level styling, formatting, and layout for Excel reports.
 """
-from typing import Dict
 from numbers import Number
-from openpyxl.styles import Font, PatternFill, Alignment
-from openpyxl.utils import get_column_letter
+
 from openpyxl.formatting.rule import DataBarRule
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
 
@@ -64,7 +64,7 @@ class ExcelStyler:
             ws.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
 
     @staticmethod
-    def get_header_map(ws: Worksheet) -> Dict[str, int]:
+    def get_header_map(ws: Worksheet) -> dict[str, int]:
         """Returns a map of header name to column index (1-based)."""
         return {str(cell.value): cell.column for cell in ws[1] if cell.value is not None}
 
