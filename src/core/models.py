@@ -6,7 +6,15 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator
 
 
-class VideoAnalysisInput(BaseModel):
+
+class DomainModel(BaseModel):
+    """
+    Base domain model to establish structural harmony across models.
+    """
+    pass
+
+
+class VideoAnalysisInput(DomainModel):
     """
     Schema for video data to be analyzed by the agent.
     Strictly validates input to prevent injection and ensure data integrity.
@@ -45,7 +53,7 @@ class VideoAnalysisInput(BaseModel):
         return v
 
 
-class NotificationEvent(BaseModel):
+class NotificationEvent(DomainModel):
     """
     Schema for notification events.
     """
@@ -59,7 +67,7 @@ class NotificationEvent(BaseModel):
     )
 
 
-class MetricEvent(BaseModel):
+class MetricEvent(DomainModel):
     """
     Schema for system telemetry events.
     """
@@ -70,3 +78,15 @@ class MetricEvent(BaseModel):
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+
+
+class ArchiveMetadata(DomainModel):
+    """
+    Schema for an archived dataset metadata.
+    """
+    archive_id: str = Field(..., min_length=1)
+    record_count: int = Field(..., ge=0)
+    archived_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    source_type: str = Field(default="system")

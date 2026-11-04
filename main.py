@@ -29,6 +29,7 @@ from src.core.notifications import (  # noqa: E402
 from src.core.metrics import (  # noqa: E402
     FileMetricsRepository, MetricsDataIngestionService, MetricsReportGenerator
 )
+from src.core.archival import FileArchiveRepository, StandardDataArchivalService  # noqa: E402
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -176,6 +177,9 @@ def main() -> None:
     )
     notification_service = _initialize_notifications(ui)
 
+    archive_repo = FileArchiveRepository(archive_dir=".archive")
+    archival_service = StandardDataArchivalService(repository=archive_repo)
+
     ui.display_status("Initializing Analytics Dashboard...")
     try:
         app = BachataAnalyticsApp(
@@ -183,7 +187,8 @@ def main() -> None:
             ai_service=ai_service,
             report_generator=report_generator,
             data_ingestion_service=data_ingestion_service,
-            notification_service=notification_service
+            notification_service=notification_service,
+            archival_service=archival_service
         )
         asyncio.run(app.run())
     except ValidationError as e:

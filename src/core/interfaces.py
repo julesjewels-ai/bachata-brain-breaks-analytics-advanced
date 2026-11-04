@@ -4,11 +4,11 @@ Defines contracts for dependency injection to decouple implementation details.
 """
 from typing import (
     Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
+    TypeVar
 )
 from io import BytesIO
 import pandas as pd
-from src.core.models import VideoAnalysisInput, NotificationEvent
+from src.core.models import VideoAnalysisInput, NotificationEvent, ArchiveMetadata
 
 
 class AIService(Protocol):
@@ -164,4 +164,31 @@ class NotificationService(Protocol):
         Args:
             event: The notification event containing details.
         """
+        ...
+
+
+T = TypeVar('T')
+
+class Repository(Protocol[T]):
+    """
+    Generic Protocol for persistence logic.
+    """
+    def save(self, entity: T) -> None:
+        ...
+
+    def get(self, id: str) -> Optional[T]:
+        ...
+
+class ArchiveRepository(Repository[ArchiveMetadata], Protocol):
+    """
+    Protocol extending Repository for archived data.
+    """
+    def save_data(self, archive_id: str, df: pd.DataFrame) -> None:
+        ...
+
+class DataArchivalService(Protocol):
+    """
+    Protocol for archiving data.
+    """
+    def archive(self, df: pd.DataFrame) -> ArchiveMetadata:
         ...
