@@ -22,34 +22,32 @@ def test_display_table_empty(ui: RichConsoleUI, mock_console: Mock) -> None:
     ui.display_table(data)
     mock_console.print.assert_called_with("[italic dim]No data available.[/italic dim]")
 
-def test_display_table_columns(ui: RichConsoleUI, mock_console: Mock) -> None:
-    data = pd.DataFrame({
-        "A": ["string"],
-        "B": [1],
-        "Views": [100]
-    })
+@pytest.mark.parametrize("col_name,col_data,expected_justify,expected_style", [
+    ("A", ["string"], "left", "cyan"),
+    ("B", [1], "right", "green"),
+    ("Views", [100], "right", "green"),
+    ("Retention", [50], "right", "green"),
+    ("Retention (%)", [50.5], "right", "green"),
+    ("Title", ["Hello"], "left", "cyan"),
+])
+def test_display_table_columns(
+    ui: RichConsoleUI,
+    mock_console: Mock,
+    col_name: str,
+    col_data: list,
+    expected_justify: str,
+    expected_style: str
+) -> None:
+    data = pd.DataFrame({col_name: col_data})
     ui.display_table(data)
 
-    # Check if a Table was printed
     args, _ = mock_console.print.call_args
-    assert isinstance(args[0], Table)
+    assert isinstance(args[0], Table), f"Failed on column: {col_name}, expected a Table to be printed."
     table = args[0]
 
-    # Check columns
-    # Column A: String -> justify="left", style="cyan"
-    assert table.columns[0].header == "A"
-    assert table.columns[0].justify == "left"
-    assert table.columns[0].style == "cyan"
-
-    # Column B: Numeric -> justify="right", style="green"
-    assert table.columns[1].header == "B"
-    assert table.columns[1].justify == "right"
-    assert table.columns[1].style == "green"
-
-    # Column Views: Name matches -> justify="right", style="green"
-    assert table.columns[2].header == "Views"
-    assert table.columns[2].justify == "right"
-    assert table.columns[2].style == "green"
+    assert table.columns[0].header == col_name, f"Failed on column header for: {col_name}"
+    assert table.columns[0].justify == expected_justify, f"Failed on column justify for: {col_name}"
+    assert table.columns[0].style == expected_style, f"Failed on column style for: {col_name}"
 
 def test_display_table_rows(ui: RichConsoleUI, mock_console: Mock) -> None:
     data = pd.DataFrame({
