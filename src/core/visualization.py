@@ -2,6 +2,7 @@
 Visualization module for generating static charts.
 """
 from io import BytesIO
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from pydantic import BaseModel, Field

@@ -1,7 +1,9 @@
 import pytest
 from pydantic import ValidationError
-from src.core.models import VideoAnalysisInput
+
 from src.core.ai import GeminiThinkingAgent
+from src.core.models import VideoAnalysisInput
+
 
 def test_video_analysis_input_valid():
     """Test valid input creation."""
@@ -88,7 +90,8 @@ def test_video_analysis_input_invalid_type():
         VideoAnalysisInput(**data)
     assert "String should match pattern" in str(exc.value)
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 
 @patch('src.core.ai.genai.Client')
 def test_agent_analyze_semantics_typed(mock_client_class, monkeypatch):

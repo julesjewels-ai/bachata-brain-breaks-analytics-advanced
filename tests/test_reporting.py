@@ -1,10 +1,12 @@
 import os
 from io import BytesIO
+
 import pandas as pd
 from openpyxl import load_workbook
-from src.core.reporting import ExcelReportGenerator
+
 from src.core.excel_styling import ExcelStyler
 from src.core.interfaces import Visualizer
+from src.core.reporting import ExcelReportGenerator
 
 
 class MockVisualizer(Visualizer):
