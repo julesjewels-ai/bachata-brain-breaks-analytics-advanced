@@ -1,22 +1,26 @@
 """
 User Interface implementation using Rich.
 """
-from typing import Union, Optional, ContextManager, Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from contextlib import AbstractContextManager as ContextManager
+from typing import Any
+
 import pandas as pd
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-from rich.live import Live
 from rich import box
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 from src.core.interfaces import UserInterface
+
 
 class RichConsoleUI(UserInterface):
     """
     Implementation of UserInterface using the Rich library.
     """
-    def __init__(self, console: Optional[Console] = None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         """
         Initialize the RichConsoleUI.
 
@@ -35,7 +39,7 @@ class RichConsoleUI(UserInterface):
     def display_status(self, text: str) -> None:
         self.console.print(f"[yellow]{text}[/yellow]")
 
-    def display_table(self, data: pd.DataFrame, title: Optional[str] = None) -> None:
+    def display_table(self, data: pd.DataFrame, title: str | None = None) -> None:
         if data.empty:
             self.console.print("[italic dim]No data available.[/italic dim]")
             return
@@ -67,7 +71,7 @@ class RichConsoleUI(UserInterface):
 
         self.console.print(table)
 
-    def display_error(self, error: Union[Exception, str]) -> None:
+    def display_error(self, error: Exception | str) -> None:
         self.console.print(f"[bold red]Error:[/bold red] {error}")
 
     def display_success(self, text: str) -> None:
