@@ -2,10 +2,11 @@
 Charting module for Excel reports.
 Encapsulates chart configuration and building logic using OpenPyXL.
 """
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
 from openpyxl.chart import BarChart, Reference
 from openpyxl.worksheet.worksheet import Worksheet
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class ChartDataLocation(BaseModel):
     """Defines the location of data for the chart."""
@@ -16,9 +17,9 @@ class ChartDataLocation(BaseModel):
     title_from_data: bool = True
 
     # Optional explicit location for categories (labels)
-    cats_min_col: Optional[int] = None
-    cats_min_row: Optional[int] = None
-    cats_max_row: Optional[int] = None
+    cats_min_col: int | None = None
+    cats_min_row: int | None = None
+    cats_max_row: int | None = None
 
 class ChartConfig(BaseModel):
     """Configuration for chart styling and dimensions."""

@@ -2,27 +2,27 @@
 Interfaces for the core application.
 Defines contracts for dependency injection to decouple implementation details.
 """
-from typing import (
-    Protocol, Union, Optional, ContextManager, Any, List, AsyncGenerator, Dict,
-    Literal
-)
+from collections.abc import AsyncGenerator
 from io import BytesIO
+from typing import Any, ContextManager, Protocol
+
 import pandas as pd
-from src.core.models import VideoAnalysisInput, NotificationEvent
+
+from src.core.models import NotificationEvent, VideoAnalysisInput
 
 
 class AIService(Protocol):
     """
     Protocol for AI operations.
     """
-    def analyze_semantics(self, videos: List[VideoAnalysisInput]) -> str:
+    def analyze_semantics(self, videos: list[VideoAnalysisInput]) -> str:
         """
         Analyzes video metadata to identify semantic patterns.
         """
         ...
 
     def analyze_stream(
-        self, videos: List[VideoAnalysisInput]
+        self, videos: list[VideoAnalysisInput]
     ) -> AsyncGenerator[str, None]:
         """
         Stream analysis of video metadata.
@@ -48,12 +48,12 @@ class UserInterface(Protocol):
         ...
 
     def display_table(
-        self, data: pd.DataFrame, title: Optional[str] = None
+        self, data: pd.DataFrame, title: str | None = None
     ) -> None:
         """Displays structured data as a table."""
         ...
 
-    def display_error(self, error: Union[Exception, str]) -> None:
+    def display_error(self, error: Exception | str) -> None:
         """Displays an error message."""
         ...
 
@@ -107,7 +107,7 @@ class ReportGenerator(Protocol):
     Protocol for generating reports.
     """
     def generate_report(
-        self, anomalies: Dict[str, pd.DataFrame], strategy: str, filepath: str
+        self, anomalies: dict[str, pd.DataFrame], strategy: str, filepath: str
     ) -> None:
         """
         Generates a report.
@@ -130,7 +130,7 @@ class CacheBackend(Protocol):
     """
     Protocol for caching string data.
     """
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """
         Retrieves a value from the cache.
 
